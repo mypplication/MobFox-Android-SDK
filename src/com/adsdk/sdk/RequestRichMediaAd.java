@@ -61,12 +61,21 @@ public class RequestRichMediaAd extends RequestAd<RichMediaAd> {
 			XMLReader xr = sp.getXMLReader();
 			ResponseHandler myHandler = new ResponseHandler();
 			xr.setContentHandler(myHandler);
-
-			InputSource src = new InputSource(inputStream);
-			src.setEncoding(RESPONSE_ENCODING);
-			xr.parse(src);
-			return myHandler.getRichMediaAd();
-
+			if(Log.LOGGING_ENABLED){
+				String response = convertStreamToString(inputStream);
+				Log.d("Ad RequestPerform HTTP Response: " + response);
+				byte[] bytes = response.getBytes(RESPONSE_ENCODING);
+				InputSource src = new InputSource(new ByteArrayInputStream(bytes));
+				src.setEncoding(RESPONSE_ENCODING);
+				xr.parse(src);
+				return myHandler.getRichMediaAd();
+			}
+			else{
+				InputSource src = new InputSource(inputStream);
+				src.setEncoding(RESPONSE_ENCODING);
+				xr.parse(src);
+				return myHandler.getRichMediaAd();
+			}
 		} catch (Exception e) {
 			throw new RequestException("Cannot parse Response:"
 					+ e.getMessage(), e);

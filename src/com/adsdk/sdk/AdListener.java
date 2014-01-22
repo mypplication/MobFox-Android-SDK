@@ -1,5 +1,6 @@
 package com.adsdk.sdk;
 
+
 public interface AdListener {
 
 	public void adClicked();

@@ -42,6 +42,7 @@ import android.widget.VideoView;
 
 import com.adsdk.sdk.AdManager;
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.Log;
 import com.adsdk.sdk.Util;
 import com.adsdk.sdk.video.InterstitialController.OnResetAutocloseListener;
 import com.adsdk.sdk.video.MediaController.OnPauseListener;
@@ -64,14 +65,14 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void run() {
 
+			Log.v("###########TRACKING CAN CLOSE INTERSTITIAL");
 			this.mActivity.mCanClose = true;
 			if (this.mActivity.mSkipButton != null)
 				this.mActivity.runOnUiThread(new Runnable() {
 
 					@Override
 					public void run() {
-						CanSkipTask.this.mActivity.mSkipButton
-						.setVisibility(View.VISIBLE);
+						CanSkipTask.this.mActivity.mSkipButton.setVisibility(View.VISIBLE);
 					}
 				});
 		}
@@ -88,14 +89,19 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void run() {
 
+			Log.v("###########TRACKING INTERSTITIAL AUTOCLOSE");
 			RichMediaActivity.this.mResult = true;
 			this.mActivity.runOnUiThread(new Runnable() {
 
 				@Override
 				public void run() {
 
-					RichMediaActivity.this.setResult(Activity.RESULT_OK);
-					RichMediaActivity.this.finish();
+					if (RichMediaActivity.this.mAd.getType() == Const.INTERSTITIAL_TO_VIDEO) {
+						playVideo();
+					} else {
+						RichMediaActivity.this.setResult(Activity.RESULT_OK);
+						RichMediaActivity.this.finish();
+					}
 				}
 			});
 
@@ -107,6 +113,7 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void run() {
 
+			Log.v(Const.TAG, "###########TRACKING INTERSTITIAL LOADING TIMEOUT");
 			RichMediaActivity.this.mCanClose = true;
 			RichMediaActivity.this.mInterstitialController.pageLoaded();
 		}
@@ -123,6 +130,7 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void run() {
 
+			Log.v("###########TRACKING VIDEO TIMEOUT");
 			this.mActivity.runOnUiThread(new Runnable() {
 
 				@Override
@@ -139,8 +147,7 @@ public class RichMediaActivity extends Activity {
 	public static final int TYPE_VIDEO = 1;
 	public static final int TYPE_INTERSTITIAL = 2;
 
-	public static void setActivityAnimation(final Activity activity,
-			final int in, final int out) {
+	public static void setActivityAnimation(final Activity activity, final int in, final int out) {
 		try {
 			activity.overridePendingTransition(in, out);
 
@@ -207,7 +214,7 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void handleMessage(final Message msg) {
 			RichMediaActivity wRichMediaActivity = richMediaActivity.get();
-			if(wRichMediaActivity!=null){
+			if (wRichMediaActivity != null) {
 				wRichMediaActivity.handleMessage(msg);
 			}
 		}
@@ -220,13 +227,9 @@ public class RichMediaActivity extends Activity {
 			case ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID:
 				if (RichMediaActivity.this.mSkipButton != null)
 					if (mResourceManager.containsResource(ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID)) {
-						RichMediaActivity.this.mSkipButton
-						.setImageDrawable(mResourceManager
-								.getResource(this,ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+						RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
 					} else {
-						RichMediaActivity.this.mSkipButton
-						.setImageDrawable(mResourceManager
-								.getResource(this,ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+						RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
 					}
 
 				break;
@@ -241,9 +244,9 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onTimeEvent(final int time) {
 
+			Log.d(Const.TAG, "RichMediaActivity mOverlayShowListener show after:" + time);
 			if (RichMediaActivity.this.mOverlayView != null) {
-				RichMediaActivity.this.mOverlayView
-				.setVisibility(View.VISIBLE);
+				RichMediaActivity.this.mOverlayView.setVisibility(View.VISIBLE);
 				RichMediaActivity.this.mOverlayView.requestLayout();
 			}
 		}
@@ -254,6 +257,7 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onClick(final View arg0) {
 
+			Log.d(Const.TAG, "RichMediaActivity mOverlayClickListener");
 			if (RichMediaActivity.this.mMediaController != null)
 				RichMediaActivity.this.mMediaController.toggle();
 		}
@@ -262,8 +266,8 @@ public class RichMediaActivity extends Activity {
 	OnErrorListener mOnVideoErrorListener = new OnErrorListener() {
 
 		@Override
-		public boolean onError(final MediaPlayer mp, final int what,
-				final int extra) {
+		public boolean onError(final MediaPlayer mp, final int what, final int extra) {
+			Log.w("Cannot play video/ Error: " + what + " Extra: " + extra);
 			finish();
 			return false;
 		}
@@ -274,9 +278,9 @@ public class RichMediaActivity extends Activity {
 	OnInfoListener mOnVideoInfoListener = new OnInfoListener() {
 
 		@Override
-		public boolean onInfo(final MediaPlayer mp, final int what,
-				final int extra) {
-			if(what == 703){
+		public boolean onInfo(final MediaPlayer mp, final int what, final int extra) {
+			Log.i("Info: " + what + " Extra: " + extra);
+			if (what == 703) {
 				mTimeTest = mVideoView.getCurrentPosition();
 				new Handler().postDelayed(mCheckProgressTask, 5000);
 			}
@@ -285,28 +289,32 @@ public class RichMediaActivity extends Activity {
 	};
 
 	private Runnable mCheckProgressTask = new Runnable() {
-		
-	    public void run() {
-	    	int test = mVideoView.getCurrentPosition();
-	    	if(test - mTimeTest <= 1){
-	    		finish();
-	    	}
-	    }
+
+		public void run() {
+			Log.w("Video playback is being checked");
+			int test = mVideoView.getCurrentPosition();
+			if (test - mTimeTest <= 1) {
+				Log.w("Video playback too slow. Ending");
+				finish();
+			} else {
+				Log.w("Video playback has restarted");
+			}
+		}
 	};
-	
+
 	OnPreparedListener mOnVideoPreparedListener = new OnPreparedListener() {
 
 		@Override
 		public void onPrepared(final MediaPlayer mp) {
 
+			Log.d(Const.TAG, "RichMediaActivity onPrepared MediaPlayer");
 			if (RichMediaActivity.this.mVideoTimeoutTimer != null) {
 				RichMediaActivity.this.mVideoTimeoutTimer.cancel();
 				RichMediaActivity.this.mVideoTimeoutTimer = null;
 			}
 			if (RichMediaActivity.this.mLoadingView != null)
-				RichMediaActivity.this.mLoadingView
-				.setVisibility(View.GONE);
-			if(mVideoData.showNavigationBars)
+				RichMediaActivity.this.mLoadingView.setVisibility(View.GONE);
+			if (mVideoData.showNavigationBars)
 				mMediaController.setVisibility(View.VISIBLE);
 			RichMediaActivity.this.mVideoView.requestFocus();
 		}
@@ -317,29 +325,25 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onCompletion(final MediaPlayer mp) {
 
+			Log.d("###########TRACKING END VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.completeEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
+				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
 				event.timestamp = System.currentTimeMillis();
 				TrackerService.requestTrack(event);
 			}
-			if (RichMediaActivity.this.mType == RichMediaActivity.TYPE_VIDEO
-					&& RichMediaActivity.this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL) {
-				final Intent intent = new Intent(RichMediaActivity.this,
-						RichMediaActivity.class);
-				intent.putExtra(Const.AD_EXTRA,
-						RichMediaActivity.this.mAd);
-				intent.putExtra(Const.AD_TYPE_EXTRA,
-						RichMediaActivity.TYPE_INTERSTITIAL);
+			if (RichMediaActivity.this.mType == RichMediaActivity.TYPE_VIDEO && RichMediaActivity.this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL) {
+				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
+				intent.putExtra(Const.AD_EXTRA, RichMediaActivity.this.mAd);
+				intent.putExtra(Const.AD_TYPE_EXTRA, RichMediaActivity.TYPE_INTERSTITIAL);
 				try {
 					RichMediaActivity.this.startActivity(intent);
-					RichMediaActivity.setActivityAnimation(
-							RichMediaActivity.this,
-							RichMediaActivity.this.mEnterAnim,
-							RichMediaActivity.this.mExitAnim);
+					RichMediaActivity.setActivityAnimation(RichMediaActivity.this, RichMediaActivity.this.mEnterAnim, RichMediaActivity.this.mExitAnim);
 				} catch (final Exception e) {
+					Log.e("Cannot start Rich Ad activity:" + e, e);
 				}
 			}
 			RichMediaActivity.this.mResult = true;
@@ -353,9 +357,11 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onVideoStart() {
 
+			Log.d("###########TRACKING START VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.startEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
+				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
 				event.timestamp = System.currentTimeMillis();
@@ -369,9 +375,11 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onVideoPause() {
 
+			Log.d("###########TRACKING PAUSE VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.pauseEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
+				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
 				event.timestamp = System.currentTimeMillis();
@@ -385,9 +393,11 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onVideoUnpause() {
 
+			Log.d("###########TRACKING UNPAUSE VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.unpauseEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
+				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
 				event.timestamp = System.currentTimeMillis();
@@ -401,10 +411,12 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onTimeEvent(final int time) {
 
-			final Vector<String> trackers = RichMediaActivity.this.mVideoData.timeTrackingEvents
-					.get(time);
+			Log.d("###########TRACKING TIME VIDEO:" + time);
+			final Vector<String> trackers = RichMediaActivity.this.mVideoData.timeTrackingEvents.get(time);
 			if (trackers != null)
 				for (int i = 0; i < trackers.size(); i++) {
+
+					Log.d("Track url:" + trackers.get(i));
 					final TrackEvent event = new TrackEvent();
 					event.url = trackers.get(i);
 					event.timestamp = System.currentTimeMillis();
@@ -417,16 +429,14 @@ public class RichMediaActivity extends Activity {
 
 		@Override
 		public void onTimeEvent(final int time) {
+
+			Log.d("###########CAN CLOSE VIDEO:" + time);
 			RichMediaActivity.this.mCanClose = true;
-			if (RichMediaActivity.this.mVideoData.showSkipButton
-					&& RichMediaActivity.this.mSkipButton != null) {
+			if (RichMediaActivity.this.mVideoData.showSkipButton && RichMediaActivity.this.mSkipButton != null) {
 
-				RichMediaActivity.this.mSkipButton
-				.setImageDrawable(mResourceManager
-						.getResource(RichMediaActivity.this,ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+				RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(RichMediaActivity.this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
 
-				RichMediaActivity.this.mSkipButton
-				.setVisibility(View.VISIBLE);
+				RichMediaActivity.this.mSkipButton.setVisibility(View.VISIBLE);
 			}
 		}
 	};
@@ -436,17 +446,17 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onClick(final View v) {
 
+			Log.v("###########TRACKING SKIP VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.skipEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
+				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
 				event.timestamp = System.currentTimeMillis();
 				TrackerService.requestTrack(event);
 			}
 
-			RichMediaActivity.this.mResult = true;
-			RichMediaActivity.this.setResult(Activity.RESULT_OK);
 			RichMediaActivity.this.finish();
 		}
 	};
@@ -456,9 +466,11 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onVideoReplay() {
 
+			Log.d("###########TRACKING REPLAY VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.replayEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
+				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
 				event.timestamp = System.currentTimeMillis();
@@ -472,10 +484,10 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onClick(final View arg0) {
 
+			Log.d(Const.TAG, "RichMediaActivity mInterstitialClickListener");
 			if (RichMediaActivity.this.mInterstitialController != null) {
 				RichMediaActivity.this.mInterstitialController.toggle();
-				RichMediaActivity.this.mInterstitialController
-				.resetAutoclose();
+				RichMediaActivity.this.mInterstitialController.resetAutoclose();
 			}
 		}
 	};
@@ -484,6 +496,8 @@ public class RichMediaActivity extends Activity {
 
 		@Override
 		public void onClick(final View v) {
+
+			Log.v("###########TRACKING SKIP INTERSTITIAL");
 
 			RichMediaActivity.this.mResult = true;
 			RichMediaActivity.this.setResult(Activity.RESULT_OK);
@@ -496,10 +510,10 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onResetAutoclose() {
 
+			Log.v("###########RESET AUTOCLOSE INTERSTITIAL");
 			RichMediaActivity.this.mInterstitialAutocloseReset = true;
 			if (RichMediaActivity.this.mInterstitialAutocloseTimer != null) {
-				RichMediaActivity.this.mInterstitialAutocloseTimer
-				.cancel();
+				RichMediaActivity.this.mInterstitialAutocloseTimer.cancel();
 				RichMediaActivity.this.mInterstitialAutocloseTimer = null;
 			}
 		}
@@ -509,28 +523,20 @@ public class RichMediaActivity extends Activity {
 
 		@Override
 		public void onPageLoaded() {
-			if (RichMediaActivity.this.mInterstitialData != null
-					&& RichMediaActivity.this.mInterstitialData.autoclose > 0)
-				if (RichMediaActivity.this.mInterstitialAutocloseTimer == null
-				&& !RichMediaActivity.this.mInterstitialAutocloseReset) {
-					final InterstitialAutocloseTask autocloseTask = new InterstitialAutocloseTask(
-							RichMediaActivity.this);
+			Log.v("onPageLoaded");
+			if (RichMediaActivity.this.mInterstitialData != null && RichMediaActivity.this.mInterstitialData.autoclose > 0)
+				if (RichMediaActivity.this.mInterstitialAutocloseTimer == null && !RichMediaActivity.this.mInterstitialAutocloseReset) {
+					final InterstitialAutocloseTask autocloseTask = new InterstitialAutocloseTask(RichMediaActivity.this);
 					RichMediaActivity.this.mInterstitialAutocloseTimer = new Timer();
-					RichMediaActivity.this.mInterstitialAutocloseTimer
-					.schedule(
-							autocloseTask,
-							RichMediaActivity.this.mInterstitialData.autoclose * 1000);
+					RichMediaActivity.this.mInterstitialAutocloseTimer.schedule(autocloseTask, RichMediaActivity.this.mInterstitialData.autoclose * 1000);
+					Log.v("onPageLoaded mInterstitialAutocloseTimer");
 				}
-			if (RichMediaActivity.this.mInterstitialData != null
-					&& RichMediaActivity.this.mInterstitialData.showSkipButtonAfter > 0) {
+			if (RichMediaActivity.this.mInterstitialData != null && RichMediaActivity.this.mInterstitialData.showSkipButtonAfter > 0) {
 				if (RichMediaActivity.this.mInterstitialCanCloseTimer == null) {
-					final CanSkipTask skipTask = new CanSkipTask(
-							RichMediaActivity.this);
+					final CanSkipTask skipTask = new CanSkipTask(RichMediaActivity.this);
 					RichMediaActivity.this.mInterstitialCanCloseTimer = new Timer();
-					RichMediaActivity.this.mInterstitialCanCloseTimer
-					.schedule(
-							skipTask,
-							RichMediaActivity.this.mInterstitialData.showSkipButtonAfter * 1000);
+					RichMediaActivity.this.mInterstitialCanCloseTimer.schedule(skipTask, RichMediaActivity.this.mInterstitialData.showSkipButtonAfter * 1000);
+					Log.v("onPageLoaded mInterstitialCanCloseTimer");
 				}
 			} else
 				RichMediaActivity.this.mCanClose = true;
@@ -557,32 +563,28 @@ public class RichMediaActivity extends Activity {
 	@Override
 	public void finish() {
 
-		if (this.mAd != null){
+		if (this.mAd != null) {
+			Log.d("Finish Activity type:" + this.mType + " ad Type:" + this.mAd.getType());
 			switch (this.mType) {
 			case TYPE_VIDEO:
 				if (this.mAd.getType() == Const.VIDEO)
 					AdManager.closeRunningAd(this.mAd, this.mResult);
-				else if (this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL
-						&& !this.mResult)
+				else if (this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL && !this.mResult)
 					AdManager.closeRunningAd(this.mAd, this.mResult);
 				break;
 			case TYPE_INTERSTITIAL:
-				if (this.mAd.getType() == Const.INTERSTITIAL
-				|| this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL
-				|| this.mAd.getType() == Const.INTERSTITIAL_TO_VIDEO)
+				if (this.mAd.getType() == Const.INTERSTITIAL || this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL || this.mAd.getType() == Const.INTERSTITIAL_TO_VIDEO)
 					AdManager.closeRunningAd(this.mAd, this.mResult);
 				break;
 			}
 		}
 		super.finish();
 
-		RichMediaActivity.setActivityAnimation(this, this.mEnterAnim,
-				this.mExitAnim);
+		RichMediaActivity.setActivityAnimation(this, this.mEnterAnim, this.mExitAnim);
 	}
 
 	public int getDipSize(final int argSize) {
-		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-				argSize, this.getResources().getDisplayMetrics());
+		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, argSize, this.getResources().getDisplayMetrics());
 	}
 
 	public FrameLayout getRootLayout() {
@@ -592,6 +594,7 @@ public class RichMediaActivity extends Activity {
 	public void goBack() {
 		if (this.mCustomView != null) {
 
+			Log.d("Closing custom view on back key pressed");
 			this.onHideCustomView();
 			return;
 		}
@@ -619,6 +622,7 @@ public class RichMediaActivity extends Activity {
 
 	}
 
+	@SuppressWarnings("deprecation")
 	private void initInterstitialView() {
 		this.mInterstitialData = this.mAd.getInterstitial();
 		this.mInterstitialAutocloseReset = false;
@@ -627,17 +631,12 @@ public class RichMediaActivity extends Activity {
 		final FrameLayout layout = new FrameLayout(this);
 		this.mInterstitialView = new WebFrame(this, true, false, false);
 		this.mInterstitialView.setBackgroundColor(Color.TRANSPARENT);
-		this.mInterstitialView
-		.setOnPageLoadedListener(this.mOnInterstitialLoadedListener);
-		this.mInterstitialController = new InterstitialController(this,
-				this.mInterstitialData);
+		this.mInterstitialView.setOnPageLoadedListener(this.mOnInterstitialLoadedListener);
+		this.mInterstitialController = new InterstitialController(this, this.mInterstitialData);
 		this.mInterstitialController.setBrowser(this.mInterstitialView);
 		this.mInterstitialController.setBrowserView(this.mInterstitialView);
-		this.mInterstitialController
-		.setOnResetAutocloseListener(this.mOnResetAutocloseListener);
-		layout.addView(this.mInterstitialController,
-				new FrameLayout.LayoutParams(LayoutParams.FILL_PARENT,
-						LayoutParams.FILL_PARENT, Gravity.CENTER));
+		this.mInterstitialController.setOnResetAutocloseListener(this.mOnResetAutocloseListener);
+		layout.addView(this.mInterstitialController, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
 		if (this.mInterstitialData.showNavigationBars)
 			this.mInterstitialController.show(0);
 		if (this.mInterstitialData.showSkipButton) {
@@ -646,50 +645,36 @@ public class RichMediaActivity extends Activity {
 			this.mSkipButton.setAdjustViewBounds(false);
 			FrameLayout.LayoutParams params = null;
 
-			int buttonSize = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this
-					.getResources().getDisplayMetrics());
+			int buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
 
-			int size = Math.min(this.getResources().getDisplayMetrics().widthPixels,this.getResources().getDisplayMetrics().heightPixels);
-			buttonSize = (int)(size*0.1);
+			int size = Math.min(this.getResources().getDisplayMetrics().widthPixels, this.getResources().getDisplayMetrics().heightPixels);
+			buttonSize = (int) (size * 0.1);
 
-			params = new FrameLayout.LayoutParams(buttonSize, buttonSize,
-					Gravity.TOP | Gravity.RIGHT);
+			params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
 
 			if (this.mInterstitialData.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-				final int margin = (int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources()
-						.getDisplayMetrics());
+				final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
 				params.topMargin = margin;
 				params.rightMargin = margin;
 			} else {
-				final int margin = (int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 10, this.getResources()
-						.getDisplayMetrics());
+				final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, this.getResources().getDisplayMetrics());
 				params.topMargin = margin;
 				params.rightMargin = margin;
 			}
 
-			if (this.mInterstitialData.skipButtonImage != null
-					&& this.mInterstitialData.skipButtonImage.length() > 0) {
+			if (this.mInterstitialData.skipButtonImage != null && this.mInterstitialData.skipButtonImage.length() > 0) {
 				this.mSkipButton.setBackgroundDrawable(null);
-				this.mResourceManager.fetchResource(this,
-						this.mInterstitialData.skipButtonImage,
-						ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID);
+				this.mResourceManager.fetchResource(this, this.mInterstitialData.skipButtonImage, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID);
 			} else
-				this.mSkipButton
-				.setImageDrawable(mResourceManager
-						.getResource(this,ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
-			this.mSkipButton
-			.setOnClickListener(this.mOnInterstitialSkipListener);
+				this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+			this.mSkipButton.setOnClickListener(this.mOnInterstitialSkipListener);
 			if (this.mInterstitialData.showSkipButtonAfter > 0) {
 				this.mCanClose = false;
 				this.mSkipButton.setVisibility(View.GONE);
 				if (this.mInterstitialLoadingTimer == null) {
 					final InterstitialLoadingTimeoutTask loadingTimeoutTask = new InterstitialLoadingTimeoutTask();
 					this.mInterstitialLoadingTimer = new Timer();
-					this.mInterstitialLoadingTimer.schedule(loadingTimeoutTask,
-							Const.CONNECTION_TIMEOUT);
+					this.mInterstitialLoadingTimer.schedule(loadingTimeoutTask, Const.CONNECTION_TIMEOUT);
 				}
 
 			} else {
@@ -699,19 +684,17 @@ public class RichMediaActivity extends Activity {
 			layout.addView(this.mSkipButton, params);
 		} else
 			this.mCanClose = false;
-		this.mInterstitialView
-		.setOnClickListener(this.mInterstitialClickListener);
+		this.mInterstitialView.setOnClickListener(this.mInterstitialClickListener);
 		this.mRootLayout.addView(layout);
 		switch (this.mInterstitialData.interstitialType) {
 		case InterstitialData.INTERSTITIAL_MARKUP:
-			this.mInterstitialView
-			.setMarkup(this.mInterstitialData.interstitialMarkup);
+			this.mInterstitialView.setMarkup(this.mInterstitialData.interstitialMarkup);
 			break;
 		case InterstitialData.INTERSTITIAL_URL:
-			this.mInterstitialView
-			.loadUrl(this.mInterstitialData.interstitialUrl);
+			this.mInterstitialView.loadUrl(this.mInterstitialData.interstitialUrl);
 			break;
 		}
+		Log.i(this.mInterstitialView.getWebView().getSettings().getUserAgentString());
 	}
 
 	private void initRootLayout() {
@@ -742,10 +725,8 @@ public class RichMediaActivity extends Activity {
 			this.mVideoHeight = this.mWindowHeight;
 		} else {
 			final DisplayMetrics m = this.getResources().getDisplayMetrics();
-			this.mVideoWidth = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, this.mVideoWidth, m);
-			this.mVideoHeight = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, this.mVideoHeight, m);
+			this.mVideoWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.mVideoWidth, m);
+			this.mVideoHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.mVideoHeight, m);
 
 			if (this.mVideoWidth > this.mWindowWidth)
 				this.mVideoWidth = this.mWindowWidth;
@@ -753,12 +734,11 @@ public class RichMediaActivity extends Activity {
 				this.mVideoHeight = this.mWindowHeight;
 		}
 
+		Log.d("Video size (" + this.mVideoWidth + "," + this.mVideoHeight + ")");
+
 		this.mVideoLayout = new FrameLayout(this);
-		this.mVideoView = new SDKVideoView(this, this.mVideoWidth,
-				this.mVideoHeight, this.mVideoData.display);
-		this.mVideoLayout.addView(this.mVideoView,
-				new FrameLayout.LayoutParams(LayoutParams.FILL_PARENT,
-						LayoutParams.FILL_PARENT, Gravity.CENTER));
+		this.mVideoView = new SDKVideoView(this, this.mVideoWidth, this.mVideoHeight, this.mVideoData.display);
+		this.mVideoLayout.addView(this.mVideoView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
 		if (this.mVideoData.showHtmlOverlay) {
 			this.mOverlayView = new WebFrame(this, false, false, false);
 			this.mOverlayView.setEnableZoom(false);
@@ -767,28 +747,22 @@ public class RichMediaActivity extends Activity {
 
 			if (this.mVideoData.showHtmlOverlayAfter > 0) {
 				this.mOverlayView.setVisibility(View.GONE);
-				this.mVideoView.setOnTimeEventListener(
-						this.mVideoData.showHtmlOverlayAfter,
-						this.mOverlayShowListener);
+				this.mVideoView.setOnTimeEventListener(this.mVideoData.showHtmlOverlayAfter, this.mOverlayShowListener);
 			}
 			if (this.mVideoData.htmlOverlayType == VideoData.OVERLAY_URL)
 				this.mOverlayView.loadUrl(this.mVideoData.htmlOverlayUrl);
 			else
 				this.mOverlayView.setMarkup(this.mVideoData.htmlOverlayMarkup);
-			final FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(
-					LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
-			if (this.mVideoData.showBottomNavigationBar
-					&& this.mVideoData.showTopNavigationBar) {
+			final FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+			if (this.mVideoData.showBottomNavigationBar && this.mVideoData.showTopNavigationBar) {
 				overlayParams.bottomMargin = (int) (this.mWindowWidth * 0.11875);
 				overlayParams.topMargin = (int) (this.mWindowWidth * 0.11875);
 				overlayParams.gravity = Gravity.CENTER;
-			} else if (this.mVideoData.showBottomNavigationBar
-					&& !this.mVideoData.showTopNavigationBar) {
+			} else if (this.mVideoData.showBottomNavigationBar && !this.mVideoData.showTopNavigationBar) {
 				overlayParams.bottomMargin = (int) (this.mWindowWidth * 0.11875);
 				overlayParams.gravity = Gravity.TOP;
 
-			} else if (this.mVideoData.showTopNavigationBar
-					&& !this.mVideoData.showBottomNavigationBar) {
+			} else if (this.mVideoData.showTopNavigationBar && !this.mVideoData.showBottomNavigationBar) {
 
 				overlayParams.topMargin = (int) (this.mWindowWidth * 0.11875);
 				overlayParams.gravity = Gravity.BOTTOM;
@@ -800,56 +774,38 @@ public class RichMediaActivity extends Activity {
 		if (this.mVideoData.showNavigationBars)
 			mMediaController.toggle();
 		if (!this.mVideoData.pauseEvents.isEmpty())
-			this.mMediaController
-			.setOnPauseListener(this.mOnVideoPauseListener);
+			this.mMediaController.setOnPauseListener(this.mOnVideoPauseListener);
 		if (!this.mVideoData.unpauseEvents.isEmpty())
-			this.mMediaController
-			.setOnUnpauseListener(this.mOnVideoUnpauseListener);
+			this.mMediaController.setOnUnpauseListener(this.mOnVideoUnpauseListener);
 		if (!this.mVideoData.replayEvents.isEmpty())
-			this.mMediaController
-			.setOnReplayListener(this.mOnVideoReplayListener);
-		this.mVideoLayout.addView(this.mMediaController,
-				new FrameLayout.LayoutParams(LayoutParams.FILL_PARENT,
-						LayoutParams.FILL_PARENT, Gravity.FILL_HORIZONTAL));
+			this.mMediaController.setOnReplayListener(this.mOnVideoReplayListener);
+		this.mVideoLayout.addView(this.mMediaController, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.FILL_HORIZONTAL));
 		if (this.mVideoData.showSkipButton) {
 
 			this.mSkipButton = new ImageView(this);
 			this.mSkipButton.setAdjustViewBounds(false);
 			FrameLayout.LayoutParams params = null;
 
-			int buttonSize = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this
-					.getResources().getDisplayMetrics());
+			int buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
 
-			
-			int size = Math.min(this.getResources().getDisplayMetrics().widthPixels,this.getResources().getDisplayMetrics().heightPixels);
-			buttonSize = (int)(size*0.09);
+			int size = Math.min(this.getResources().getDisplayMetrics().widthPixels, this.getResources().getDisplayMetrics().heightPixels);
+			buttonSize = (int) (size * 0.09);
 
-			params = new FrameLayout.LayoutParams(buttonSize, buttonSize,
-					Gravity.TOP | Gravity.RIGHT);
+			params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
 			if (this.mVideoData.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-				final int margin = (int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources()
-						.getDisplayMetrics());
+				final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
 				params.topMargin = margin;
 				params.rightMargin = margin;
 			} else {
-				final int margin = (int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 10, this.getResources()
-						.getDisplayMetrics());
+				final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, this.getResources().getDisplayMetrics());
 				params.topMargin = margin;
 				params.rightMargin = margin;
 			}
 
-			if (this.mVideoData.skipButtonImage != null
-					&& this.mVideoData.skipButtonImage.length() > 0)
-				this.mResourceManager.fetchResource(this,
-						this.mVideoData.skipButtonImage,
-						ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID);
+			if (this.mVideoData.skipButtonImage != null && this.mVideoData.skipButtonImage.length() > 0)
+				this.mResourceManager.fetchResource(this, this.mVideoData.skipButtonImage, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID);
 			else
-				this.mSkipButton
-				.setImageDrawable(mResourceManager
-						.getResource(this,ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+				this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
 			this.mSkipButton.setOnClickListener(this.mOnVideoSkipListener);
 			if (this.mVideoData.showSkipButtonAfter > 0) {
 				this.mCanClose = false;
@@ -862,45 +818,35 @@ public class RichMediaActivity extends Activity {
 		} else
 			this.mCanClose = false;
 		if (this.mVideoData.showSkipButtonAfter > 0)
-			this.mVideoView.setOnTimeEventListener(
-					this.mVideoData.showSkipButtonAfter,
-					this.mOnVideoCanCloseEventListener);
-		final FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
-				Gravity.CENTER);
+			this.mVideoView.setOnTimeEventListener(this.mVideoData.showSkipButtonAfter, this.mOnVideoCanCloseEventListener);
+		final FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER);
 		this.mLoadingView = new FrameLayout(this);
 		final TextView loadingText = new TextView(this);
 		loadingText.setText(Const.LOADING);
 		this.mLoadingView.addView(loadingText, params);
-		this.mVideoLayout.addView(this.mLoadingView,
-				new FrameLayout.LayoutParams(LayoutParams.FILL_PARENT,
-						LayoutParams.FILL_PARENT, Gravity.CENTER));
+		this.mVideoLayout.addView(this.mLoadingView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
 
 		this.mVideoView.setOnPreparedListener(this.mOnVideoPreparedListener);
-		this.mVideoView
-		.setOnCompletionListener(this.mOnVideoCompletionListener);
+		this.mVideoView.setOnCompletionListener(this.mOnVideoCompletionListener);
 		this.mVideoView.setOnErrorListener(this.mOnVideoErrorListener);
 		this.mVideoView.setOnInfoListener(this.mOnVideoInfoListener);
 		if (!this.mVideoData.startEvents.isEmpty())
 			this.mVideoView.setOnStartListener(this.mOnVideoStartListener);
 		if (!this.mVideoData.timeTrackingEvents.isEmpty()) {
-			final Set<Integer> keys = this.mVideoData.timeTrackingEvents
-					.keySet();
+			final Set<Integer> keys = this.mVideoData.timeTrackingEvents.keySet();
 			for (final Iterator<Integer> it = keys.iterator(); it.hasNext();) {
 				final int key = it.next();
-				this.mVideoView.setOnTimeEventListener(key,
-						this.mOnVideoTimeEventListener);
+				this.mVideoView.setOnTimeEventListener(key, this.mOnVideoTimeEventListener);
 			}
 		}
 		this.mVideoLastPosition = 0;
 		String path = this.mVideoData.videoUrl;
 		this.mVideoView.setVideoPath(path);
 	}
-	
+
 	private void initWebBrowserView(final boolean showExit) {
 		this.mWebBrowserView = new WebFrame(this, true, true, showExit);
-		this.mWebBrowserView
-		.setOnPageLoadedListener(this.mOnWebBrowserLoadedListener);
+		this.mWebBrowserView.setOnPageLoadedListener(this.mOnWebBrowserLoadedListener);
 
 		this.mRootLayout.addView(this.mWebBrowserView);
 	}
@@ -914,8 +860,7 @@ public class RichMediaActivity extends Activity {
 			this.mInterstitialView.loadUrl(clickUrl);
 			break;
 		default:
-			final Intent intent = new Intent(this,
-					RichMediaActivity.class);
+			final Intent intent = new Intent(this, RichMediaActivity.class);
 			intent.setData(Uri.parse(clickUrl));
 			this.startActivity(intent);
 		}
@@ -925,39 +870,42 @@ public class RichMediaActivity extends Activity {
 	public void onConfigurationChanged(final Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 
+		Log.d("RichMediaActivity onConfigurationChanged");
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(final Bundle icicle) {
 
+		Log.d("RichMediaActivity onCreate");
 		super.onCreate(icicle);
 		this.mResult = false;
 		this.mPageLoaded = false;
 		this.setResult(Activity.RESULT_CANCELED);
 		final Window win = this.getWindow();
-		win.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		win.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		win.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 		final Display display = this.getWindowManager().getDefaultDisplay();
 		this.metrics = new DisplayMetrics();
-		final WindowManager wm = (WindowManager) this
-				.getSystemService(Context.WINDOW_SERVICE);
+		final WindowManager wm = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
 		wm.getDefaultDisplay().getMetrics(this.metrics);
 		this.mWindowWidth = display.getWidth();
 		this.mWindowHeight = display.getHeight();
 		win.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+
+		Log.d("RichMediaActivity Window Size:(" + this.mWindowWidth + "," + this.mWindowHeight + ")");
 
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
 		this.mType = RichMediaActivity.TYPE_UNKNOWN;
 		final Intent intent = this.getIntent();
 		final Bundle extras = intent.getExtras();
-		if (extras == null
-				|| extras.getSerializable(Const.AD_EXTRA) == null) {
+		if (extras == null || extras.getSerializable(Const.AD_EXTRA) == null) {
 			this.uri = intent.getData();
 			if (this.uri == null) {
 
+				Log.d("url is null so do not load anything");
 				this.finish();
 				return;
 			}
@@ -973,13 +921,10 @@ public class RichMediaActivity extends Activity {
 		if (this.mType == RichMediaActivity.TYPE_BROWSER) {
 			this.initWebBrowserView(true);
 			this.mWebBrowserView.loadUrl(this.uri.toString());
-			this.mEnterAnim = Util
-					.getEnterAnimation(RichMediaAd.ANIMATION_FADE_IN);
-			this.mExitAnim = Util
-					.getExitAnimation(RichMediaAd.ANIMATION_FADE_IN);
+			this.mEnterAnim = Util.getEnterAnimation(RichMediaAd.ANIMATION_FADE_IN);
+			this.mExitAnim = Util.getExitAnimation(RichMediaAd.ANIMATION_FADE_IN);
 		} else {
-			this.mAd = (RichMediaAd) extras
-					.getSerializable(Const.AD_EXTRA);
+			this.mAd = (RichMediaAd) extras.getSerializable(Const.AD_EXTRA);
 			this.mEnterAnim = Util.getEnterAnimation(this.mAd.getAnimation());
 			this.mExitAnim = Util.getExitAnimation(this.mAd.getAnimation());
 
@@ -998,28 +943,35 @@ public class RichMediaActivity extends Activity {
 				}
 			switch (this.mType) {
 			case TYPE_VIDEO:
+				Log.v("Type video");
 				this.initVideoView();
 				break;
 			case TYPE_INTERSTITIAL:
+				Log.v("Type interstitial");
 				this.initInterstitialView();
 				break;
 			}
 		}
 
 		this.setContentView(this.mRootLayout);
+		Log.d("RichMediaActivity onCreate done");
 	}
 
 	@Override
 	protected void onDestroy() {
 		mMediaController = null;
 		mResourceManager.releaseInstance();
-		if(this.mVideoView!=null)
+		if (this.mVideoView != null)
 			this.mVideoView.destroy();
+		Log.d("RichMediaActivity onDestroy");
 		super.onDestroy();
+
+		Log.d("RichMediaActivity onDestroy done");
 	}
 
 	public void onHideCustomView() {
 
+		Log.d("onHideCustomView Hidding Custom View");
 		if (this.mCustomView != null) {
 
 			this.mCustomView.setVisibility(View.GONE);
@@ -1027,13 +979,16 @@ public class RichMediaActivity extends Activity {
 			if (this.mCustomVideoView != null) {
 				try {
 
+					Log.d("onHideCustomView stop video");
 					this.mCustomVideoView.stopPlayback();
 				} catch (final Exception e) {
+					Log.d("Couldn't stop custom video view");
 				}
 				this.mCustomVideoView = null;
 			}
 		}
 
+		Log.d("onHideCustomView calling callback");
 		this.mCustomViewCallback.onCustomViewHidden();
 		this.mRootLayout.setVisibility(View.VISIBLE);
 		this.setContentView(this.mRootLayout);
@@ -1051,6 +1006,7 @@ public class RichMediaActivity extends Activity {
 	@Override
 	protected void onPause() {
 
+		Log.d("RichMediaActivity onPause");
 		super.onPause();
 		switch (this.mType) {
 		case TYPE_VIDEO:
@@ -1078,11 +1034,13 @@ public class RichMediaActivity extends Activity {
 			break;
 		}
 
+		Log.d("RichMediaActivity onPause done");
 	}
 
 	@Override
 	protected void onResume() {
 
+		Log.d("RichMediaActivity onResume");
 		super.onResume();
 		switch (this.mType) {
 		case TYPE_VIDEO:
@@ -1090,11 +1048,9 @@ public class RichMediaActivity extends Activity {
 			this.mVideoView.seekTo(this.mVideoLastPosition);
 			this.mVideoView.start();
 			if (this.mVideoTimeoutTimer == null) {
-				final VideoTimeoutTask autocloseTask = new VideoTimeoutTask(
-						RichMediaActivity.this);
+				final VideoTimeoutTask autocloseTask = new VideoTimeoutTask(RichMediaActivity.this);
 				this.mVideoTimeoutTimer = new Timer();
-				this.mVideoTimeoutTimer.schedule(autocloseTask,
-						Const.VIDEO_LOAD_TIMEOUT);
+				this.mVideoTimeoutTimer.schedule(autocloseTask, Const.VIDEO_LOAD_TIMEOUT);
 			}
 
 			break;
@@ -1102,13 +1058,11 @@ public class RichMediaActivity extends Activity {
 			switch (this.mInterstitialData.interstitialType) {
 			case InterstitialData.INTERSTITIAL_MARKUP:
 				if (!this.mPageLoaded)
-					this.mInterstitialView
-					.setMarkup(this.mInterstitialData.interstitialMarkup);
+					this.mInterstitialView.setMarkup(this.mInterstitialData.interstitialMarkup);
 				break;
 			case InterstitialData.INTERSTITIAL_URL:
 				if (!this.mPageLoaded)
-					this.mInterstitialView
-					.loadUrl(this.mInterstitialData.interstitialUrl);
+					this.mInterstitialView.loadUrl(this.mInterstitialData.interstitialUrl);
 				break;
 			}
 			break;
@@ -1116,25 +1070,26 @@ public class RichMediaActivity extends Activity {
 			break;
 		}
 
+		Log.d("RichMediaActivity onResume done");
 	}
 
-	public void onShowCustomView(final View view,
-			final CustomViewCallback callback) {
+	public void onShowCustomView(final View view, final CustomViewCallback callback) {
 
+		Log.d(" onShowCustomView");
 		if (view instanceof FrameLayout) {
 
 			this.mCustomView = (FrameLayout) view;
 			this.mCustomViewCallback = callback;
 			if (this.mCustomView.getFocusedChild() instanceof VideoView) {
 
-				this.mCustomVideoView = (VideoView) this.mCustomView
-						.getFocusedChild();
-				this.mCustomVideoView
-				.setOnCompletionListener(new OnCompletionListener() {
+				Log.d(" onShowCustomView Starting Video View");
+				this.mCustomVideoView = (VideoView) this.mCustomView.getFocusedChild();
+				this.mCustomVideoView.setOnCompletionListener(new OnCompletionListener() {
 
 					@Override
 					public void onCompletion(final MediaPlayer mp) {
 
+						Log.d(" onCompletion Video");
 						RichMediaActivity.this.onHideCustomView();
 					}
 				});
@@ -1148,6 +1103,7 @@ public class RichMediaActivity extends Activity {
 
 	public void playVideo() {
 
+		Log.d("RichMediaActivity play video:" + this.mType);
 		switch (this.mType) {
 		case TYPE_VIDEO:
 			if (this.mMediaController != null)
@@ -1156,18 +1112,17 @@ public class RichMediaActivity extends Activity {
 		case TYPE_INTERSTITIAL:
 			if (this.mAd.getType() == Const.INTERSTITIAL_TO_VIDEO) {
 
-				final Intent intent = new Intent(this,
-						RichMediaActivity.class);
+				Log.d("RichMediaActivity launch video");
+				final Intent intent = new Intent(this, RichMediaActivity.class);
 				intent.putExtra(Const.AD_EXTRA, this.mAd);
-				intent.putExtra(Const.AD_TYPE_EXTRA,
-						RichMediaActivity.TYPE_VIDEO);
+				intent.putExtra(Const.AD_TYPE_EXTRA, RichMediaActivity.TYPE_VIDEO);
 				try {
 					this.startActivity(intent);
-					RichMediaActivity.setActivityAnimation(this,
-							this.mEnterAnim, this.mExitAnim);
+					RichMediaActivity.setActivityAnimation(this, this.mEnterAnim, this.mExitAnim);
 					this.mResult = true;
 					this.setResult(Activity.RESULT_OK);
 				} catch (final Exception e) {
+					Log.e(Const.TAG, "Cannot start Rich Ad activity:" + e, e);
 				}
 			}
 			break;

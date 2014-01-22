@@ -5,7 +5,7 @@ public interface Const {
 	public static final String TAG = "ADSDK";
 	public static final String ENCODING = "UTF-8";
 	public static final String RESPONSE_ENCODING = "ISO-8859-1";
-	public static final String VERSION = "4.1.6";
+	public static final String VERSION = "5.0.0";
 	public static final String PROTOCOL_VERSION = "1.0";
 
 	public static final int LIVE = 0;
@@ -64,5 +64,743 @@ public interface Const {
 	public final static int INTERSTITIAL = 6;
 	public final static int MRAID = 7;
 	
-	public static final String mraid = "(function() {\n  var isIOS = (/iphone|ipad|ipod/i).test(window.navigator.userAgent.toLowerCase()); \n  if (isIOS) {\n    console = {};\n    console.log = function(log) {\n      var iframe = document.createElement('iframe');\n      iframe.setAttribute('src', 'ios-log: ' + log);\n      document.documentElement.appendChild(iframe);\n      iframe.parentNode.removeChild(iframe);\n      iframe = null;\n    };\n    console.debug = console.info = console.warn = console.error = console.log;\n  }\n}());\n\n(function() {\n  // Establish the root mraidbridge object.\n  var mraidbridge = window.mraidbridge = {};\n  \n  // Listeners for bridge events.\n  var listeners = {};\n  \n  // Queue to track pending calls to the native SDK.\n  var nativeCallQueue = [];\n  \n  // Whether a native call is currently in progress.\n  var nativeCallInFlight = false;\n\n  //////////////////////////////////////////////////////////////////////////////////////////////////\n  \n  mraidbridge.fireReadyEvent = function() {\n    mraidbridge.fireEvent('ready');\n  };\n  \n  mraidbridge.fireChangeEvent = function(properties) {\n    mraidbridge.fireEvent('change', properties);\n  };\n  \n  mraidbridge.fireErrorEvent = function(message, action) {\n    mraidbridge.fireEvent('error', message, action);\n  };\n\n  mraidbridge.fireEvent = function(type) {\n    var ls = listeners[type];\n    if (ls) {\n      var args = Array.prototype.slice.call(arguments);\n      args.shift();\n      var l = ls.length;\n      for (var i = 0; i < l; i++) {\n        ls[i].apply(null, args);\n      }\n    }\n  };\n  \n  mraidbridge.nativeCallComplete = function(command) {\n    if (nativeCallQueue.length === 0) {\n      nativeCallInFlight = false;\n      return;\n    }\n    \n    var nextCall = nativeCallQueue.pop();\n    window.location = nextCall;\n  };\n  \n  mraidbridge.executeNativeCall = function(command) {\n    var call = 'mraid://' + command;\n    \n    var key, value;\n    var isFirstArgument = true;\n    \n    for (var i = 1; i < arguments.length; i += 2) {\n      key = arguments[i];\n      value = arguments[i + 1];\n      \n      if (value === null) continue;\n      \n      if (isFirstArgument) {\n        call += '?';\n        isFirstArgument = false;\n      } else {\n        call += '&';\n      }\n      \n      call += key + '=' + escape(value);\n    }\n\n    if (nativeCallInFlight) {\n      nativeCallQueue.push(call);\n    } else {\n      nativeCallInFlight = true;\n      window.location = call;\n    }\n  };\n  \n  //////////////////////////////////////////////////////////////////////////////////////////////////\n  \n  mraidbridge.addEventListener = function(event, listener) {\n    var eventListeners;\n    listeners[event] = listeners[event] || [];\n    eventListeners = listeners[event];\n    \n    for (var l in eventListeners) {\n      // Listener already registered, so no need to add it.\n      if (listener === l) return;\n    }\n    \n    eventListeners.push(listener);\n  };\n\n  mraidbridge.removeEventListener = function(event, listener) {\n    if (listeners.hasOwnProperty(event)) {\n      var eventListeners = listeners[event];\n      if (eventListeners) {\n        var idx = eventListeners.indexOf(listener);\n        if (idx !== -1) {\n          eventListeners.splice(idx, 1);\n        }\n      }\n    }\n  };\n}());\n\n(function() {\n  var mraid = window.mraid = {};\n  var bridge = window.mraidbridge;\n  \n  // Constants. ////////////////////////////////////////////////////////////////////////////////////\n  \n  var VERSION = mraid.VERSION = '1.0';\n  \n  var STATES = mraid.STATES = {\n    LOADING: 'loading',     // Initial state.\n    DEFAULT: 'default',\n    EXPANDED: 'expanded',\n    HIDDEN: 'hidden'\n  };\n  \n  var EVENTS = mraid.EVENTS = {\n    ERROR: 'error',\n    INFO: 'info',\n    READY: 'ready',\n    STATECHANGE: 'stateChange',\n    VIEWABLECHANGE: 'viewableChange'\n  };\n  \n  var PLACEMENT_TYPES = mraid.PLACEMENT_TYPES = {\n    UNKNOWN: 'inline',\n    INLINE: 'inline',\n    INTERSTITIAL: 'interstitial'\n  };\n\n  // External MRAID state: may be directly or indirectly modified by the ad JS. ////////////////////\n\n  // Properties which define the behavior of an expandable ad.\n  var expandProperties = {\n    width: -1,\n    height: -1,\n    useCustomClose: false,\n    isModal: true,\n    lockOrientation: false\n  };\n\n  var hasSetCustomSize = false;\n\n  var hasSetCustomClose = false;\n \n  var listeners = {};\n\n  // Internal MRAID state. Modified by the native SDK. /////////////////////////////////////////////\n  \n  var state = STATES.LOADING;\n  \n  var isViewable = false;\n  \n  var screenSize = { width: -1, height: -1 };\n\n  var placementType = PLACEMENT_TYPES.UNKNOWN;\n  \n  //////////////////////////////////////////////////////////////////////////////////////////////////\n  \n  var EventListeners = function(event) {\n    this.event = event;\n    this.count = 0;\n    var listeners = {};\n    \n    this.add = function(func) {\n      var id = String(func);\n      if (!listeners[id]) {\n        listeners[id] = func;\n        this.count++;\n      }\n    };\n    \n    this.remove = function(func) {\n      var id = String(func);\n      if (listeners[id]) {\n        listeners[id] = null;\n        delete listeners[id];\n        this.count--;\n        return true;\n      } else {\n        return false;\n      }\n    };\n    \n    this.removeAll = function() {\n      for (var id in listeners) {\n        if (listeners.hasOwnProperty(id)) this.remove(listeners[id]);\n      }\n    };\n    \n    this.broadcast = function(args) {\n      for (var id in listeners) {\n        if (listeners.hasOwnProperty(id)) listeners[id].apply({}, args);\n      }\n    };\n    \n    this.toString = function() {\n      var out = [event, ':'];\n      for (var id in listeners) {\n        if (listeners.hasOwnProperty(id)) out.push('|', id, '|');\n      }\n      return out.join('');\n    };\n  };\n  \n  var broadcastEvent = function() {\n    var args = new Array(arguments.length);\n    var l = arguments.length;\n    for (var i = 0; i < l; i++) args[i] = arguments[i];\n    var event = args.shift();\n    if (listeners[event]) listeners[event].broadcast(args);\n  };\n  \n  var contains = function(value, array) {\n    for (var i in array) {\n      if (array[i] === value) return true;\n    }\n    return false;\n  };\n  \n  var clone = function(obj) {\n    if (obj === null) return null;\n    var f = function() {};\n    f.prototype = obj;\n    return new f();\n  };\n  \n  var stringify = function(obj) {\n    if (typeof obj === 'object') {\n      var out = [];\n      if (obj.push) {\n        // Array.\n        for (var p in obj) out.push(obj[p]);\n        return '[' + out.join(',') + ']';\n      } else {\n        // Other object.\n        for (var p in obj) out.push(\"'\" + p + \"': \" + obj[p]);\n        return '{' + out.join(',') + '}';\n      }\n    } else return String(obj);\n  };\n  \n  var trim = function(str) {\n    return str.replace(/^\\s+|\\s+$/g, '');\n  };\n  \n  // Functions that will be invoked by the native SDK whenever a \"change\" event occurs.\n  var changeHandlers = {\n    state: function(val) {\n      if (state === STATES.LOADING) {\n        broadcastEvent(EVENTS.INFO, 'Native SDK initialized.');\n      }\n      state = val;\n      broadcastEvent(EVENTS.INFO, 'Set state to ' + stringify(val));\n      broadcastEvent(EVENTS.STATECHANGE, state);\n    },\n    \n    viewable: function(val) {\n      isViewable = val;\n      broadcastEvent(EVENTS.INFO, 'Set isViewable to ' + stringify(val));\n      broadcastEvent(EVENTS.VIEWABLECHANGE, isViewable);\n    },\n    \n    placementType: function(val) {\n      broadcastEvent(EVENTS.INFO, 'Set placementType to ' + stringify(val));\n      placementType = val;\n    },\n\n    screenSize: function(val) {\n      broadcastEvent(EVENTS.INFO, 'Set screenSize to ' + stringify(val));\n      for (var key in val) {\n        if (val.hasOwnProperty(key)) screenSize[key] = val[key];\n      }\n\n      if (!hasSetCustomSize) {\n        expandProperties['width'] = screenSize['width'];\n        expandProperties['height'] = screenSize['height'];\n      }\n    },\n    \n    expandProperties: function(val) {\n      broadcastEvent(EVENTS.INFO, 'Merging expandProperties with ' + stringify(val));\n      for (var key in val) {\n        if (val.hasOwnProperty(key)) expandProperties[key] = val[key];\n      }\n    }\n  };\n  \n  var validate = function(obj, validators, action, merge) {\n    if (!merge) {\n      // Check to see if any required properties are missing.\n      if (obj === null) {\n        broadcastEvent(EVENTS.ERROR, 'Required object not provided.', action);\n        return false;\n      } else {\n        for (var i in validators) {\n          if (validators.hasOwnProperty(i) && obj[i] === undefined) {\n            broadcastEvent(EVENTS.ERROR, 'Object is missing required property: ' + i + '.', action);\n            return false;\n          }\n        }\n      }\n    }\n    \n    for (var prop in obj) {\n      var validator = validators[prop];\n      var value = obj[prop];\n      if (validator && !validator(value)) {\n        // Failed validation.\n        broadcastEvent(EVENTS.ERROR, 'Value of property ' + prop + ' is invalid.', \n          action);\n        return false;\n      }\n    }\n    return true;\n  };\n  \n  var expandPropertyValidators = {\n    width: function(v) { return !isNaN(v) && v >= 0; },\n    height: function(v) { return !isNaN(v) && v >= 0; },\n    useCustomClose: function(v) { return (typeof v === 'boolean'); },\n    lockOrientation: function(v) { return (typeof v === 'boolean'); }\n  };\n  \n  //////////////////////////////////////////////////////////////////////////////////////////////////\n  \n  bridge.addEventListener('change', function(properties) {\n    for (var p in properties) {\n      if (properties.hasOwnProperty(p)) {\n        var handler = changeHandlers[p];\n        handler(properties[p]);\n      }\n    }\n  });\n  \n  bridge.addEventListener('error', function(message, action) {\n    broadcastEvent(EVENTS.ERROR, message, action);\n  });\n  \n  bridge.addEventListener('ready', function() {\n    broadcastEvent(EVENTS.READY);\n  });\n\n  //////////////////////////////////////////////////////////////////////////////////////////////////\n  \n  mraid.addEventListener = function(event, listener) {\n    if (!event || !listener) {\n      broadcastEvent(EVENTS.ERROR, 'Both event and listener are required.', 'addEventListener');\n    } else if (!contains(event, EVENTS)) {\n      broadcastEvent(EVENTS.ERROR, 'Unknown MRAID event: ' + event, 'addEventListener');\n    } else {\n      if (!listeners[event]) listeners[event] = new EventListeners(event);\n      listeners[event].add(listener);\n    }\n  };\n  \n  mraid.close = function() {\n    if (state === STATES.HIDDEN) {\n      broadcastEvent(EVENTS.ERROR, 'Ad cannot be closed when it is already hidden.',\n        'close');\n    } else bridge.executeNativeCall('close');\n  };\n  \n  mraid.expand = function(URL) {\n    if (state !== STATES.DEFAULT) {\n      broadcastEvent(EVENTS.ERROR, 'Ad can only be expanded from the default state.', 'expand');\n    } else {\n      var args = ['expand'];\n      \n      if (hasSetCustomClose) {\n        args = args.concat(['shouldUseCustomClose', expandProperties.useCustomClose ? 'true' : 'false']);\n      }\n\n      if (hasSetCustomSize) {\n        if (expandProperties.width >= 0 && expandProperties.height >= 0) {\n          args = args.concat(['w', expandProperties.width, 'h', expandProperties.height]);\n        }\n      }\n      \n      if (typeof expandProperties.lockOrientation !== 'undefined') {\n        args = args.concat(['lockOrientation', expandProperties.lockOrientation]);\n      }\n\n      if (URL) {\n        args = args.concat(['url', URL]);\n      }\n      \n      bridge.executeNativeCall.apply(this, args);\n    }\n  };\n  \n  mraid.getExpandProperties = function() {\n    var properties = {\n      width: expandProperties.width,\n      height: expandProperties.height,\n      useCustomClose: expandProperties.useCustomClose,\n      isModal: expandProperties.isModal\n    };\n    return properties;\n  };\n  \n  mraid.getPlacementType = function() {\n    return placementType;\n  };\n  \n  mraid.getState = function() {\n    return state;\n  };\n  \n  mraid.getVersion = function() {\n    return mraid.VERSION;\n  };\n  \n  mraid.isViewable = function() {\n    return isViewable;\n  };\n  \n  mraid.open = function(URL) {\n    if (!URL) broadcastEvent(EVENTS.ERROR, 'URL is required.', 'open');\n    else bridge.executeNativeCall('open', 'url', URL);\n  };\n\n  mraid.removeEventListener = function(event, listener) {\n    if (!event) broadcastEvent(EVENTS.ERROR, 'Event is required.', 'removeEventListener');\n    else {\n      if (listener && (!listeners[event] || !listeners[event].remove(listener))) {\n        broadcastEvent(EVENTS.ERROR, 'Listener not currently registered for event.', \n          'removeEventListener');\n        return;\n      } else if (listeners[event]) listeners[event].removeAll();\n      \n      if (listeners[event] && listeners[event].count === 0) {\n        listeners[event] = null;\n        delete listeners[event];\n      }\n    }\n  };\n  \n  mraid.setExpandProperties = function(properties) {\n    if (validate(properties, expandPropertyValidators, 'setExpandProperties', true)) {\n      if (properties.hasOwnProperty('width') || properties.hasOwnProperty('height')) {\n        hasSetCustomSize = true;\n      }\n\n      if (properties.hasOwnProperty('useCustomClose')) hasSetCustomClose = true;\n\n      var desiredProperties = ['width', 'height', 'useCustomClose', 'lockOrientation'];\n      var length = desiredProperties.length;\n      for (var i = 0; i < length; i++) {\n        var propname = desiredProperties[i];\n        if (properties.hasOwnProperty(propname)) expandProperties[propname] = properties[propname];\n      }\n    }\n  };\n  \n  mraid.useCustomClose = function(shouldUseCustomClose) {\n    expandProperties.useCustomClose = shouldUseCustomClose;\n    hasSetCustomClose = true;\n    bridge.executeNativeCall('usecustomclose', 'shouldUseCustomClose', shouldUseCustomClose);\n  };\n}());";
+	public static final String mraid = "(function() {\r\n" + 
+			"  var isIOS = (/iphone|ipad|ipod/i).test(window.navigator.userAgent.toLowerCase());\r\n" + 
+			"  if (isIOS) {\r\n" + 
+			"    console = {};\r\n" + 
+			"    console.log = function(log) {\r\n" + 
+			"      var iframe = document.createElement('iframe');\r\n" + 
+			"      iframe.setAttribute('src', 'ios-log: ' + log);\r\n" + 
+			"      document.documentElement.appendChild(iframe);\r\n" + 
+			"      iframe.parentNode.removeChild(iframe);\r\n" + 
+			"      iframe = null;\r\n" + 
+			"    };\r\n" + 
+			"    console.debug = console.info = console.warn = console.error = console.log;\r\n" + 
+			"  }\r\n" + 
+			"}());\r\n" + 
+			"\r\n" + 
+			"(function() {\r\n" + 
+			"  // Establish the root mraidbridge object.\r\n" + 
+			"  var mraidbridge = window.mraidbridge = {};\r\n" + 
+			"\r\n" + 
+			"  // Listeners for bridge events.\r\n" + 
+			"  var listeners = {};\r\n" + 
+			"\r\n" + 
+			"  // Queue to track pending calls to the native SDK.\r\n" + 
+			"  var nativeCallQueue = [];\r\n" + 
+			"\r\n" + 
+			"  // Whether a native call is currently in progress.\r\n" + 
+			"  var nativeCallInFlight = false;\r\n" + 
+			"\r\n" + 
+			"  //////////////////////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.fireReadyEvent = function() {\r\n" + 
+			"    mraidbridge.fireEvent('ready');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.fireChangeEvent = function(properties) {\r\n" + 
+			"    mraidbridge.fireEvent('change', properties);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.fireErrorEvent = function(message, action) {\r\n" + 
+			"    mraidbridge.fireEvent('error', message, action);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.fireEvent = function(type) {\r\n" + 
+			"    var ls = listeners[type];\r\n" + 
+			"    if (ls) {\r\n" + 
+			"      var args = Array.prototype.slice.call(arguments);\r\n" + 
+			"      args.shift();\r\n" + 
+			"      var l = ls.length;\r\n" + 
+			"      for (var i = 0; i < l; i++) {\r\n" + 
+			"        ls[i].apply(null, args);\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.nativeCallComplete = function(command) {\r\n" + 
+			"    if (nativeCallQueue.length === 0) {\r\n" + 
+			"      nativeCallInFlight = false;\r\n" + 
+			"      return;\r\n" + 
+			"    }\r\n" + 
+			"\r\n" + 
+			"    var nextCall = nativeCallQueue.pop();\r\n" + 
+			"    window.location = nextCall;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.executeNativeCall = function(command) {\r\n" + 
+			"    var call = 'mraid://' + command;\r\n" + 
+			"\r\n" + 
+			"    var key, value;\r\n" + 
+			"    var isFirstArgument = true;\r\n" + 
+			"\r\n" + 
+			"    for (var i = 1; i < arguments.length; i += 2) {\r\n" + 
+			"      key = arguments[i];\r\n" + 
+			"      value = arguments[i + 1];\r\n" + 
+			"\r\n" + 
+			"      if (value === null) continue;\r\n" + 
+			"\r\n" + 
+			"      if (isFirstArgument) {\r\n" + 
+			"        call += '?';\r\n" + 
+			"        isFirstArgument = false;\r\n" + 
+			"      } else {\r\n" + 
+			"        call += '&';\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      call += encodeURIComponent(key) + '=' + encodeURIComponent(value);\r\n" + 
+			"    }\r\n" + 
+			"\r\n" + 
+			"    if (nativeCallInFlight) {\r\n" + 
+			"      nativeCallQueue.push(call);\r\n" + 
+			"    } else {\r\n" + 
+			"      nativeCallInFlight = true;\r\n" + 
+			"      window.location = call;\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  //////////////////////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.addEventListener = function(event, listener) {\r\n" + 
+			"    var eventListeners;\r\n" + 
+			"    listeners[event] = listeners[event] || [];\r\n" + 
+			"    eventListeners = listeners[event];\r\n" + 
+			"\r\n" + 
+			"    for (var l in eventListeners) {\r\n" + 
+			"      // Listener already registered, so no need to add it.\r\n" + 
+			"      if (listener === l) return;\r\n" + 
+			"    }\r\n" + 
+			"\r\n" + 
+			"    eventListeners.push(listener);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraidbridge.removeEventListener = function(event, listener) {\r\n" + 
+			"    if (listeners.hasOwnProperty(event)) {\r\n" + 
+			"      var eventListeners = listeners[event];\r\n" + 
+			"      if (eventListeners) {\r\n" + 
+			"        var idx = eventListeners.indexOf(listener);\r\n" + 
+			"        if (idx !== -1) {\r\n" + 
+			"          eventListeners.splice(idx, 1);\r\n" + 
+			"        }\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"}());\r\n" + 
+			"\r\n" + 
+			"(function() {\r\n" + 
+			"  var mraid = window.mraid = {};\r\n" + 
+			"  var bridge = window.mraidbridge;\r\n" + 
+			"\r\n" + 
+			"  // Constants. ////////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  var VERSION = mraid.VERSION = '2.0';\r\n" + 
+			"\r\n" + 
+			"  var STATES = mraid.STATES = {\r\n" + 
+			"    LOADING: 'loading',     // Initial state.\r\n" + 
+			"    DEFAULT: 'default',\r\n" + 
+			"    EXPANDED: 'expanded',\r\n" + 
+			"    HIDDEN: 'hidden'\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var EVENTS = mraid.EVENTS = {\r\n" + 
+			"    ERROR: 'error',\r\n" + 
+			"    INFO: 'info',\r\n" + 
+			"    READY: 'ready',\r\n" + 
+			"    STATECHANGE: 'stateChange',\r\n" + 
+			"    VIEWABLECHANGE: 'viewableChange'\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var PLACEMENT_TYPES = mraid.PLACEMENT_TYPES = {\r\n" + 
+			"    UNKNOWN: 'unknown',\r\n" + 
+			"    INLINE: 'inline',\r\n" + 
+			"    INTERSTITIAL: 'interstitial'\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  // External MRAID state: may be directly or indirectly modified by the ad JS. ////////////////////\r\n" + 
+			"\r\n" + 
+			"  // Properties which define the behavior of an expandable ad.\r\n" + 
+			"  var expandProperties = {\r\n" + 
+			"    width: -1,\r\n" + 
+			"    height: -1,\r\n" + 
+			"    useCustomClose: false,\r\n" + 
+			"    isModal: true,\r\n" + 
+			"    lockOrientation: false\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var hasSetCustomSize = false;\r\n" + 
+			"\r\n" + 
+			"  var hasSetCustomClose = false;\r\n" + 
+			"\r\n" + 
+			"  var listeners = {};\r\n" + 
+			"\r\n" + 
+			"  // Internal MRAID state. Modified by the native SDK. /////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  var state = STATES.LOADING;\r\n" + 
+			"\r\n" + 
+			"  var isViewable = false;\r\n" + 
+			"\r\n" + 
+			"  var screenSize = { width: -1, height: -1 };\r\n" + 
+			"\r\n" + 
+			"  var placementType = PLACEMENT_TYPES.UNKNOWN;\r\n" + 
+			"\r\n" + 
+			"  var supports = {\r\n" + 
+			"    sms: false,\r\n" + 
+			"    tel: false,\r\n" + 
+			"    calendar: false,\r\n" + 
+			"    storePicture: false,\r\n" + 
+			"    inlineVideo: false\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  //////////////////////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  var EventListeners = function(event) {\r\n" + 
+			"    this.event = event;\r\n" + 
+			"    this.count = 0;\r\n" + 
+			"    var listeners = {};\r\n" + 
+			"\r\n" + 
+			"    this.add = function(func) {\r\n" + 
+			"      var id = String(func);\r\n" + 
+			"      if (!listeners[id]) {\r\n" + 
+			"        listeners[id] = func;\r\n" + 
+			"        this.count++;\r\n" + 
+			"      }\r\n" + 
+			"    };\r\n" + 
+			"\r\n" + 
+			"    this.remove = function(func) {\r\n" + 
+			"      var id = String(func);\r\n" + 
+			"      if (listeners[id]) {\r\n" + 
+			"        listeners[id] = null;\r\n" + 
+			"        delete listeners[id];\r\n" + 
+			"        this.count--;\r\n" + 
+			"        return true;\r\n" + 
+			"      } else {\r\n" + 
+			"        return false;\r\n" + 
+			"      }\r\n" + 
+			"    };\r\n" + 
+			"\r\n" + 
+			"    this.removeAll = function() {\r\n" + 
+			"      for (var id in listeners) {\r\n" + 
+			"        if (listeners.hasOwnProperty(id)) this.remove(listeners[id]);\r\n" + 
+			"      }\r\n" + 
+			"    };\r\n" + 
+			"\r\n" + 
+			"    this.broadcast = function(args) {\r\n" + 
+			"      for (var id in listeners) {\r\n" + 
+			"        if (listeners.hasOwnProperty(id)) listeners[id].apply({}, args);\r\n" + 
+			"      }\r\n" + 
+			"    };\r\n" + 
+			"\r\n" + 
+			"    this.toString = function() {\r\n" + 
+			"      var out = [event, ':'];\r\n" + 
+			"      for (var id in listeners) {\r\n" + 
+			"        if (listeners.hasOwnProperty(id)) out.push('|', id, '|');\r\n" + 
+			"      }\r\n" + 
+			"      return out.join('');\r\n" + 
+			"    };\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var broadcastEvent = function() {\r\n" + 
+			"    var args = new Array(arguments.length);\r\n" + 
+			"    var l = arguments.length;\r\n" + 
+			"    for (var i = 0; i < l; i++) args[i] = arguments[i];\r\n" + 
+			"    var event = args.shift();\r\n" + 
+			"    if (listeners[event]) listeners[event].broadcast(args);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var contains = function(value, array) {\r\n" + 
+			"    for (var i in array) {\r\n" + 
+			"      if (array[i] === value) return true;\r\n" + 
+			"    }\r\n" + 
+			"    return false;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var clone = function(obj) {\r\n" + 
+			"    if (obj === null) return null;\r\n" + 
+			"    var f = function() {};\r\n" + 
+			"    f.prototype = obj;\r\n" + 
+			"    return new f();\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var stringify = function(obj) {\r\n" + 
+			"    if (typeof obj === 'object') {\r\n" + 
+			"      var out = [];\r\n" + 
+			"      if (obj.push) {\r\n" + 
+			"        // Array.\r\n" + 
+			"        for (var p in obj) out.push(obj[p]);\r\n" + 
+			"        return '[' + out.join(',') + ']';\r\n" + 
+			"      } else {\r\n" + 
+			"        // Other object.\r\n" + 
+			"        for (var p in obj) out.push(\"'\" + p + \"': \" + obj[p]);\r\n" + 
+			"        return '{' + out.join(',') + '}';\r\n" + 
+			"      }\r\n" + 
+			"    } else return String(obj);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var trim = function(str) {\r\n" + 
+			"    return str.replace(/^\\s+|\\s+$/g, '');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  // Functions that will be invoked by the native SDK whenever a \"change\" event occurs.\r\n" + 
+			"  var changeHandlers = {\r\n" + 
+			"    state: function(val) {\r\n" + 
+			"      if (state === STATES.LOADING) {\r\n" + 
+			"        broadcastEvent(EVENTS.INFO, 'Native SDK initialized.');\r\n" + 
+			"      }\r\n" + 
+			"      state = val;\r\n" + 
+			"      broadcastEvent(EVENTS.INFO, 'Set state to ' + stringify(val));\r\n" + 
+			"      broadcastEvent(EVENTS.STATECHANGE, state);\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    viewable: function(val) {\r\n" + 
+			"      isViewable = val;\r\n" + 
+			"      broadcastEvent(EVENTS.INFO, 'Set isViewable to ' + stringify(val));\r\n" + 
+			"      broadcastEvent(EVENTS.VIEWABLECHANGE, isViewable);\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    placementType: function(val) {\r\n" + 
+			"      broadcastEvent(EVENTS.INFO, 'Set placementType to ' + stringify(val));\r\n" + 
+			"      placementType = val;\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    screenSize: function(val) {\r\n" + 
+			"      broadcastEvent(EVENTS.INFO, 'Set screenSize to ' + stringify(val));\r\n" + 
+			"      for (var key in val) {\r\n" + 
+			"        if (val.hasOwnProperty(key)) screenSize[key] = val[key];\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      if (!hasSetCustomSize) {\r\n" + 
+			"        expandProperties['width'] = screenSize['width'];\r\n" + 
+			"        expandProperties['height'] = screenSize['height'];\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    expandProperties: function(val) {\r\n" + 
+			"      broadcastEvent(EVENTS.INFO, 'Merging expandProperties with ' + stringify(val));\r\n" + 
+			"      for (var key in val) {\r\n" + 
+			"        if (val.hasOwnProperty(key)) expandProperties[key] = val[key];\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    supports: function(val) {\r\n" + 
+			"      broadcastEvent(EVENTS.INFO, 'Set supports to ' + stringify(val));\r\n" + 
+			"        supports = val;\r\n" + 
+			"    },\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var validate = function(obj, validators, action, merge) {\r\n" + 
+			"    if (!merge) {\r\n" + 
+			"      // Check to see if any required properties are missing.\r\n" + 
+			"      if (obj === null) {\r\n" + 
+			"        broadcastEvent(EVENTS.ERROR, 'Required object not provided.', action);\r\n" + 
+			"        return false;\r\n" + 
+			"      } else {\r\n" + 
+			"        for (var i in validators) {\r\n" + 
+			"          if (validators.hasOwnProperty(i) && obj[i] === undefined) {\r\n" + 
+			"            broadcastEvent(EVENTS.ERROR, 'Object is missing required property: ' + i + '.', action);\r\n" + 
+			"            return false;\r\n" + 
+			"          }\r\n" + 
+			"        }\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"\r\n" + 
+			"    for (var prop in obj) {\r\n" + 
+			"      var validator = validators[prop];\r\n" + 
+			"      var value = obj[prop];\r\n" + 
+			"      if (validator && !validator(value)) {\r\n" + 
+			"        // Failed validation.\r\n" + 
+			"        broadcastEvent(EVENTS.ERROR, 'Value of property ' + prop + ' is invalid.',\r\n" + 
+			"          action);\r\n" + 
+			"        return false;\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"    return true;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var expandPropertyValidators = {\r\n" + 
+			"    width: function(v) { return !isNaN(v) && v >= 0; },\r\n" + 
+			"    height: function(v) { return !isNaN(v) && v >= 0; },\r\n" + 
+			"    useCustomClose: function(v) { return (typeof v === 'boolean'); },\r\n" + 
+			"    lockOrientation: function(v) { return (typeof v === 'boolean'); }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  //////////////////////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  bridge.addEventListener('change', function(properties) {\r\n" + 
+			"    for (var p in properties) {\r\n" + 
+			"      if (properties.hasOwnProperty(p)) {\r\n" + 
+			"        var handler = changeHandlers[p];\r\n" + 
+			"        handler(properties[p]);\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"  });\r\n" + 
+			"\r\n" + 
+			"  bridge.addEventListener('error', function(message, action) {\r\n" + 
+			"    broadcastEvent(EVENTS.ERROR, message, action);\r\n" + 
+			"  });\r\n" + 
+			"\r\n" + 
+			"  bridge.addEventListener('ready', function() {\r\n" + 
+			"    broadcastEvent(EVENTS.READY);\r\n" + 
+			"  });\r\n" + 
+			"\r\n" + 
+			"  //////////////////////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  mraid.addEventListener = function(event, listener) {\r\n" + 
+			"    if (!event || !listener) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'Both event and listener are required.', 'addEventListener');\r\n" + 
+			"    } else if (!contains(event, EVENTS)) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'Unknown MRAID event: ' + event, 'addEventListener');\r\n" + 
+			"    } else {\r\n" + 
+			"      if (!listeners[event]) listeners[event] = new EventListeners(event);\r\n" + 
+			"      listeners[event].add(listener);\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.close = function() {\r\n" + 
+			"    if (state === STATES.HIDDEN) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'Ad cannot be closed when it is already hidden.',\r\n" + 
+			"        'close');\r\n" + 
+			"    } else bridge.executeNativeCall('close');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.expand = function(URL) {\r\n" + 
+			"    if (this.getState() !== STATES.DEFAULT) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'Ad can only be expanded from the default state.', 'expand');\r\n" + 
+			"    } else {\r\n" + 
+			"      var args = ['expand'];\r\n" + 
+			"\r\n" + 
+			"      if (this.getHasSetCustomClose()) {\r\n" + 
+			"        args = args.concat(['shouldUseCustomClose', expandProperties.useCustomClose ? 'true' : 'false']);\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      if (this.getHasSetCustomSize()) {\r\n" + 
+			"        if (expandProperties.width >= 0 && expandProperties.height >= 0) {\r\n" + 
+			"          args = args.concat(['w', expandProperties.width, 'h', expandProperties.height]);\r\n" + 
+			"        }\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      if (typeof expandProperties.lockOrientation !== 'undefined') {\r\n" + 
+			"        args = args.concat(['lockOrientation', expandProperties.lockOrientation]);\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      if (URL) {\r\n" + 
+			"        args = args.concat(['url', URL]);\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      bridge.executeNativeCall.apply(this, args);\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getHasSetCustomClose = function() {\r\n" + 
+			"      return hasSetCustomClose;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getHasSetCustomSize = function() {\r\n" + 
+			"      return hasSetCustomSize;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getExpandProperties = function() {\r\n" + 
+			"    var properties = {\r\n" + 
+			"      width: expandProperties.width,\r\n" + 
+			"      height: expandProperties.height,\r\n" + 
+			"      useCustomClose: expandProperties.useCustomClose,\r\n" + 
+			"      isModal: expandProperties.isModal\r\n" + 
+			"    };\r\n" + 
+			"    return properties;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getPlacementType = function() {\r\n" + 
+			"    return placementType;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getState = function() {\r\n" + 
+			"    return state;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getVersion = function() {\r\n" + 
+			"    return mraid.VERSION;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.isViewable = function() {\r\n" + 
+			"    return isViewable;\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.open = function(URL) {\r\n" + 
+			"    if (!URL) broadcastEvent(EVENTS.ERROR, 'URL is required.', 'open');\r\n" + 
+			"    else bridge.executeNativeCall('open', 'url', URL);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.removeEventListener = function(event, listener) {\r\n" + 
+			"    if (!event) broadcastEvent(EVENTS.ERROR, 'Event is required.', 'removeEventListener');\r\n" + 
+			"    else {\r\n" + 
+			"      if (listener && (!listeners[event] || !listeners[event].remove(listener))) {\r\n" + 
+			"        broadcastEvent(EVENTS.ERROR, 'Listener not currently registered for event.',\r\n" + 
+			"          'removeEventListener');\r\n" + 
+			"        return;\r\n" + 
+			"      } else if (listeners[event]) listeners[event].removeAll();\r\n" + 
+			"\r\n" + 
+			"      if (listeners[event] && listeners[event].count === 0) {\r\n" + 
+			"        listeners[event] = null;\r\n" + 
+			"        delete listeners[event];\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.setExpandProperties = function(properties) {\r\n" + 
+			"    if (validate(properties, expandPropertyValidators, 'setExpandProperties', true)) {\r\n" + 
+			"      if (properties.hasOwnProperty('width') || properties.hasOwnProperty('height')) {\r\n" + 
+			"        hasSetCustomSize = true;\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      if (properties.hasOwnProperty('useCustomClose')) hasSetCustomClose = true;\r\n" + 
+			"\r\n" + 
+			"      var desiredProperties = ['width', 'height', 'useCustomClose', 'lockOrientation'];\r\n" + 
+			"      var length = desiredProperties.length;\r\n" + 
+			"      for (var i = 0; i < length; i++) {\r\n" + 
+			"        var propname = desiredProperties[i];\r\n" + 
+			"        if (properties.hasOwnProperty(propname)) expandProperties[propname] = properties[propname];\r\n" + 
+			"      }\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.useCustomClose = function(shouldUseCustomClose) {\r\n" + 
+			"    expandProperties.useCustomClose = shouldUseCustomClose;\r\n" + 
+			"    hasSetCustomClose = true;\r\n" + 
+			"    bridge.executeNativeCall('usecustomclose', 'shouldUseCustomClose', shouldUseCustomClose);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  // MRAID 2.0 APIs ////////////////////////////////////////////////////////////////////////////////\r\n" + 
+			"\r\n" + 
+			"  mraid.createCalendarEvent = function(parameters) {\r\n" + 
+			"    CalendarEventParser.initialize(parameters);\r\n" + 
+			"    if (CalendarEventParser.parse()) {\r\n" + 
+			"      bridge.executeNativeCall.apply(this, CalendarEventParser.arguments);\r\n" + 
+			"    } else {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, CalendarEventParser.errors[0], 'createCalendarEvent');\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.supports = function(feature) {\r\n" + 
+			"    return supports[feature];\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.playVideo = function(uri) {\r\n" + 
+			"    if (!mraid.isViewable()) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'playVideo cannot be called until the ad is viewable', 'playVideo');\r\n" + 
+			"      return;\r\n" + 
+			"    }\r\n" + 
+			"\r\n" + 
+			"    if (!uri) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'playVideo must be called with a valid URI', 'playVideo');\r\n" + 
+			"    } else {\r\n" + 
+			"      bridge.executeNativeCall.apply(this, ['playVideo', 'uri', uri]);\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.storePicture = function(uri) {\r\n" + 
+			"    if (!mraid.isViewable()) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'storePicture cannot be called until the ad is viewable', 'storePicture');\r\n" + 
+			"      return;\r\n" + 
+			"    }\r\n" + 
+			"\r\n" + 
+			"    if (!uri) {\r\n" + 
+			"      broadcastEvent(EVENTS.ERROR, 'storePicture must be called with a valid URI', 'storePicture');\r\n" + 
+			"    } else {\r\n" + 
+			"      bridge.executeNativeCall.apply(this, ['storePicture', 'uri', uri]);\r\n" + 
+			"    }\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.resize = function() {\r\n" + 
+			"    bridge.executeNativeCall('resize');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getResizeProperties = function() {\r\n" + 
+			"    bridge.executeNativeCall('getResizeProperties');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.setResizeProperties = function(resizeProperties) {\r\n" + 
+			"    bridge.executeNativeCall('setResizeProperties', 'resizeProperties', resizeProperties);\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getCurrentPosition = function() {\r\n" + 
+			"    bridge.executeNativeCall('getCurrentPosition');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getDefaultPosition = function() {\r\n" + 
+			"    bridge.executeNativeCall('getDefaultPosition');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getMaxSize = function() {\r\n" + 
+			"    bridge.executeNativeCall('getMaxSize');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  mraid.getScreenSize = function() {\r\n" + 
+			"    bridge.executeNativeCall('getScreenSize');\r\n" + 
+			"  };\r\n" + 
+			"\r\n" + 
+			"  var CalendarEventParser = {\r\n" + 
+			"    initialize: function(parameters) {\r\n" + 
+			"      this.parameters = parameters;\r\n" + 
+			"      this.errors = [];\r\n" + 
+			"      this.arguments = ['createCalendarEvent'];\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parse: function() {\r\n" + 
+			"      if (!this.parameters) {\r\n" + 
+			"        this.errors.push('The object passed to createCalendarEvent cannot be null.');\r\n" + 
+			"      } else {\r\n" + 
+			"        this.parseDescription();\r\n" + 
+			"        this.parseLocation();\r\n" + 
+			"        this.parseSummary();\r\n" + 
+			"        this.parseStartAndEndDates();\r\n" + 
+			"        this.parseReminder();\r\n" + 
+			"        this.parseRecurrence();\r\n" + 
+			"        this.parseTransparency();\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      var errorCount = this.errors.length;\r\n" + 
+			"      if (errorCount) {\r\n" + 
+			"        this.arguments.length = 0;\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      return (errorCount === 0);\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseDescription: function() {\r\n" + 
+			"      this._processStringValue('description');\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseLocation: function() {\r\n" + 
+			"      this._processStringValue('location');\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseSummary: function() {\r\n" + 
+			"      this._processStringValue('summary');\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseStartAndEndDates: function() {\r\n" + 
+			"      this._processDateValue('start');\r\n" + 
+			"      this._processDateValue('end');\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseReminder: function() {\r\n" + 
+			"      var reminder = this._getParameter('reminder');\r\n" + 
+			"      if (!reminder) {\r\n" + 
+			"        return;\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      if (reminder < 0) {\r\n" + 
+			"        this.arguments.push('relativeReminder');\r\n" + 
+			"        this.arguments.push(parseInt(reminder) / 1000);\r\n" + 
+			"      } else {\r\n" + 
+			"        this.arguments.push('absoluteReminder');\r\n" + 
+			"        this.arguments.push(reminder);\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseRecurrence: function() {\r\n" + 
+			"      var recurrenceDict = this._getParameter('recurrence');\r\n" + 
+			"      if (!recurrenceDict) {\r\n" + 
+			"        return;\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      this.parseRecurrenceInterval(recurrenceDict);\r\n" + 
+			"      this.parseRecurrenceFrequency(recurrenceDict);\r\n" + 
+			"      this.parseRecurrenceEndDate(recurrenceDict);\r\n" + 
+			"      this.parseRecurrenceArrayValue(recurrenceDict, 'daysInWeek');\r\n" + 
+			"      this.parseRecurrenceArrayValue(recurrenceDict, 'daysInMonth');\r\n" + 
+			"      this.parseRecurrenceArrayValue(recurrenceDict, 'daysInYear');\r\n" + 
+			"      this.parseRecurrenceArrayValue(recurrenceDict, 'monthsInYear');\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseTransparency: function() {\r\n" + 
+			"      var validValues = ['opaque', 'transparent'];\r\n" + 
+			"\r\n" + 
+			"      if (this.parameters.hasOwnProperty('transparency')) {\r\n" + 
+			"        var transparency = this.parameters['transparency'];\r\n" + 
+			"        if (contains(transparency, validValues)) {\r\n" + 
+			"          this.arguments.push('transparency');\r\n" + 
+			"          this.arguments.push(transparency);\r\n" + 
+			"        } else {\r\n" + 
+			"          this.errors.push('transparency must be opaque or transparent');\r\n" + 
+			"        }\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseRecurrenceArrayValue: function(recurrenceDict, kind) {\r\n" + 
+			"      if (recurrenceDict.hasOwnProperty(kind)) {\r\n" + 
+			"        var array = recurrenceDict[kind];\r\n" + 
+			"        if (!array || !(array instanceof Array)) {\r\n" + 
+			"          this.errors.push(kind + ' must be an array.');\r\n" + 
+			"        } else {\r\n" + 
+			"          var arrayStr = array.join(',');\r\n" + 
+			"          this.arguments.push(kind);\r\n" + 
+			"          this.arguments.push(arrayStr);\r\n" + 
+			"        }\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseRecurrenceInterval: function(recurrenceDict) {\r\n" + 
+			"      if (recurrenceDict.hasOwnProperty('interval')) {\r\n" + 
+			"        var interval = recurrenceDict['interval'];\r\n" + 
+			"        if (!interval) {\r\n" + 
+			"          this.errors.push('Recurrence interval cannot be null.');\r\n" + 
+			"        } else {\r\n" + 
+			"          this.arguments.push('interval');\r\n" + 
+			"          this.arguments.push(interval);\r\n" + 
+			"        }\r\n" + 
+			"      } else {\r\n" + 
+			"        // If a recurrence rule was specified without an interval, use a default value of 1.\r\n" + 
+			"        this.arguments.push('interval');\r\n" + 
+			"        this.arguments.push(1);\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseRecurrenceFrequency: function(recurrenceDict) {\r\n" + 
+			"      if (recurrenceDict.hasOwnProperty('frequency')) {\r\n" + 
+			"        var frequency = recurrenceDict['frequency'];\r\n" + 
+			"        var validFrequencies = ['daily', 'weekly', 'monthly', 'yearly'];\r\n" + 
+			"        if (contains(frequency, validFrequencies)) {\r\n" + 
+			"          this.arguments.push('frequency');\r\n" + 
+			"          this.arguments.push(frequency);\r\n" + 
+			"        } else {\r\n" + 
+			"          this.errors.push('Recurrence frequency must be one of: \"daily\", \"weekly\", \"monthly\", \"yearly\".');\r\n" + 
+			"        }\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    parseRecurrenceEndDate: function(recurrenceDict) {\r\n" + 
+			"      var expires = recurrenceDict['expires'];\r\n" + 
+			"\r\n" + 
+			"      if (!expires) {\r\n" + 
+			"        return;\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      this.arguments.push('expires');\r\n" + 
+			"      this.arguments.push(expires);\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    _getParameter: function(key) {\r\n" + 
+			"      if (this.parameters.hasOwnProperty(key)) {\r\n" + 
+			"        return this.parameters[key];\r\n" + 
+			"      }\r\n" + 
+			"\r\n" + 
+			"      return null;\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    _processStringValue: function(kind) {\r\n" + 
+			"      if (this.parameters.hasOwnProperty(kind)) {\r\n" + 
+			"        var value = this.parameters[kind];\r\n" + 
+			"        this.arguments.push(kind);\r\n" + 
+			"        this.arguments.push(value);\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"\r\n" + 
+			"    _processDateValue: function(kind) {\r\n" + 
+			"      if (this.parameters.hasOwnProperty(kind)) {\r\n" + 
+			"        var dateString = this._getParameter(kind);\r\n" + 
+			"        this.arguments.push(kind);\r\n" + 
+			"        this.arguments.push(dateString);\r\n" + 
+			"      }\r\n" + 
+			"    },\r\n" + 
+			"  };\r\n" + 
+			"}());";
 }

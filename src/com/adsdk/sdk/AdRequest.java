@@ -15,6 +15,9 @@ public class AdRequest {
 	private String publisherId;
 	private double longitude = 0.0;
 	private double latitude = 0.0;
+	private boolean adspaceStrict;
+	private int adspaceWidth;
+	private int adspaceHeight;
 	private static final String REQUEST_TYPE_ANDROID = "android_app";
 	private int type = -1;
 
@@ -24,6 +27,9 @@ public class AdRequest {
 	private String ipAddress;
 
 	private String deviceId2;
+	private String androidIMEI = "";
+	private String androidID = "";
+	private String androidAdId = "";
 
 	private String connectionType;
 
@@ -177,7 +183,10 @@ public class AdRequest {
 		b.appendQueryParameter("u", this.getUserAgent());
 		b.appendQueryParameter("u2", this.getUserAgent2());
 		b.appendQueryParameter("s", this.getPublisherId());
-		b.appendQueryParameter("o", this.getDeviceId());
+		b.appendQueryParameter("o", this.getDeviceId()); 
+		b.appendQueryParameter("o_androidimei", androidIMEI);
+		b.appendQueryParameter("o_androidid", androidID);
+		b.appendQueryParameter("o_andadvid", androidAdId);
 		b.appendQueryParameter("o2", this.getDeviceId2());
 		b.appendQueryParameter("t", Long.toString(this.getTimestamp()));
 		b.appendQueryParameter("connection_type", this.getConnectionType());
@@ -193,6 +202,21 @@ public class AdRequest {
 			break;
 		}
 		b.appendQueryParameter("u_wv", this.getUserAgent());
+		b.appendQueryParameter("u_br", this.getUserAgent());
+		if(longitude != 0 && latitude != 0) {
+			b.appendQueryParameter("longitude", Double.toString(longitude));
+			b.appendQueryParameter("latitude", Double.toString(latitude));
+		}
+		
+		if(adspaceHeight != 0 && adspaceWidth != 0) {
+			if(adspaceStrict) {
+				b.appendQueryParameter("adspace.strict", "1");
+			} else {
+				b.appendQueryParameter("adspace.strict", "0");
+			}
+			b.appendQueryParameter("adspace.width", Integer.toString(adspaceWidth));
+			b.appendQueryParameter("adspace.height", Integer.toString(adspaceHeight));
+		}
 
 		return b.build();
 	}
@@ -211,6 +235,54 @@ public class AdRequest {
 
 	public void setType(int type) {
 		this.type = type;
+	}
+
+	public boolean isAdspaceStrict() {
+		return adspaceStrict;
+	}
+
+	public void setAdspaceStrict(boolean adspaceStrict) {
+		this.adspaceStrict = adspaceStrict;
+	}
+
+	public int getAdspaceWidth() {
+		return adspaceWidth;
+	}
+
+	public void setAdspaceWidth(int adspaceWidth) {
+		this.adspaceWidth = adspaceWidth;
+	}
+
+	public int getAdspaceHeight() {
+		return adspaceHeight;
+	}
+
+	public void setAdspaceHeight(int adspaceHeight) {
+		this.adspaceHeight = adspaceHeight;
+	}
+
+	public String getAndroidIMEI() {
+		return androidIMEI;
+	}
+
+	public void setAndroidIMEI(String androidIMEI) {
+		this.androidIMEI = androidIMEI;
+	}
+
+	public String getAndroidID() {
+		return androidID;
+	}
+
+	public void setAndroidID(String androidID) {
+		this.androidID = androidID;
+	}
+
+	public String getAndroidAdId() {
+		return androidAdId;
+	}
+
+	public void setAndroidAdId(String androidAdId) {
+		this.androidAdId = androidAdId;
 	}
 
 }

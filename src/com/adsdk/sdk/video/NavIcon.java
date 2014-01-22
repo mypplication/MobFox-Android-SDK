@@ -1,5 +1,4 @@
-package com.adsdk.sdk.video;
-import java.io.InputStream;
+package com.adsdk.sdk.video;import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 
@@ -19,6 +18,7 @@ import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.adsdk.sdk.Log;
 
 public class NavIcon extends AspectRatioImageViewWidth implements OnClickListener {
 
@@ -31,8 +31,7 @@ public class NavIcon extends AspectRatioImageViewWidth implements OnClickListene
 
 		int padding = (int) TypedValue.applyDimension(
 				TypedValue.COMPLEX_UNIT_DIP, 4, getResources()
-				.getDisplayMetrics());
-		mContext = context;
+				.getDisplayMetrics());		mContext = context;
 		this.mIcon = icon;
 
 		this.setPadding(padding, 0, padding, 0);
@@ -86,6 +85,7 @@ public class NavIcon extends AspectRatioImageViewWidth implements OnClickListene
 				return new BitmapDrawable(mContext.getResources(), b);
 			}
 		} catch (Exception e) {
+			Log.d("NavIcon cannot load resource " + urlString);
 		} finally {
 			if (in != null) {
 				try {
@@ -102,6 +102,7 @@ public class NavIcon extends AspectRatioImageViewWidth implements OnClickListene
 			Drawable d = Drawable.createFromStream(is, "src");
 			return d;
 		} catch (Exception e) {
+			Log.e("Cannot fetch image:" + urlString, e);
 			return null;
 		}
 	}
@@ -143,7 +144,9 @@ public class NavIcon extends AspectRatioImageViewWidth implements OnClickListene
 							Method method = c.getMethod("replayVideo");
 							method.invoke(activity);
 						} catch (NoSuchMethodException e) {
+							Log.d("Your activity class has no replayVideo method");
 						} catch (Exception e) {
+							Log.d("Couldn't run replayVideo method in your Activity");
 						}
 						return;
 					}
@@ -153,7 +156,9 @@ public class NavIcon extends AspectRatioImageViewWidth implements OnClickListene
 							Method method = c.getMethod("playVideo");
 							method.invoke(activity);
 						} catch (NoSuchMethodException e) {
+							Log.d("Your activity class has no playVideo method");
 						} catch (Exception e) {
+							Log.d("Couldn't run replayVideo method in your Activity");
 						}
 						return;
 					}
@@ -165,6 +170,7 @@ public class NavIcon extends AspectRatioImageViewWidth implements OnClickListene
 				}
 			}
 		} catch (Exception e) {
+			Log.w("Couldn't open URL: " + mIcon.clickUrl);
 		}
 	}
 

@@ -23,6 +23,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.MediaController.MediaPlayerControl;
 
+import com.adsdk.sdk.Log;
+
 public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	private Uri mUri;
 	private int mDuration;
@@ -96,6 +98,11 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 		}
 
 		setMeasuredDimension(width, height);
+
+		Log.d("SDKVideoView onMeasure video size (" + mVideoWidth
+				+ "," + mVideoHeight + ") surface:(" + mSurfaceWidth + ","
+				+ mSurfaceHeight + ") Setting size:(" + width + ","
+				+ height + ")");
 	}
 
 	private void initVideoView() {
@@ -144,6 +151,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 		mPlayWhenSurfaceReady = false;
 		if (!mSurfaceReady) {
 			mPlayWhenSurfaceReady = true;
+			Log.d("Open Video not starting until surface created");
 			return;
 		}
 		release(false);
@@ -165,6 +173,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 			mTimeEventRunnable = new Runnable() {
 				@Override
 				public void run() {
+					Log.d("Time Event Thread started");
 					do {
 						if ((mMediaPlayer != null)
 								&& (mCurrentState == STATE_PLAYING)) {
@@ -188,9 +197,11 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 									listeners.clear();
 								}
 							} catch (Exception e) {
+								Log.e("Time Event Thread error" + e, e);
 							}
 						}
 					} while (!mTimeEventThreadDone.block(1000));
+					Log.v("Time Event Thread stopped");
 				}
 			};
 			mTimeEventThread = new Thread(mTimeEventRunnable);
@@ -198,12 +209,14 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 			mCurrentState = STATE_PREPARING;
 			attachMediaController();
 		} catch (IOException ex) {
+			Log.w(TAG, "Unable to open content: " + mUri, ex);
 			mCurrentState = STATE_ERROR;
 			mTargetState = STATE_ERROR;
 			mErrorListener.onError(mMediaPlayer,
 					MediaPlayer.MEDIA_ERROR_UNKNOWN, 0);
 			return;
 		} catch (IllegalArgumentException ex) {
+			Log.w(TAG, "Unable to open content: " + mUri, ex);
 			mCurrentState = STATE_ERROR;
 			mTargetState = STATE_ERROR;
 			mErrorListener.onError(mMediaPlayer,
@@ -234,6 +247,10 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 			mVideoWidth = mMediaPlayer.getVideoWidth();
 			mVideoHeight = mMediaPlayer.getVideoHeight();
 		}
+		Log.d("SDKVideoView setVideoDisplaySize View Size ("
+				+ mWidth + "," + mHeight + ") Video size (" + mVideoWidth
+				+ "," + mVideoHeight + ") surface:(" + mSurfaceWidth + ","
+				+ mSurfaceHeight + ")");
 		if ((mSurfaceReady) && (mVideoWidth > 0 && mVideoHeight > 0)) {
 			if (mDisplayMode == VideoData.DISPLAY_NORMAL) {
 				if (mVideoWidth * mHeight > mWidth * mVideoHeight) {
@@ -252,12 +269,15 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	MediaPlayer.OnVideoSizeChangedListener mSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
 		@Override
 		public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+			Log.d("SDKVideoView OnVideoSizeChangedListener");
+
 		}
 	};
 
 	MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
 		@Override
 		public void onPrepared(MediaPlayer mp) {
+			Log.d("SDKVideoView onPrepared");
 			mCurrentState = STATE_PREPARED;
 
 			if (mOnPreparedListener != null) {
@@ -272,6 +292,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 				seekTo(seekToPosition);
 			}
 			if (!mSurfaceReady) {
+				Log.d("SDKVideoView onPrepared surface not ready yet");
 				return;
 			}
 			setVideoDisplaySize();
@@ -296,6 +317,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 			}
 			if (mOnCompletionListener != null) {
 				mOnCompletionListener.onCompletion(mMediaPlayer);
+				mOnCompletionListener = null;
 			}
 		}
 	};
@@ -303,6 +325,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	private MediaPlayer.OnErrorListener mErrorListener = new MediaPlayer.OnErrorListener() {
 		@Override
 		public boolean onError(MediaPlayer mp, int framework_err, int impl_err) {
+			Log.d("Error: " + framework_err + "," + impl_err);
 			mCurrentState = STATE_ERROR;
 			mTargetState = STATE_ERROR;
 			if (mMediaController != null) {
@@ -322,6 +345,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	private MediaPlayer.OnInfoListener mInfoListener = new MediaPlayer.OnInfoListener() {
 		@Override
 		public boolean onInfo(MediaPlayer mp, int what, int extra) {
+			Log.d("Info/Warning: " + what + "," + extra);
 
 			if (mOnInfoListener != null) {
 				if (mOnInfoListener.onInfo(mMediaPlayer, what,
@@ -345,6 +369,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int w,
 				int h) {
+			Log.d("SDKVideoView surfaceChanged");
 			mSurfaceWidth = w;
 			mSurfaceHeight = h;
 			setVideoDisplaySize();
@@ -352,6 +377,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
+			Log.d("Surface created");
 			mSurfaceReady = true;
 			if (mPlayWhenSurfaceReady) {
 				openVideo();
@@ -360,6 +386,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
+			Log.d("Surface destroyed");
 			mSurfaceReady = false;
 			if (mMediaController != null) {
 				mMediaController.hide();
@@ -553,6 +580,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 
 	@Override
 	protected void onDetachedFromWindow() {
+		Log.i("Video view detached from Window");
 		super.onDetachedFromWindow();
 	}
 

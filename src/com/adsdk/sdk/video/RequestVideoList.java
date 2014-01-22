@@ -21,6 +21,7 @@ import org.xml.sax.XMLReader;
 
 import com.adsdk.sdk.AdRequest;
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.Log;
 import com.adsdk.sdk.RequestException;
 
 
@@ -32,6 +33,7 @@ public class RequestVideoList {
 	public HashMap<String, Long> sendRequest(AdRequest request)
 			throws RequestException {
 		String url = request.toString() + "&listads=1";
+		Log.d("Video List RequestPerform HTTP Get Url: " + url);
 		DefaultHttpClient client = new DefaultHttpClient();
 		HttpConnectionParams.setSoTimeout(client.getParams(),
 				Const.SOCKET_TIMEOUT);

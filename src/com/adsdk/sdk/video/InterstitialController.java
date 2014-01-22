@@ -4,6 +4,7 @@ import java.lang.ref.WeakReference;
 import java.util.Formatter;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -21,6 +22,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+@SuppressLint("ViewConstructor")
 public class InterstitialController extends LinearLayout {
 
 	private static final int DEFAULT_TIMEOUT = 3000;
@@ -84,8 +86,8 @@ public class InterstitialController extends LinearLayout {
 
 	public void setBrowserView(View browserView) {
 		mBrowserView.addView(browserView, new FrameLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
-				android.view.ViewGroup.LayoutParams.FILL_PARENT, Gravity.CENTER));
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER));
 	}
 
 	public void setBrowser(BrowserControl browser) {
@@ -98,13 +100,13 @@ public class InterstitialController extends LinearLayout {
 		this.setWeightSum(1);
 		this.setOrientation(LinearLayout.VERTICAL);
 		this.setLayoutParams(new LinearLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
-				android.view.ViewGroup.LayoutParams.FILL_PARENT));
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT));
 
 		mTopBar = new LinearLayout(mContext);
 		mTopBar.setOrientation(LinearLayout.HORIZONTAL);
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 				android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
 		params.gravity = Gravity.TOP;
 		params.weight = 0;
@@ -136,7 +138,7 @@ public class InterstitialController extends LinearLayout {
 
 		mBrowserView = new FrameLayout(mContext);
 		LinearLayout.LayoutParams browserParams = new LinearLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 				android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
 		browserParams.gravity = Gravity.TOP;
 		browserParams.weight = 1;
@@ -146,7 +148,7 @@ public class InterstitialController extends LinearLayout {
 		mBottomBar = new LinearLayout(mContext);
 		mBottomBar.setOrientation(LinearLayout.HORIZONTAL);
 		params = new LinearLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 				(int)(metrics.widthPixels*0.119));
 		params.gravity = Gravity.BOTTOM;
 		params.weight = 0;
@@ -165,7 +167,7 @@ public class InterstitialController extends LinearLayout {
 		LinearLayout buttonPanel = new LinearLayout(mContext);
 		params = new LinearLayout.LayoutParams(
 				android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-				android.view.ViewGroup.LayoutParams.FILL_PARENT, 0);
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0);
 		params.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
 		buttonPanel.setOrientation(LinearLayout.HORIZONTAL);
 
@@ -219,6 +221,7 @@ public class InterstitialController extends LinearLayout {
 		initNavigationBarControllerView(padding,metrics);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void initNavigationBarControllerView(int padding, DisplayMetrics metrics) {
 
 		if (!mInterstitialData.showBottomNavigationBar) {
@@ -497,6 +500,7 @@ public class InterstitialController extends LinearLayout {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void handleMessage(Message msg) {
 		switch (msg.what) {
 		case FADE_OUT:

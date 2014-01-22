@@ -28,6 +28,7 @@ import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import com.adsdk.sdk.Log;
 import com.adsdk.sdk.video.InterstitialController.BrowserControl;
 import com.adsdk.sdk.video.WebViewClient.OnPageLoadedListener;
 
@@ -56,21 +57,34 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 				}
 			}
 
+			Log.v("set layer "+mWebView_SetLayerType);
 			mWebView_LAYER_TYPE_SOFTWARE = WebView.class.getField("LAYER_TYPE_SOFTWARE");
+			Log.v("set1 layer "+mWebView_LAYER_TYPE_SOFTWARE);
 
 		} catch (SecurityException e) {
+
+			Log.v("SecurityException");
 		} catch (NoSuchFieldException e) {
+
+			Log.v("NoSuchFieldException");
 		}
 	}
 
 	private static void setLayer(WebView webView){
 		if (mWebView_SetLayerType != null && mWebView_LAYER_TYPE_SOFTWARE !=null) {
 			try {
+				Log.v("Set Layer is supported");
 				mWebView_SetLayerType.invoke(webView, mWebView_LAYER_TYPE_SOFTWARE.getInt(WebView.class), null);
 			} catch (InvocationTargetException ite) {
+				Log.v("Set InvocationTargetException");
 			} catch (IllegalArgumentException e) {
+				Log.v("Set IllegalArgumentException");
 			} catch (IllegalAccessException e) {
+				Log.v("Set IllegalAccessException");
 			}
+		}
+		else{
+			Log.v("Set Layer is not supported");
 		}
 	}
 
@@ -173,6 +187,7 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 			} catch (MalformedURLException e) {
 				return (loadingUrl != null) ? loadingUrl : "";
 			}
+			Log.d("Checking URL redirect:" + loadingUrl);
 
 			int statusCode = -1;
 			HttpURLConnection connection = null;
@@ -196,6 +211,7 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 						nextLocation = connection.getHeaderField("location");
 						connection.disconnect();
 						if (!redirectLocations.add(nextLocation)) {
+							Log.d("URL redirect cycle detected");
 							return "";
 						}
 
@@ -220,6 +236,7 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 			if (url == null || url.equals("")) {
 				url = "about:blank";
 			}
+			Log.d("Show URL: " + url);
 			mWebViewClient.setAllowedUrl(url);
 			mWebView.loadUrl(url);
 			requestLayout();

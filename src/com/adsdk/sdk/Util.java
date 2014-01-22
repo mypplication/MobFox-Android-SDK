@@ -1,43 +1,39 @@
 package com.adsdk.sdk;
 
-import static com.adsdk.sdk.Const.PREFS_DEVICE_ID;
-
-import java.lang.reflect.Constructor;
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.security.MessageDigest;
 import java.util.Enumeration;
 import java.util.Locale;
-import java.util.UUID;
 
 import android.Manifest;
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
-import android.util.DisplayMetrics;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 
 import com.adsdk.sdk.video.RichMediaAd;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 public class Util {
 	private static int sFadeInAnimationId = 0;
@@ -50,15 +46,17 @@ public class Util {
 	private static int sSlideOutTopAnimationId = 0;
 	private static int sSlideInBottomAnimationId = 0;
 	private static int sSlideOutBottomAnimationId = 0;
+	private static String androidAdId;
+
+	private static final float MINIMAL_ACCURACY = 1000;
+	private static final long MINIMAL_TIME_FROM_FIX = 1000 * 60 * 20;
 
 	public static boolean isNetworkAvailable(Context ctx) {
-		int networkStatePermission = ctx
-				.checkCallingOrSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE);
+		int networkStatePermission = ctx.checkCallingOrSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE);
 
 		if (networkStatePermission == PackageManager.PERMISSION_GRANTED) {
 
-			ConnectivityManager mConnectivity = (ConnectivityManager) ctx
-					.getSystemService(Context.CONNECTIVITY_SERVICE);
+			ConnectivityManager mConnectivity = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
 
 			// Skip if no connection, or background data disabled
 			NetworkInfo info = mConnectivity.getActiveNetworkInfo();
@@ -68,8 +66,7 @@ public class Util {
 			// Only update if WiFi
 			int netType = info.getType();
 			// int netSubtype = info.getSubtype();
-			if ((netType == ConnectivityManager.TYPE_WIFI)
-					|| (netType == ConnectivityManager.TYPE_MOBILE)) {
+			if ((netType == ConnectivityManager.TYPE_WIFI) || (netType == ConnectivityManager.TYPE_MOBILE)) {
 				return info.isConnected();
 			} else {
 				return false;
@@ -80,12 +77,10 @@ public class Util {
 	}
 
 	public static String getConnectionType(Context context) {
-		int networkStatePermission = context
-				.checkCallingOrSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE);
+		int networkStatePermission = context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE);
 
 		if (networkStatePermission == PackageManager.PERMISSION_GRANTED) {
-			ConnectivityManager cm = (ConnectivityManager) context
-					.getSystemService(Context.CONNECTIVITY_SERVICE);
+			ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 			NetworkInfo info = cm.getActiveNetworkInfo();
 			if (info == null) {
 				return Const.CONNECTION_TYPE_UNKNOWN;
@@ -141,11 +136,9 @@ public class Util {
 
 	public static String getLocalIpAddress() {
 		try {
-			for (Enumeration<NetworkInterface> en = NetworkInterface
-					.getNetworkInterfaces(); en.hasMoreElements();) {
+			for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
 				NetworkInterface intf = en.nextElement();
-				for (Enumeration<InetAddress> enumIpAddr = intf
-						.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+				for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
 					InetAddress inetAddress = enumIpAddr.nextElement();
 					if (!inetAddress.isLoopbackAddress()) {
 						return inetAddress.getHostAddress().toString();
@@ -153,97 +146,74 @@ public class Util {
 				}
 			}
 		} catch (SocketException ex) {
+			Log.e(ex.toString());
 		}
 		return null;
 	}
 
 	public static String getTelephonyDeviceId(Context context) {
-		int telephonyPermission = context
-				.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE);
+		int telephonyPermission = context.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE);
 
 		if (telephonyPermission == PackageManager.PERMISSION_GRANTED) {
-			TelephonyManager tm = (TelephonyManager) context
-					.getSystemService(Context.TELEPHONY_SERVICE);
+			TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 			return tm.getDeviceId();
 		}
 		return "";
 	}
 
 	public static String getDeviceId(Context context) {
-		String androidId = Secure.getString(context.getContentResolver(),
-				Secure.ANDROID_ID);
-		if ((androidId == null) || (androidId.equals("9774d56d682e549c"))
-				|| (androidId.equals("0000000000000000"))) {
-			SharedPreferences prefs = PreferenceManager
-					.getDefaultSharedPreferences(context);
-			androidId = prefs.getString(PREFS_DEVICE_ID, null);
-			if (androidId == null) {
-				try {
-					String uuid = UUID.randomUUID().toString();
-					MessageDigest digest = MessageDigest.getInstance("MD5");
-					digest.update(uuid.getBytes(), 0, uuid.length());
-					androidId = String
-							.format("%032X",
-									new Object[] { new BigInteger(1, digest
-											.digest()) }).substring(0, 16);
-				} catch (Exception e) {
-					androidId = "9774d56d682e549c";
-				}
-				prefs.edit().putString(PREFS_DEVICE_ID, androidId).commit();
-			}
+		String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		if ((androidId == null) || (androidId.equals("9774d56d682e549c")) || (androidId.equals("0000000000000000"))) {
+			androidId = "";
 		}
 		return androidId;
 	}
 
 	public static Location getLocation(Context context) {
-		int isAccessFineLocation = context
-				.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
-		int isAccessCoarseLocation = context
-				.checkCallingOrSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
-		if ((isAccessFineLocation == PackageManager.PERMISSION_GRANTED)
-				|| (isAccessCoarseLocation == PackageManager.PERMISSION_GRANTED)) {
-			LocationManager locationManager = (LocationManager) context
-					.getSystemService(Context.LOCATION_SERVICE);
-			if (locationManager != null) {
-				if (isAccessFineLocation == PackageManager.PERMISSION_GRANTED) {
-					boolean isGpsEnabled = locationManager
-							.isProviderEnabled(LocationManager.GPS_PROVIDER);
-					if (isGpsEnabled) {
-						return locationManager
-								.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-					}
-				}
-				if (isAccessCoarseLocation == PackageManager.PERMISSION_GRANTED) {
-					boolean isNetworkEnabled = locationManager
-							.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+		boolean HasFineLocationPermission = false;
+		boolean HasCoarseLocationPermission = false;
 
-					if (isNetworkEnabled) {
-						return locationManager
-								.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-					}
-				}
+		if (context.checkCallingOrSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			HasFineLocationPermission = true;
+			HasCoarseLocationPermission = true;
+		} else if (context.checkCallingOrSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			HasCoarseLocationPermission = true;
+		}
+
+		LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+		if (locationManager != null && HasFineLocationPermission && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+			Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+			if (location == null) {
+				return null;
+			}
+
+			long timeFromFix = Math.abs(System.currentTimeMillis() - location.getTime());
+			if (location.hasAccuracy() && location.getAccuracy() < MINIMAL_ACCURACY && timeFromFix < MINIMAL_TIME_FROM_FIX) {
+				return location;
+			}
+		}
+		if (locationManager != null && HasCoarseLocationPermission && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+			Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+			if (location == null) {
+				return null;
+			}
+			long timeFromFix = Math.abs(System.currentTimeMillis() - location.getTime());
+			if (location.hasAccuracy() && location.getAccuracy() < MINIMAL_ACCURACY && timeFromFix < MINIMAL_TIME_FROM_FIX) {
+				return location;
 			}
 		}
 		return null;
 	}
 
 	public static String getDefaultUserAgentString(Context context) {
-//		String userAgent = System.getProperty("http.agent");
-		try {
-			Constructor<WebSettings> constructor = WebSettings.class
-					.getDeclaredConstructor(Context.class, WebView.class);
-			constructor.setAccessible(true);
-			try {
-				WebSettings settings = constructor.newInstance(context, null);
-				return settings.getUserAgentString();
-			} finally {
-				constructor.setAccessible(false);
-	}
-		} catch (Exception e) {
-			return new WebView(context).getSettings().getUserAgentString();
-		}
+		String userAgent = System.getProperty("http.agent");
+		return userAgent;
 	}
 
+	@SuppressLint("DefaultLocale")
 	public static String buildUserAgent() {
 		String androidVersion = Build.VERSION.RELEASE;
 		String model = Build.MODEL;
@@ -259,17 +229,14 @@ public class Util {
 			}
 		}
 
-		String userAgent = String.format(Const.USER_AGENT_PATTERN,
-				androidVersion, locale, model, androidBuild);
+		String userAgent = String.format(Const.USER_AGENT_PATTERN, androidVersion, locale, model, androidBuild);
 		return userAgent;
 	}
 
 	public static int getMemoryClass(Context context) {
 		try {
-			Method getMemoryClassMethod = ActivityManager.class
-					.getMethod("getMemoryClass");
-			ActivityManager ac = (ActivityManager) context
-					.getSystemService(Context.ACTIVITY_SERVICE);
+			Method getMemoryClassMethod = ActivityManager.class.getMethod("getMemoryClass");
+			ActivityManager ac = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 			return (Integer) getMemoryClassMethod.invoke(ac, new Object[] {});
 		} catch (Exception ex) {
 			return 16;
@@ -278,59 +245,54 @@ public class Util {
 
 	public static void initializeAnimations(Context ctx) {
 		Resources r = ctx.getResources();
-		sFadeInAnimationId = r.getIdentifier("fade_in", "anim",
-				ctx.getPackageName());
-		sFadeOutAnimationId = r.getIdentifier("fade_out", "anim",
-				ctx.getPackageName());
-		sSlideInBottomAnimationId = r.getIdentifier("slide_bottom_in",
-				"anim", ctx.getPackageName());
-		sSlideOutBottomAnimationId = r.getIdentifier("slide_bottom_out",
-				"anim", ctx.getPackageName());
-		sSlideInTopAnimationId = r.getIdentifier("slide_top_in", "anim",
-				ctx.getPackageName());
-		sSlideOutTopAnimationId = r.getIdentifier("slide_top_out",
-				"anim", ctx.getPackageName());
-		sSlideInLeftAnimationId = r.getIdentifier("slide_left_in",
-				"anim", ctx.getPackageName());
-		sSlideOutLeftAnimationId = r.getIdentifier("slide_left_out",
-				"anim", ctx.getPackageName());
-		sSlideInRightAnimationId = r.getIdentifier("slide_right_in",
-				"anim", ctx.getPackageName());
-		sSlideOutRightAnimationId = r.getIdentifier("slide_right_out",
-				"anim", ctx.getPackageName());
+		sFadeInAnimationId = r.getIdentifier("fade_in", "anim", ctx.getPackageName());
+		sFadeOutAnimationId = r.getIdentifier("fade_out", "anim", ctx.getPackageName());
+		sSlideInBottomAnimationId = r.getIdentifier("slide_bottom_in", "anim", ctx.getPackageName());
+		sSlideOutBottomAnimationId = r.getIdentifier("slide_bottom_out", "anim", ctx.getPackageName());
+		sSlideInTopAnimationId = r.getIdentifier("slide_top_in", "anim", ctx.getPackageName());
+		sSlideOutTopAnimationId = r.getIdentifier("slide_top_out", "anim", ctx.getPackageName());
+		sSlideInLeftAnimationId = r.getIdentifier("slide_left_in", "anim", ctx.getPackageName());
+		sSlideOutLeftAnimationId = r.getIdentifier("slide_left_out", "anim", ctx.getPackageName());
+		sSlideInRightAnimationId = r.getIdentifier("slide_right_in", "anim", ctx.getPackageName());
+		sSlideOutRightAnimationId = r.getIdentifier("slide_right_out", "anim", ctx.getPackageName());
 
 	}
 
 	public static AnimationSet getEnterAnimationSet(int animation) {
 		AnimationSet set = new AnimationSet(false);
-		AlphaAnimation alphaAnimation = new AlphaAnimation(0.0f,1.0f);
+		AlphaAnimation alphaAnimation = new AlphaAnimation(0.0f, 1.0f);
 		alphaAnimation.setDuration(3000);
 		set.addAnimation(alphaAnimation);
 		TranslateAnimation translateAnimation;
-		//    	TranslateAnimation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f, 0.0f);
-		//    	translateAnimation.setDuration(3000);
+		// TranslateAnimation translateAnimation = new TranslateAnimation(0.0f,
+		// 0.0f, 0.0f, 0.0f);
+		// translateAnimation.setDuration(3000);
 		switch (animation) {
 		case RichMediaAd.ANIMATION_FADE_IN:
 			return set;
 		case RichMediaAd.ANIMATION_FLIP_IN:
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,1.0f, Animation.RELATIVE_TO_SELF,0.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 1.0f,
+					Animation.RELATIVE_TO_SELF, 0.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_LEFT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+					Animation.RELATIVE_TO_SELF, 0.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_RIGHT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 1.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 1.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+					Animation.RELATIVE_TO_SELF, 0.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_TOP:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,-1.0f, Animation.RELATIVE_TO_SELF,0.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, -1.0f,
+					Animation.RELATIVE_TO_SELF, 0.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
@@ -341,34 +303,39 @@ public class Util {
 
 	public static AnimationSet getExitAnimationSet(int animation) {
 		AnimationSet set = new AnimationSet(false);
-		AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f,0.0f);
+		AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f, 0.0f);
 		alphaAnimation.setDuration(3000);
 		set.addAnimation(alphaAnimation);
 		TranslateAnimation translateAnimation;
-		//    	TranslateAnimation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f, 0.0f);
-		//    	translateAnimation.setDuration(3000);
+		// TranslateAnimation translateAnimation = new TranslateAnimation(0.0f,
+		// 0.0f, 0.0f, 0.0f);
+		// translateAnimation.setDuration(3000);
 		switch (animation) {
 		case RichMediaAd.ANIMATION_FADE_IN:
 			return set;
 		case RichMediaAd.ANIMATION_FLIP_IN:
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,1.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+					Animation.RELATIVE_TO_SELF, 1.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_LEFT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,-1.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+					Animation.RELATIVE_TO_SELF, 0.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_RIGHT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,1.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 1.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+					Animation.RELATIVE_TO_SELF, 0.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
 		case RichMediaAd.ANIMATION_SLIDE_IN_TOP:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,0.0f, Animation.RELATIVE_TO_SELF,-1.0f);
+			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
+					Animation.RELATIVE_TO_SELF, -1.0f);
 			translateAnimation.setDuration(1000);
 			set.addAnimation(translateAnimation);
 			return set;
@@ -414,6 +381,46 @@ public class Util {
 		default:
 			return 0;
 		}
+	}
+
+	public static void prepareAndroidAdId(final Context context) {
+		try {
+			Class.forName("com.google.android.gms.common.GooglePlayServicesUtil");
+		} catch (ClassNotFoundException e) {
+			return;
+		}
+
+		if (androidAdId == null && GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
+			AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+
+				@Override
+				protected Void doInBackground(Void... params) {
+					Info adInfo = null;
+					try {
+						adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context);
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (GooglePlayServicesNotAvailableException e) {
+						e.printStackTrace();
+					} catch (IllegalStateException e) {
+						e.printStackTrace();
+					} catch (GooglePlayServicesRepairableException e) {
+						e.printStackTrace();
+					}
+					androidAdId = adInfo.getId();
+					return null;
+				}
+
+			};
+			task.execute();
+		}
+	}
+
+	public static String getAndroidAdId() {
+		if (androidAdId == null) {
+			return "";
+		}
+		return androidAdId;
 	}
 
 }

@@ -25,6 +25,7 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 
 	public RequestBannerAd(InputStream xmlArg) {
 		is = xmlArg;
+		Log.d("Parse is null"+(is==null));
 	}
 
 	private int getInteger(final String text) {
@@ -58,6 +59,10 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 		if (element != null) {
 			nodeList = element.getChildNodes();
 			if (nodeList.getLength() > 0)
+				// if (Log.isLoggable(TAG, Log.DEBUG)) {
+				// Log.d(TAG, "node value for " + name + ": " +
+				// nodeList.item(0).getNodeValue());
+				// }
 				return nodeList.item(0).getNodeValue();
 		}
 		return null;
@@ -90,6 +95,12 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 		try {
 			db = dbf.newDocumentBuilder();
 			InputSource src = new InputSource(inputStream);
+			if(Log.LOGGING_ENABLED){
+				String sResponse = convertStreamToString(inputStream);
+				Log.d("Ad RequestPerform HTTP Response: " + sResponse);
+				byte[] bytes = sResponse.getBytes(RESPONSE_ENCODING);
+				src = new InputSource(new ByteArrayInputStream(bytes));
+			}
 			src.setEncoding(Const.RESPONSE_ENCODING);
 			final Document doc = db.parse(src);
 
@@ -124,6 +135,7 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 				response.setType(Const.TEXT);
 				response.setText(this.getValue(doc, "htmlString"));
 				String skipOverlay = this.getAttribute(doc, "htmlString", "skipoverlaybutton");
+				Log.i("PARSER", "SkipOverlay: "+skipOverlay);
 				if (skipOverlay != null){
 					response.setSkipOverlay(Integer.parseInt(skipOverlay));
 				}
@@ -139,6 +151,7 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 				response.setType(Const.MRAID);
 				response.setText(this.getValue(doc, "htmlString"));
 				String skipOverlay = this.getAttribute(doc, "htmlString", "skipoverlaybutton");
+				Log.i("PARSER", "SkipOverlay: "+skipOverlay);
 				if (skipOverlay != null){
 					response.setSkipOverlay(Integer.parseInt(skipOverlay));
 				}

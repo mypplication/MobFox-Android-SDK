@@ -18,7 +18,9 @@ public abstract class RequestAd<T> {
 	public T sendRequest(AdRequest request)
 			throws RequestException {
 		if (is == null) {
+			Log.d("Parse Real");
 			String url = request.toString();
+			Log.d("Ad RequestPerform HTTP Get Url: " + url);
 			DefaultHttpClient client = new DefaultHttpClient();
 			HttpConnectionParams.setSoTimeout(client.getParams(),
 					Const.SOCKET_TIMEOUT);
@@ -47,6 +49,7 @@ public abstract class RequestAd<T> {
 				throw new RequestException("Error in HTTP request", t);
 			}
 		} else {
+			Log.d("Parse Injected");
 			return parseTestString();
 		}
 	}

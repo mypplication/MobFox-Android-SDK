@@ -13,6 +13,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.Log;
 
 public class InAppWebView extends Activity {
 
@@ -66,6 +67,8 @@ public class InAppWebView extends Activity {
 				try {
 					startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
 				} catch (ActivityNotFoundException exception) {
+					Log.w("MoPub", "Unable to start activity for " + url + ". " +
+							"Ensure that your phone can handle this intent.");
 				}
 
 				finish();

@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.http.client.methods.HttpGet;
@@ -23,8 +22,9 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.util.DisplayMetrics;
-import android.util.SparseArray;
 import android.util.TypedValue;
+
+import com.adsdk.sdk.Log;
 
 public class ResourceManager {
 
@@ -84,6 +84,7 @@ public class ResourceManager {
 		String[] files = ctx.fileList();
 		for (int i = 0; i < files.length; i++) {
 			if (VERSION.equals(files[i])) {
+				Log.d("Resources already installed");
 				return true;
 			}
 		}
@@ -110,6 +111,7 @@ public class ResourceManager {
 				}
 			}
 		}
+		Log.d("Resources installed version:" + result);
 		return result;
 	}
 
@@ -202,6 +204,8 @@ public class ResourceManager {
 		Drawable d = buildDrawable(ctx, name);
 		if (d != null) {
 			sResources.put(resId, d);
+		} else {
+			Log.i("registerImageResource", "drawable was null " + name);
 		}
 	}
 
@@ -210,7 +214,7 @@ public class ResourceManager {
 		InputStream in = null;
 		try {
 			in = ctx.getClass().getClassLoader()
-					.getResourceAsStream("defaultresources/" + name);
+					.getResourceAsStream(name);
 
 			Bitmap b = BitmapFactory.decodeStream(in);
 			if (b != null) {
@@ -229,6 +233,7 @@ public class ResourceManager {
 				return new BitmapDrawable(ctx.getResources(), b);
 			}
 		} catch (Exception e) {
+			Log.i("ResourceManager cannot find resource " + name);
 		} finally {
 			if (in != null) {
 				try {
@@ -300,11 +305,13 @@ public class ResourceManager {
 			mContext = ctx;
 			mUrl = url;
 			mResourceId = resId;
+			Log.i("Fetching: "+mUrl);
 		}
 
 		@Override
 		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
+			Log.i("Fetched: "+mUrl);
 			Message msg = mHandler.obtainMessage(RESOURCE_LOADED_MSG,
 					mResourceId, 0);
 			mHandler.sendMessage(msg);
@@ -344,6 +351,7 @@ public class ResourceManager {
 					return new BitmapDrawable(mContext.getResources(), b);
 				}
 			} catch (Exception e) {
+				Log.e("Cannot fetch image:" + urlString, e);
 			}
 			return null;
 		}

@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.webkit.WebView;
 
+import com.adsdk.sdk.Log;
+
 public class WebViewClient extends android.webkit.WebViewClient {
 	private boolean mAllowNavigation = false;
 	private Activity mActivity;
@@ -23,6 +25,7 @@ public class WebViewClient extends android.webkit.WebViewClient {
 
 	@Override
 	public boolean shouldOverrideUrlLoading(WebView view, String url) {
+		Log.d("Loading url:" + url);
 		if (url.startsWith("market:")
 				|| url.startsWith("http://market.android.com")
 				|| url.startsWith("sms:") || url.startsWith("tel:")
@@ -33,6 +36,7 @@ public class WebViewClient extends android.webkit.WebViewClient {
 			try {
 				mActivity.startActivity(intent);
 			} catch (ActivityNotFoundException e) {
+				Log.w("Could open URL: " + url);
 			}
 			return true;
 		}
@@ -50,7 +54,10 @@ public class WebViewClient extends android.webkit.WebViewClient {
 				Method method = c.getMethod("replayVideo");
 				method.invoke(mActivity);
 			} catch (NoSuchMethodException e) {
+				Log.d("Your activity class has no replayVideo method");
 			} catch (Exception e) {
+				Log.d(
+						"Couldn't run replayVideo method in your Activity");
 			}
 			return true;
 		}
@@ -60,7 +67,9 @@ public class WebViewClient extends android.webkit.WebViewClient {
 				Method method = c.getMethod("playVideo");
 				method.invoke(mActivity);
 			} catch (NoSuchMethodException e) {
+				Log.d("Your activity class has no playVideo method");
 			} catch (Exception e) {
+				Log.d("Couldn't run replayVideo method in your Activity");
 			}
 			return true;
 		}
@@ -93,6 +102,7 @@ public class WebViewClient extends android.webkit.WebViewClient {
 	@Override
 	public void onPageFinished(WebView view, String url) {
 		super.onPageFinished(view, url);
+		Log.d("onPageFinished:" + url + " mAllowedUrl:" + mAllowedUrl);
 		if ((mAllowedUrl == null) || (url.equals(mAllowedUrl))) {
 
 			if (mFinishedLoadingTime == 0) {

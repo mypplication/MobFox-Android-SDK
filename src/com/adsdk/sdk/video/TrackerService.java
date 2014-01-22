@@ -15,6 +15,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.Log;
 
 public class TrackerService {
 
@@ -37,6 +38,7 @@ public class TrackerService {
 					sTrackEvents.add(trackEvent);
 				}
 			}
+			Log.d("Added track event:" + sTrackEvents.size());
 		}
 		if (!sThreadRunning) {
 			startTracking();
@@ -48,6 +50,7 @@ public class TrackerService {
 			if (!sTrackEvents.contains(trackEvent)) {
 				sTrackEvents.add(trackEvent);
 			}
+			Log.d("Added track event:" + sTrackEvents.size());
 		}
 		if (!sThreadRunning) {
 			startTracking();
@@ -62,12 +65,15 @@ public class TrackerService {
 					sRetryTrackEvents.add(trackEvent);
 				}
 			}
+			Log.d("Added retry track event:" + sRetryTrackEvents.size());
 		}
 	}
 
 	private static boolean hasMoreUpdates() {
 		synchronized (sLock) {
 			boolean hasMore = !sTrackEvents.isEmpty();
+			Log.d("More updates:" + hasMore + " size:"
+					+ sTrackEvents.size());
 			return hasMore;
 		}
 	}
@@ -96,15 +102,25 @@ public class TrackerService {
 						while (!sStopped) {
 							while (hasMoreUpdates() && !sStopped) {
 								TrackEvent event = getNextUpdate();
+								Log.d("Sending tracking :" + event.url
+										+ " Time:"
+										+ event.timestamp
+										+ " Events left:"
+										+ sTrackEvents.size());
 								if (event == null)
 									continue;
 								URL u = null;
 								try {
 									u = new URL(event.url);
 								} catch (MalformedURLException e) {
+									Log.d("Wrong tracking url:"
+											+ event.url);
 									continue;
 								}
 
+								Log.d("Sending conversion Request");
+								Log.d("Perform tracking HTTP Get Url: "
+										+ event.url);
 								DefaultHttpClient client = new DefaultHttpClient();
 								HttpConnectionParams.setSoTimeout(
 										client.getParams(),
@@ -119,6 +135,8 @@ public class TrackerService {
 									if (response.getStatusLine()
 											.getStatusCode() != HttpURLConnection.HTTP_OK) {
 										requestRetry(event);
+									} else {
+										Log.d("Tracking OK");
 									}
 								} catch (Throwable t) {
 									requestRetry(event);
@@ -159,7 +177,9 @@ public class TrackerService {
 	}
 
 	public static void release() {
+		Log.v("release");
 		if (sThread != null) {
+			Log.v("release stopping Tracking events thread");
 			sStopped = true;
 		}
 	}

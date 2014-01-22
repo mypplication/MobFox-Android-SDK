@@ -23,6 +23,7 @@ import android.widget.MediaController.MediaPlayerControl;
 import android.widget.TextView;
 
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.Log;
 import com.adsdk.sdk.Util;
 
 public class MediaController extends FrameLayout {
@@ -70,6 +71,7 @@ public class MediaController extends FrameLayout {
 		mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
 		mResourceManager = new ResourceManager(mContext, mHandler);
 		buildNavigationBarView(metrics);
+		Log.d("MediaController created");
 	}
 
 	public void setMediaPlayer(MediaPlayerControl player) {
@@ -77,8 +79,7 @@ public class MediaController extends FrameLayout {
 		updatePausePlay();
 	}
 
-	protected void buildNavigationBarView(DisplayMetrics metrics) {
-		int barHeight = metrics.widthPixels;
+	protected void buildNavigationBarView(DisplayMetrics metrics) {		int barHeight = metrics.widthPixels;
 		this.setLayoutParams(new FrameLayout.LayoutParams(
 				android.view.ViewGroup.LayoutParams.FILL_PARENT,
 				android.view.ViewGroup.LayoutParams.FILL_PARENT));
@@ -93,8 +94,7 @@ public class MediaController extends FrameLayout {
 		mTopBar.setGravity(Gravity.CENTER_VERTICAL);
 		int padding = (int) TypedValue.applyDimension(
 				TypedValue.COMPLEX_UNIT_DIP, 5, getResources()
-				.getDisplayMetrics());
-		this.addView(mTopBar, paramsFrame);
+				.getDisplayMetrics());		this.addView(mTopBar, paramsFrame);
 
 		mBottomBar = new LinearLayout(mContext);
 		mBottomBar.setOrientation(LinearLayout.HORIZONTAL);
@@ -145,8 +145,7 @@ public class MediaController extends FrameLayout {
 		mLeftTime.setPadding(padding, padding, padding, padding);
 		mLeftTime.setGravity(Gravity.CENTER_VERTICAL);
 		mLeftTime.setTextSize(23);
-		mBottomBar.addView(mLeftTime, params);
-		View view = new View(mContext);
+		mBottomBar.addView(mLeftTime, params);		View view = new View(mContext);
 		params = new LinearLayout.LayoutParams(
 				0,
 				0);
@@ -155,20 +154,22 @@ public class MediaController extends FrameLayout {
 		mBottomBar.addView(view, params);
 		
 		initNavigationBarControllerView(padding,metrics);
+
 	}
 
 	private void initNavigationBarControllerView(int padding,DisplayMetrics metrics) {
 		int barHeight = metrics.widthPixels;
 		if (!mVideoData.showBottomNavigationBar) {
 			mBottomBar.setVisibility(View.GONE);
+
 		} else {
-			mBottomBar.setVisibility(View.VISIBLE);
-			if ((mVideoData.bottomNavigationBarBackground != null)
+			mBottomBar.setVisibility(View.VISIBLE);			if ((mVideoData.bottomNavigationBarBackground != null)
 					&& (mVideoData.bottomNavigationBarBackground.length() > 0)) {
 				mResourceManager.fetchResource(mContext,
 						mVideoData.bottomNavigationBarBackground,
 						ResourceManager.DEFAULT_BOTTOMBAR_BG_RESOURCE_ID);
 			} else {
+
 				mBottomBar.setBackgroundDrawable(
 				mResourceManager
 						.getResource(mContext,ResourceManager.DEFAULT_BOTTOMBAR_BG_RESOURCE_ID));
@@ -181,6 +182,7 @@ public class MediaController extends FrameLayout {
 					mResourceManager.fetchResource(mContext,mVideoData.pauseButtonImage,
 							ResourceManager.DEFAULT_PAUSE_IMAGE_RESOURCE_ID);
 				} else {
+
 					mPauseButton
 					.setImageDrawable(mResourceManager
 							.getResource(mContext,ResourceManager.DEFAULT_PAUSE_IMAGE_RESOURCE_ID));
@@ -200,6 +202,7 @@ public class MediaController extends FrameLayout {
 			if (mReplayButton != null) {
 				if ((mVideoData.replayButtonImage != null)
 						&& (mVideoData.replayButtonImage.length() > 0))
+
 				{
 					mReplayButton.setImageDrawable(null);
 					mResourceManager.fetchResource(mContext,
@@ -217,6 +220,7 @@ public class MediaController extends FrameLayout {
 					mReplayButton.setVisibility(View.GONE);
 				}
 			}
+
 			if (mLeftTime != null) {
 				if (mVideoData.showTimer) {
 					mLeftTime.setVisibility(View.VISIBLE);
@@ -231,41 +235,43 @@ public class MediaController extends FrameLayout {
 					LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
 							(int) (barHeight*buttonWidthPercent),
 							(int) (barHeight*buttonWidthPercent));
+
 					mBottomBar.addView(icon, params);
 				}
 			}
 		}
 		if (!mVideoData.showTopNavigationBar) {
 			mTopBar.setVisibility(View.GONE);
+
 		} else {
-			mTopBar.setVisibility(View.VISIBLE);
-			if ((mVideoData.topNavigationBarBackground != null)
+			mTopBar.setVisibility(View.VISIBLE);			if ((mVideoData.topNavigationBarBackground != null)
 					&& (mVideoData.topNavigationBarBackground.length() > 0)) {
 				mResourceManager.fetchResource(mContext,
 						mVideoData.topNavigationBarBackground,
 						ResourceManager.DEFAULT_TOPBAR_BG_RESOURCE_ID);
 			} else {
+
 				mTopBar.setBackgroundDrawable(
 						mResourceManager
 						.getResource(mContext,ResourceManager.DEFAULT_TOPBAR_BG_RESOURCE_ID));
 			}
+
 		}
 		if (!mVideoData.showNavigationBars) {
 			this.setVisibility(View.GONE);
 		}
-	}
-
-	public void show() {
+	}	public void show() {
 		show(DEFAULT_TIMEOUT);
-	}
+	}	public void show(int timeout) {
 
-	public void show(int timeout) {
+		Log.d("SHOW:" + timeout);
 		if (timeout == 0) {
 			mFixed = true;
 		}
 		if (!mShowing) {
 			this.setVisibility(View.VISIBLE);
 			mShowing = true;
+			Log.d("Change Visibility");
 		}
 		refreshProgress();
 		mHandler.removeMessages(FADE_OUT);
@@ -278,9 +284,12 @@ public class MediaController extends FrameLayout {
 	public boolean isShowing() {
 		return mShowing;
 	}	public void hide() {
+		Log.d("HIDE");
 		mFixed = false;
 		if (canToggle()) {
+			Log.d("Hide can toggle");
 			if (mShowing) {
+				Log.d("Hide change visibility");
 				mHandler.removeMessages(SHOW_PROGRESS);
 				this.setVisibility(View.GONE);
 				mShowing = false;
@@ -318,6 +327,7 @@ public class MediaController extends FrameLayout {
 
 		public ResourceHandler(MediaController controller) {
 			mController = new WeakReference<MediaController>(controller);
+
 		}
 
 		@Override
@@ -346,6 +356,7 @@ public class MediaController extends FrameLayout {
 					Drawable d = mResourceManager
 							.getResource(mContext,ResourceManager.DEFAULT_TOPBAR_BG_RESOURCE_ID);
 					if (d != null) {
+
 						mTopBar.setBackgroundDrawable(d);
 					}
 				}
@@ -355,6 +366,7 @@ public class MediaController extends FrameLayout {
 					Drawable d = mResourceManager
 							.getResource(mContext,ResourceManager.DEFAULT_BOTTOMBAR_BG_RESOURCE_ID);
 					if (d != null) {
+
 						mBottomBar.setBackgroundDrawable(d);
 					}
 				}
@@ -374,6 +386,7 @@ public class MediaController extends FrameLayout {
 					updateReplay();
 				}
 				break;
+
 			}
 			requestLayout();
 			break;
@@ -404,6 +417,7 @@ public class MediaController extends FrameLayout {
 		}
 		int position = mPlayer.getCurrentPosition();
 		int duration = mPlayer.getDuration();
+
 		int timeLeft = duration - position;
 		if (mLeftTime != null) {
 			mLeftTime.setText(stringForTime(timeLeft));
@@ -446,6 +460,7 @@ public class MediaController extends FrameLayout {
 	private void updateReplay() {
 		if (mReplayButton == null)
 			return;
+
 		if (mResourceManager.containsResource(ResourceManager.DEFAULT_REPLAY_IMAGE_RESOURCE_ID)) {
 			Drawable d = mResourceManager
 					.getResource(mContext,ResourceManager.DEFAULT_REPLAY_IMAGE_RESOURCE_ID);
@@ -471,6 +486,7 @@ public class MediaController extends FrameLayout {
 						.getResource(mContext,ResourceManager.DEFAULT_PAUSE_IMAGE_RESOURCE_ID);
 				mPauseButton.setImageDrawable(d);
 			}
+
 		} else {
 			if (mResourceManager.containsResource(ResourceManager.DEFAULT_PLAY_IMAGE_RESOURCE_ID)) {
 				Drawable d = mResourceManager
@@ -481,6 +497,7 @@ public class MediaController extends FrameLayout {
 						.getResource(mContext,ResourceManager.DEFAULT_PLAY_IMAGE_RESOURCE_ID);
 				mPauseButton.setImageDrawable(d);
 			}
+
 		}
 	}
 
