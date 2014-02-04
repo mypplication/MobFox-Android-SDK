@@ -4,7 +4,7 @@ package com.mobfox.adapter;
 import com.google.ads.mediation.MediationServerParameters;
 
 public class MobFoxServerParameters extends MediationServerParameters {
-	
-	@Parameter(name = "pubIdNumber")
+
+	@Parameter(name = "pubid")
 	public String pubIdNumber;
 }
