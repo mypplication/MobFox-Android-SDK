@@ -402,7 +402,9 @@ public class AdView extends FrameLayout {
 				this.addView(MRAIDFrame,new FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, (int)(50*scale+0.5f)));				
 			}
 
-			mMRAIDView.setMraidListener(createMraidListener(adListener));
+			if(adListener != null) {				
+				mMRAIDView.setMraidListener(createMraidListener(adListener));
+			}
 			mMRAIDView.loadHtmlData(response.getText());
 			
 			
