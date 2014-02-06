@@ -383,11 +383,7 @@ public class AdView extends FrameLayout {
 		}
 		
 		if(response.getType()==Const.TEXT || response.getType()==Const.IMAGE){
-			mBannerView = new BannerAdView(mContext, response, animation, adListener);
-			if(adspaceHeight != 0 && adspaceWidth != 0) {
-				mBannerView.setWidth(adspaceWidth);
-				mBannerView.setHeight(adspaceHeight);
-			}
+			mBannerView = new BannerAdView(mContext, response, adspaceWidth, adspaceHeight, animation, adListener);
 			this.addView(mBannerView);
 		}
 		if(response.getType()==Const.MRAID){
@@ -402,9 +398,7 @@ public class AdView extends FrameLayout {
 				this.addView(MRAIDFrame,new FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, (int)(50*scale+0.5f)));				
 			}
 
-			if(adListener != null) {				
-				mMRAIDView.setMraidListener(createMraidListener(adListener));
-			}
+			mMRAIDView.setMraidListener(createMraidListener(adListener));
 			mMRAIDView.loadHtmlData(response.getText());
 			
 			

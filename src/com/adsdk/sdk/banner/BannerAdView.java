@@ -21,6 +21,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.text.style.LineHeightSpan.WithDensity;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.webkit.WebSettings;
@@ -72,10 +73,12 @@ public class BannerAdView extends RelativeLayout {
 		this.height = height;
 	}
 
-	public BannerAdView(final Context context, final BannerAd response, final boolean animation, final AdListener adListener) {
+	public BannerAdView(final Context context, final BannerAd response, int width, int height, final boolean animation, final AdListener adListener) {
 		super(context);
-		this.response = response;
 		mContext = context;
+		this.response = response;
+		this.width = width;
+		this.height = height;
 		this.animation = animation;
 		this.adListener = adListener;
 		this.initialize(context);
