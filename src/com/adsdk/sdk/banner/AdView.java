@@ -414,22 +414,30 @@ public class AdView extends FrameLayout {
 			
 			@Override
 			public void onReady(MraidView arg0) {
-				listener.adLoadSucceeded(null);
+				if(listener != null){
+					listener.adLoadSucceeded(null);
+				}
 			}
 			
 			@Override
 			public void onFailure(MraidView arg0) {
-				listener.noAdFound();
+				if(listener != null){
+					listener.noAdFound();
+				}
 			}
 			
 			@Override
 			public void onExpand(MraidView arg0) {
-				listener.adShown(null, true);
+				if(listener != null){
+					listener.adShown(null, true);
+				}
 			}
 			
 			@Override
 			public void onClose(MraidView arg0, ViewState arg1) {
-				listener.adClosed(null, true);
+				if(listener != null){
+					listener.adClosed(null, true);
+				}
 			}
 		};
 	}

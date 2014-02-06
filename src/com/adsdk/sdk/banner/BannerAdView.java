@@ -21,7 +21,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.text.style.LineHeightSpan.WithDensity;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.webkit.WebSettings;
@@ -64,14 +63,6 @@ public class BannerAdView extends RelativeLayout {
 	private static Field mWebView_LAYER_TYPE_SOFTWARE;
 
 	private final Handler updateHandler = new Handler();
-
-	public void setWidth(int width) {
-		this.width = width;
-	}
-
-	public void setHeight(int height) {
-		this.height = height;
-	}
 
 	public BannerAdView(final Context context, final BannerAd response, int width, int height, final boolean animation, final AdListener adListener) {
 		super(context);
