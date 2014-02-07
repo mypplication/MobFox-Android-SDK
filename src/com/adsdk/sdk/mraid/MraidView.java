@@ -209,6 +209,7 @@ public class MraidView extends BaseWebView implements UserClickListener {
         
         try {
             HttpGet httpGet = new HttpGet(url);
+            httpGet.setHeader("User-Agent", System.getProperty("http.agent"));
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
     

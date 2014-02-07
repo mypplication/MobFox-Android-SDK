@@ -142,6 +142,7 @@ public class BannerAdView extends RelativeLayout {
 				try {
 					HttpClient client = new DefaultHttpClient();
 					HttpGet request = new HttpGet();
+					request.setHeader("User-Agent", System.getProperty("http.agent"));
 					request.setURI(new URI(clickUrl));
 					client.execute(request);
 				} catch (URISyntaxException e) {

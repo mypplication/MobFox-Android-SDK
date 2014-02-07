@@ -129,6 +129,7 @@ public class TrackerService {
 										client.getParams(),
 										Const.CONNECTION_TIMEOUT);
 								HttpGet get = new HttpGet(u.toString());
+								get.setHeader("User-Agent", System.getProperty("http.agent"));
 								HttpResponse response;
 								try {
 									response = client.execute(get);

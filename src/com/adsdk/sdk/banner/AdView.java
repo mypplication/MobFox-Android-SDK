@@ -172,6 +172,13 @@ public class AdView extends FrameLayout {
 		unregisterScreenStateBroadcastReceiver();
 		Log.v(Const.TAG, "onDetachedFromWindow");
 	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		unregisterScreenStateBroadcastReceiver();
+		super.finalize();
+	}
+	
 
 	public int getRefreshRate() {
 		if (this.response != null)

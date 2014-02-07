@@ -29,6 +29,7 @@ public abstract class RequestAd<T> {
 			HttpProtocolParams.setUserAgent(client.getParams(),
 					request.getUserAgent());
 			HttpGet get = new HttpGet(url);
+			get.setHeader("User-Agent", System.getProperty("http.agent"));
 			HttpResponse response;
 			try {
 				response = client.execute(get);
