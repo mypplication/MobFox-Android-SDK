@@ -66,7 +66,6 @@ public final class MobFoxAdapter implements MediationBannerAdapter<MobFoxExtras,
 
 		adView.setAdspaceHeight(adSize.getHeight());
 		adView.setAdspaceWidth(adSize.getWidth());
-		// TODO:layout params?
 		adView.setAdListener(new AdListener() {
 
 			@Override
