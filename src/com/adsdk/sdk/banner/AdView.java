@@ -16,6 +16,7 @@ import android.location.Location;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.FrameLayout;
 
 import com.adsdk.sdk.AdListener;
@@ -25,26 +26,32 @@ import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.RequestBannerAd;
 import com.adsdk.sdk.Util;
+import com.adsdk.sdk.customevents.CustomEvent;
+import com.adsdk.sdk.customevents.CustomEventBanner;
+import com.adsdk.sdk.customevents.CustomEventBanner.CustomEventBannerListener;
+import com.adsdk.sdk.customevents.CustomEventBannerFactory;
 import com.adsdk.sdk.mraid.MraidView;
 import com.adsdk.sdk.mraid.MraidView.MraidListener;
 import com.adsdk.sdk.mraid.MraidView.ViewState;
 
 public class AdView extends FrameLayout {
-	
+
 	public static final int LIVE = 0;
 	public static final int TEST = 1;
 
 	private boolean includeLocation = false;
 	private String publisherId;
 	private boolean animation;
-	
+
 	private int adspaceWidth;
 	private int adspaceHeight;
 	private boolean adspaceStrict;
 
 	private BannerAdView mBannerView;
 	private MraidView mMRAIDView;
-	
+	private CustomEventBanner customEventBanner;
+	private View customEventBannerView;
+
 	private Timer reloadTimer;
 	private boolean isInternalBrowser = false;
 
@@ -74,20 +81,21 @@ public class AdView extends FrameLayout {
 		}
 	};
 	private FrameLayout MRAIDFrame;
+	private CustomEventBannerListener customAdListener;
 
-	public void setAdspaceWidth(int width){
+	public void setAdspaceWidth(int width) {
 		adspaceWidth = width;
 	}
-	
-	public void setAdspaceHeight(int height){
+
+	public void setAdspaceHeight(int height) {
 		adspaceHeight = height;
 	}
-	
-	public void setAdspaceStrict (boolean strict) {
+
+	public void setAdspaceStrict(boolean strict) {
 		adspaceStrict = strict;
 	}
 
-	public AdView(final Context context, final AttributeSet attributes){
+	public AdView(final Context context, final AttributeSet attributes) {
 		super(context, attributes);
 		mContext = context;
 		if (attributes != null) {
@@ -111,22 +119,19 @@ public class AdView extends FrameLayout {
 				}
 			}
 		}
-		
+
 		initialize(context);
 	}
-	
 
 	public AdView(final Context context, final String requestURL, final String publisherId) {
 		this(context, requestURL, publisherId, false, false);
 	}
 
-	public AdView(final Context context, final String requestURL, final InputStream xml, final String publisherId,
-			final boolean includeLocation, final boolean animation) {
+	public AdView(final Context context, final String requestURL, final InputStream xml, final String publisherId, final boolean includeLocation, final boolean animation) {
 		this(context, xml, requestURL, publisherId, includeLocation, animation);
 	}
 
-	public AdView(final Context context, final InputStream xml,  final String requestURL, final String publisherId, final boolean includeLocation,
-			final boolean animation){
+	public AdView(final Context context, final InputStream xml, final String requestURL, final String publisherId, final boolean includeLocation, final boolean animation) {
 		super(context);
 		this.xml = xml;
 		this.requestURL = requestURL;
@@ -137,13 +142,11 @@ public class AdView extends FrameLayout {
 		this.initialize(context);
 	}
 
-	public AdView(final Context context, final String requestURL, final String publisherId, final boolean includeLocation,
-			final boolean animation) {
+	public AdView(final Context context, final String requestURL, final String publisherId, final boolean includeLocation, final boolean animation) {
 		this(context, requestURL, publisherId, includeLocation, animation, null);
 	}
-	
-	public AdView(final Context context, final String requestURL, final String publisherId, final boolean includeLocation,
-			final boolean animation, final AdListener listener) {
+
+	public AdView(final Context context, final String requestURL, final String publisherId, final boolean includeLocation, final boolean animation, final AdListener listener) {
 		super(context);
 		this.requestURL = requestURL;
 		mContext = context;
@@ -151,7 +154,7 @@ public class AdView extends FrameLayout {
 		this.includeLocation = includeLocation;
 		this.animation = animation;
 		this.adListener = listener;
-		Log.d("AdListener: "+(adListener==null));
+		Log.d("AdListener: " + (adListener == null));
 		this.initialize(context);
 	}
 
@@ -172,13 +175,12 @@ public class AdView extends FrameLayout {
 		unregisterScreenStateBroadcastReceiver();
 		Log.v(Const.TAG, "onDetachedFromWindow");
 	}
-	
+
 	@Override
 	protected void finalize() throws Throwable {
 		unregisterScreenStateBroadcastReceiver();
 		super.finalize();
 	}
-	
 
 	public int getRefreshRate() {
 		if (this.response != null)
@@ -190,9 +192,7 @@ public class AdView extends FrameLayout {
 		if (this.request == null) {
 			this.request = new AdRequest();
 			if (this.telephonyPermission == PackageManager.PERMISSION_GRANTED) {
-				final TelephonyManager tm = (TelephonyManager) this
-						.getContext().getSystemService(
-								Context.TELEPHONY_SERVICE);
+				final TelephonyManager tm = (TelephonyManager) this.getContext().getSystemService(Context.TELEPHONY_SERVICE);
 				this.request.setDeviceId(tm.getDeviceId());
 				this.request.setAndroidIMEI(tm.getDeviceId());
 			} else {
@@ -204,16 +204,13 @@ public class AdView extends FrameLayout {
 			this.request.setUserAgent(Util.getDefaultUserAgentString(mContext));
 			this.request.setUserAgent2(Util.buildUserAgent());
 			Log.d(Const.TAG, "WebKit UserAgent:" + this.request.getUserAgent());
-			Log.d(Const.TAG,
-					"SDK built UserAgent:" + this.request.getUserAgent2());
+			Log.d(Const.TAG, "SDK built UserAgent:" + this.request.getUserAgent2());
 		}
 		Location location = null;
 		if (this.includeLocation)
 			location = Util.getLocation(mContext);
 		if (location != null) {
-			Log.d(Const.TAG,
-					"location is longitude: " + location.getLongitude()
-					+ ", latitude: " + location.getLatitude());
+			Log.d(Const.TAG, "location is longitude: " + location.getLongitude() + ", latitude: " + location.getLatitude());
 			this.request.setLatitude(location.getLatitude());
 			this.request.setLongitude(location.getLongitude());
 		} else {
@@ -235,6 +232,7 @@ public class AdView extends FrameLayout {
 		registerScreenStateBroadcastReceiver();
 		telephonyPermission = context.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE);
 		Util.prepareAndroidAdId(context);
+		customAdListener = createCustomAdListener(adListener);
 	}
 
 	public boolean isInternalBrowser() {
@@ -250,8 +248,7 @@ public class AdView extends FrameLayout {
 						Log.d(Const.TAG, "Screen sleep with ad in foreground, disable refresh");
 						pause();
 					} else {
-						Log.d(Const.TAG, "Screen sleep but ad in background; " +
-								"refresh should already be disabled");
+						Log.d(Const.TAG, "Screen sleep but ad in background; " + "refresh should already be disabled");
 					}
 				} else if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)) {
 					if (mIsInForeground) {
@@ -277,21 +274,17 @@ public class AdView extends FrameLayout {
 				public void run() {
 					Log.d(Const.TAG, "starting request thread");
 					final RequestBannerAd requestAd;
-					if(xml == null)
+					if (xml == null)
 						requestAd = new RequestBannerAd();
 					else
 						requestAd = new RequestBannerAd(xml);
 
 					try {
-
-						AdView.this.response = requestAd
-								.sendRequest(AdView.this.getRequest());
+						AdView.this.response = requestAd.sendRequest(AdView.this.getRequest());
 						if (AdView.this.response != null) {
 							Log.d(Const.TAG, "response received");
-							Log.d(Const.TAG, "getVisibility: "
-									+ AdView.this.getVisibility());
-							AdView.this.updateHandler
-							.post(AdView.this.showContent);
+							Log.d(Const.TAG, "getVisibility: " + AdView.this.getVisibility());
+							AdView.this.updateHandler.post(AdView.this.showContent);
 						}
 					} catch (final Throwable e) {
 						AdView.this.notifyLoadAdFailed(e);
@@ -301,14 +294,11 @@ public class AdView extends FrameLayout {
 				}
 
 			});
-			this.loadContentThread
-			.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+			this.loadContentThread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
 				@Override
-				public void uncaughtException(final Thread thread,
-						final Throwable ex) {
-					Log.e(Const.TAG,
-							"Exception in request thread", ex);
+				public void uncaughtException(final Thread thread, final Throwable ex) {
+					Log.e(Const.TAG, "Exception in request thread", ex);
 					AdView.this.loadContentThread = null;
 				}
 			});
@@ -325,18 +315,18 @@ public class AdView extends FrameLayout {
 	}
 
 	private void notifyNoAd() {
-	this.updateHandler.post(new Runnable() {
+		this.updateHandler.post(new Runnable() {
 
-		@Override
-		public void run() {
-			Log.d(Const.TAG, "No Ad");
+			@Override
+			public void run() {
+				Log.d(Const.TAG, "No Ad");
 
-			if (adListener != null)
-				adListener.noAdFound();
-		}
-	});
-}
-	
+				if (adListener != null)
+					adListener.noAdFound();
+			}
+		});
+	}
+
 	private void notifyLoadAdFailed(final Throwable e) {
 		this.updateHandler.post(new Runnable() {
 
@@ -344,8 +334,7 @@ public class AdView extends FrameLayout {
 			public void run() {
 				Log.e(Const.TAG, "Exception in request thread", e);
 				if (AdView.this.adListener != null) {
-					Log.d(Const.TAG, "notify bannerListener: "
-							+ AdView.this.adListener.getClass().getName());
+					Log.d(Const.TAG, "notify bannerListener: " + AdView.this.adListener.getClass().getName());
 					adListener.noAdFound();
 				}
 			}
@@ -377,83 +366,169 @@ public class AdView extends FrameLayout {
 			}
 	}
 
-	private void showContent(){
-		if(mBannerView!=null){
+	private void showContent() {
+		if (mBannerView != null) {
 			this.removeView(mBannerView);
+			mBannerView = null;
 		}
-		if(mMRAIDView!=null){
+		if (mMRAIDView != null) {
 			mMRAIDView.destroy();
 			this.removeView(mMRAIDView);
+			mMRAIDView = null;
 		}
-		if(MRAIDFrame!=null){
+		if (MRAIDFrame != null) {
 			this.removeView(MRAIDFrame);
+			MRAIDFrame = null;
+		}
+		if (customEventBannerView != null) {
+			this.removeView(customEventBannerView);
 		}
 		
-		if(response.getType()==Const.TEXT || response.getType()==Const.IMAGE){
+		if (response.getType() == Const.TEXT || response.getType() == Const.IMAGE) {
 			mBannerView = new BannerAdView(mContext, response, adspaceWidth, adspaceHeight, animation, adListener);
-			this.addView(mBannerView);
+			if (response.getCustomEvents().isEmpty()) {
+				this.addView(mBannerView);
+			}
 		}
-		if(response.getType()==Const.MRAID){
+		if (response.getType() == Const.MRAID) {
 			mMRAIDView = new MraidView(mContext);
 			MRAIDFrame = new FrameLayout(mContext);
 			MRAIDFrame.addView(mMRAIDView);
-			
-			final float scale = mContext.getResources().getDisplayMetrics().density;
-			if(adspaceHeight != 0 && adspaceWidth != 0) {
-				this.addView(MRAIDFrame,new FrameLayout.LayoutParams((int)(adspaceWidth*scale+0.5f), (int)(adspaceHeight*scale+0.5f)));	
-			} else {
-				this.addView(MRAIDFrame,new FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, (int)(50*scale+0.5f)));				
+
+			if (response.getCustomEvents().isEmpty()) {
+				addMRAIDBannerView();
 			}
 
 			mMRAIDView.setMraidListener(createMraidListener(adListener));
 			mMRAIDView.loadHtmlData(response.getText());
-			
-			
+
 		}
-		if(response.getType()==Const.NO_AD){
-			notifyNoAd();
+		if (response.getType() == Const.NO_AD) {
+			if (response.getCustomEvents().isEmpty()) {
+				notifyNoAd();
+			}
 		}
+		
+		if(!response.getCustomEvents().isEmpty()) {
+			loadCustomEventBanner();
+			if(customEventBanner == null) {
+				response.getCustomEvents().clear();
+				customAdListener.onBannerFailed();
+			}
+		}
+		
 		this.startReloadTimer();
 	}
 	
-	private MraidListener createMraidListener(final AdListener listener) {
-		return new MraidListener() {
-			
+
+	private void addMRAIDBannerView() {
+		final float scale = mContext.getResources().getDisplayMetrics().density;
+		if (adspaceHeight != 0 && adspaceWidth != 0) {
+			AdView.this.addView(MRAIDFrame, new FrameLayout.LayoutParams((int) (adspaceWidth * scale + 0.5f), (int) (adspaceHeight * scale + 0.5f)));
+		} else {
+			AdView.this.addView(MRAIDFrame, new FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, (int) (50 * scale + 0.5f)));
+		}
+	}
+
+	private void loadCustomEventBanner() {
+		customEventBanner = null;
+		while (!response.getCustomEvents().isEmpty() && customEventBanner == null) {
+			try {
+				CustomEvent event = response.getCustomEvents().get(0);
+				response.getCustomEvents().remove(event);
+				customEventBanner = CustomEventBannerFactory.create(event.getClassName());
+				if (adspaceHeight != 0 && adspaceWidth != 0) {
+					customEventBanner.loadBanner(mContext, customAdListener, event.getOptionalParameter(), event.getPixelUrl(), adspaceWidth, adspaceHeight);
+				} else {
+					customEventBanner.loadBanner(mContext, customAdListener, event.getOptionalParameter(), event.getPixelUrl(), 300, 50);
+				}
+			} catch (Exception e) {
+				Log.d("Failed to create Custom Event Banner.");
+			}
+		}
+		
+	}
+
+	private CustomEventBannerListener createCustomAdListener(final AdListener listener) {
+		return new CustomEventBannerListener() {
+
 			@Override
-			public void onReady(MraidView arg0) {
-				if(listener != null){
+			public void onBannerLoaded(View bannerView) {
+				AdView.this.addView(bannerView);
+				if (listener != null) {
 					listener.adLoadSucceeded(null);
 				}
 			}
-			
+
 			@Override
-			public void onFailure(MraidView arg0) {
-				if(listener != null){
-					listener.noAdFound();
+			public void onBannerFailed() {
+				loadCustomEventBanner();
+				if(customEventBanner != null) {
+					return;
+				} else if (mBannerView != null) {
+					AdView.this.addView(mBannerView);
+				} else if (mMRAIDView != null) {
+					addMRAIDBannerView();
+				} else {
+					notifyNoAd();
 				}
 			}
-			
+
 			@Override
-			public void onExpand(MraidView arg0) {
-				if(listener != null){
+			public void onBannerExpanded() {
+				if (listener != null) {
 					listener.adShown(null, true);
 				}
 			}
-			
+
 			@Override
-			public void onClose(MraidView arg0, ViewState arg1) {
-				if(listener != null){
+			public void onBannerClosed() {
+				if (listener != null) {
 					listener.adClosed(null, true);
 				}
 			}
 		};
 	}
+
+	private MraidListener createMraidListener(final AdListener listener) {
+		return new MraidListener() {
+
+			@Override
+			public void onReady(MraidView arg0) {
+				if (listener != null) {
+					listener.adLoadSucceeded(null);
+				}
+			}
+
+			@Override
+			public void onFailure(MraidView arg0) {
+				if (listener != null) {
+					listener.noAdFound();
+				}
+			}
+
+			@Override
+			public void onExpand(MraidView arg0) {
+				if (listener != null) {
+					listener.adShown(null, true);
+				}
+			}
+
+			@Override
+			public void onClose(MraidView arg0, ViewState arg1) {
+				if (listener != null) {
+					listener.adClosed(null, true);
+				}
+			}
+		};
+	}
+
 	public void release() {
 		unregisterScreenStateBroadcastReceiver();
-		if(mMRAIDView!=null)
+		if (mMRAIDView != null)
 			mMRAIDView.destroy();
 	}
-	
+
 	private void unregisterScreenStateBroadcastReceiver() {
 		try {
 			mContext.unregisterReceiver(mScreenStateReceiver);
@@ -461,7 +536,7 @@ public class AdView extends FrameLayout {
 			Log.d("Failed to unregister screen state broadcast receiver (never registered).");
 		}
 	}
-	
+
 	public void resume() {
 		if (this.reloadTimer != null) {
 			this.reloadTimer.cancel();
@@ -478,10 +553,10 @@ public class AdView extends FrameLayout {
 
 	public void setAdListener(final AdListener bannerListener) {
 		this.adListener = bannerListener;
-		if(mMRAIDView!=null){
+		if (mMRAIDView != null) {
 			mMRAIDView.setMraidListener(createMraidListener(bannerListener));
 		}
-		if(mBannerView!=null){
+		if (mBannerView != null) {
 			mBannerView.setAdListener(bannerListener);
 		}
 	}
@@ -492,7 +567,7 @@ public class AdView extends FrameLayout {
 
 	private void startReloadTimer() {
 		Log.d(Const.TAG, "start reload timer");
-		if (this.reloadTimer == null || response.getRefresh()<=0)
+		if (this.reloadTimer == null || response.getRefresh() <= 0)
 			return;
 
 		final int refreshTime = this.response.getRefresh() * 1000;
@@ -501,5 +576,6 @@ public class AdView extends FrameLayout {
 		final ReloadTask reloadTask = new ReloadTask(AdView.this);
 		this.reloadTimer.schedule(reloadTask, refreshTime);
 	}
+
 
 }

@@ -5,6 +5,8 @@ import static com.adsdk.sdk.Const.RESPONSE_ENCODING;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -12,10 +14,12 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
 
 public class RequestBannerAd extends RequestAd<BannerAd> {
@@ -68,6 +72,39 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 				return nodeList.item(0).getNodeValue();
 		}
 		return null;
+	}
+
+	private String getValue(final Element element, final String name) {
+		NodeList nodeList = element.getElementsByTagName(name);
+		if (nodeList.getLength() > 0) {
+			return nodeList.item(0).getNodeValue();
+		} else {
+			return null;
+		}
+
+	}
+
+	private List<CustomEvent> getCustomEvents(Document doc) {
+		List<CustomEvent> customEvents = new ArrayList<CustomEvent>();
+
+		Element element = doc.getElementById("customevents");
+		if (element != null) {
+
+			NodeList nodeList = element.getElementsByTagName("customevent");
+			for (int i = 0; i < nodeList.getLength(); i++) {
+				Node n = nodeList.item(i);
+				if (n instanceof Element) {
+					Element el = (Element) n;
+					String className = getValue(el, "class");
+					String parameter = getValue(el, "classparameter");
+					String pixel = getValue(el, "pixel");
+					CustomEvent event = new CustomEvent(className, parameter, pixel);
+					customEvents.add(event);
+				}
+			}
+		}
+
+		return customEvents;
 	}
 
 	private boolean getValueAsBoolean(final Document document, final String name) {
@@ -158,9 +195,15 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 				response.setSkipPreflight(this.getValueAsBoolean(doc, "skippreflight"));
 			} else if ("noAd".equalsIgnoreCase(type)) {
 				response.setType(Const.NO_AD);
-				response.setRefresh(RELOAD_AFTER_NO_AD);
-			} else
+				if (response.getRefresh() <= 0) {
+					response.setRefresh(RELOAD_AFTER_NO_AD);
+				}
+			} else {
 				throw new RequestException("Unknown response type " + type);
+			}
+
+			List<CustomEvent> customEvents = this.getCustomEvents(doc);
+			response.setCustomEvents(customEvents);
 
 		} catch (final ParserConfigurationException e) {
 			throw new RequestException("Cannot parse Response", e);

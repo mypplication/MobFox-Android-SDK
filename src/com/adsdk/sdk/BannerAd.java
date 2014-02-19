@@ -1,5 +1,8 @@
 package com.adsdk.sdk;
 
+import java.util.List;
+
+import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
 
 public class BannerAd implements Ad {
@@ -18,6 +21,7 @@ public class BannerAd implements Ad {
 	private String clickUrl;
 	private String urlType;
 	private int refresh;
+	private List<CustomEvent> customEvents;
 	private boolean scale;
 	private boolean skipPreflight;
 
@@ -128,6 +132,14 @@ public class BannerAd implements Ad {
 
 	public void setSkipOverlay(int skipOverlay) {
 		this.skipOverlay = skipOverlay;
+	}
+
+	public List<CustomEvent> getCustomEvents() {
+		return customEvents;
+	}
+
+	public void setCustomEvents(List<CustomEvent> customEvents) {
+		this.customEvents = customEvents;
 	}
 
 }
