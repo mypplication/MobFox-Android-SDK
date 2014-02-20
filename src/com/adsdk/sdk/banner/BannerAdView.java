@@ -114,7 +114,7 @@ public class BannerAdView extends RelativeLayout {
 
 	private void doOpenUrl(final String url) {
 		notifyAdClicked();
-		if(this.response.getClickUrl() != null) {
+		if(this.response.getClickUrl() != null && this.response.getSkipOverlay() == 1) {
 			makeTrackingRequest(this.response.getClickUrl());
 		}
 
@@ -139,6 +139,9 @@ public class BannerAdView extends RelativeLayout {
 
 			@Override
 			protected Void doInBackground(Void... params) {
+				if(clickUrl.startsWith("market")) { //just to stay safe
+					return null;
+				}
 				try {
 					HttpClient client = new DefaultHttpClient();
 					HttpGet request = new HttpGet();

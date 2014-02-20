@@ -398,6 +398,7 @@ public class Util {
 					Info adInfo = null;
 					try {
 						adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context);
+						androidAdId = adInfo.getId();
 					} catch (IOException e) {
 						e.printStackTrace();
 					} catch (GooglePlayServicesNotAvailableException e) {
@@ -407,7 +408,6 @@ public class Util {
 					} catch (GooglePlayServicesRepairableException e) {
 						e.printStackTrace();
 					}
-					androidAdId = adInfo.getId();
 					return null;
 				}
 
