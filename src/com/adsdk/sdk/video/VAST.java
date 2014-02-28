@@ -1,141 +1,290 @@
 package com.adsdk.sdk.video;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
+import org.simpleframework.xml.Text;
 
+@Root(name = "VAST")
 public class VAST {
-	String version;
-	List<Ad> ads = new ArrayList<Ad>();
-	String error;
+	
+	@Attribute(name = "version")
+	public String version;
+	
+	@ElementList(inline=true)
+	public List<Ad> ads;
+	
+	@Element(required=false, name="Error")
+	public String error;
 
+	@Root(name = "Ad")
 	public static class Ad {
+		@Attribute(name = "id")
 		String id;
+		
+		@Attribute(required = false, name = "sequence")
 		int sequence;
+		
+		@Element(required = false, name = "InLine")
 		InLine inLine;
+		
+		@Element(required = false, name = "Wrapper")
 		Wrapper wrapper;
 		
+		@Root
 		public static class AdSystem {
+			@Attribute(required = false, name = "version")
 			String version;
+			
+			@Text
 			String name;
 		}
 		
+		@Root(name = "Wrapper")
 		public static class Wrapper {
+			@Element(required = false, name = "AdSystem")
 			AdSystem adSystem;
-			List<Impression> impressions = new ArrayList<Impression>();
+			
+			@ElementList(required = false, inline=true)
+			List<Impression> impressions;
+			
+			@Element(required = false, name = "VASTAdTagURI")
 			String VASTAdTagUri;
+			
+			@Element(required = false, name = "Error")
 			String error;
-			List<Creative> creatives = new ArrayList<Creative>();
+			
+			@ElementList(name = "Creatives")
+			List<Creative> creatives;
 		}
 		
+		@Root(name = "Impression")
 		public static class Impression {
+			@Attribute(required = false, name = "id")
 			String id;
+			
+			@Text
 			String url;
 		}
 
+		@Root (name = "InLine")
 		public static class InLine {
+			@Element (required = false, name = "AdSystem")
 			AdSystem adSystem;
+			
+			@Element (required = false, name = "AdTitle")
 			String adTitle;
+			
+			@Element (required = false, name = "Description")
 			String description;
+			
+			@Element (required = false, name = "Advertiser")
 			String advertiser;
+			
+			@Element (required = false, name = "Error")
 			String error;
-			List<Impression> impressions = new ArrayList<Impression>();
-			List<Creative> creatives = new ArrayList<Creative>();
+			
+			@ElementList(required = false, inline = true)
+			List<Impression> impressions;
+			
+			@ElementList(name = "Creatives")
+			List<Creative> creatives;
 
 		}
 
+		@Root (name = "Creative")
 		public static class Creative {
+			@Attribute(name = "id")
 			String id;
+			
+			@Attribute(required = false, name = "sequence")
 			int sequence;
+			
+			@Attribute(required = false, name = "AdID")
 			String adId;
+			
+			@Attribute(required = false, name = "apiFramework")
 			String apiFramework;
+			
+			@Element(required = false, name = "Linear")
 			Linear linear;
+			
+			@Element(required = false, name = "CompanionAds")
 			CompanionAds companionAds;
+			
+			@Element(required = false, name = "NonLinearAds")
 			NonLinearAds nonLinearAds;
 
+			@Root (name = "Linear")
 			public static class Linear {
-				int skipoffset;
-				int duration; // required, format: HH:MM:SS or HH:MM:SS.mmm
-				List<MediaFile> mediaFiles = new ArrayList<MediaFile>(); // required (1-*)
-				List<Tracking> trackingEvents = new ArrayList<Tracking>(); // optional (1-*)
+				@Attribute(required = false, name = "skipoffset")
+				String skipoffset;
+				
+				@Element(name = "Duration") //TODO: conversion?
+				String duration; // required, format: HH:MM:SS or HH:MM:SS.mmm
+				
+				@ElementList(name = "MediaFiles")
+				List<MediaFile> mediaFiles; // required (1-*)
+				
+				@ElementList(required = false, name = "TrackingEvents")
+				List<Tracking> trackingEvents; // optional (1-*)
+				
+				@Element(required = false, name = "VideoClicks")
 				VideoClicks videoClicks;
 
+				@Root(name = "MediaFile")
 				public static class MediaFile {
+					@Attribute(name = "id")
 					String id;
+					
+					@Attribute(required = false, name = "delivery")
 					String delivery;
+					@Attribute(required = false, name = "type")
 					String type;
+					@Attribute(required = false, name = "bitrate")
 					String bitrate;
+					@Attribute(required = false, name = "width")
 					int width;
+					@Attribute(required = false, name = "height")
 					int height;
+					@Attribute(required = false, name = "scalable")
 					boolean scalable;
+					@Attribute(required = false, name = "maintainAspectRatio")
 					boolean maintainAspectRatio;
+					@Attribute(required = false, name = "codec")
 					String codec;
+					@Attribute(required = false, name = "apiFramework")
 					String apiFramework;
+					@Text
 					String url;
 				}
 
+				@Root(name = "VideoClicks")
 				public static class VideoClicks {
+					@Element(required = false, name = "ClickThrough")
 					String clickThrough;
-					List<String> clickTracking = new ArrayList<String>();
-					List<String> customClicks = new ArrayList<String>();
+					@ElementList(required = false, inline = true)
+					List<ClickTracking> clickTracking;
+					
+					@ElementList(required = false, inline = true)
+					List<CustomClick> customClicks;
 				}
-
+				
+				@Root(name = "ClickTracking")
+				public static class ClickTracking{
+					@Text
+					String url;
+				}
+				
+				@Root(name = "CustomClick")
+				public static class CustomClick{
+					@Text
+					String url;
+				}
 			}
-
+			
+			@Root(name = "CompanionAds")
 			public static class CompanionAds {
+				@Attribute(required = false, name = "required")
 				String required;
-				List<Companion> companions = new ArrayList<Creative.CompanionAds.Companion>();
+				
+				@ElementList(required = false, inline = true)
+				List<Companion> companions;
 
+				@Root(name = "Companion")
 				public static class Companion {
+					@Attribute(required = false, name = "id")
 					String id;
+					@Attribute(required = false, name = "width")
 					int width;
+					@Attribute(required = false, name = "height")
 					int height;
+					@Attribute(required = false, name = "assetWidth")
 					int assetWidth;
+					@Attribute(required = false, name = "assetHeight")
 					int assetHeight;
+					@Attribute(required = false, name = "expandedWidth")
 					int expandedWidth;
+					@Attribute(required = false, name = "expandedHeight")
 					int expandedHeight;
+					@Attribute(required = false, name = "apiFramework")
 					String apiFramework;
+					@Attribute(required = false, name = "adSlotID")
 					String adSlotID;
+					@Element(required = false, name = "StaticResource")
 					StaticResource staticResource;
+					@Element(required = false, name = "IFrameResource")
 					String iframeResource;
+					@Element(required = false, name = "HTMLResource")
 					String htmlResource;
+					@Element(required = false, name = "AltText")
 					String altText;
+					@Element(required = false, name = "CompanionClickThrough")
 					String companionClickThrough;
+					@Element(required = false, name = "CompanionClickTracking")
 					String companionClickTracking;
+					@ElementList(required = false, name = "TrackingEvents")
 					List<Tracking> trackingEvents;
 				}
 			}
 
+			@Root(name = "NonLinearAds")
 			public static class NonLinearAds {
-				List<NonLinear> nonLinears = new ArrayList<NonLinear>();
-				List<Tracking> trackingEvents = new ArrayList<Creative.Tracking>();
+				@ElementList(required = false, inline = true)
+				List<NonLinear> nonLinears;
+				
+				@ElementList(required = false, name = "TrackingEvents")
+				List<Tracking> trackingEvents;
 
+				@Root (name = "NonLinear")
 				public static class NonLinear {
+					@Attribute(required = false, name = "id")
 					String id;
+					@Attribute(required = false, name = "width")
 					int width;
+					@Attribute(required = false, name = "height")
 					int height;
+					@Attribute(required = false, name = "expandedWidth")
 					int expandedWidth;
+					@Attribute(required = false, name = "expandedHeight")
 					int expandedHeight;
+					@Attribute(required = false, name = "scalable")
 					boolean scalable;
+					@Attribute(required = false, name = "maintainAspectRatio")
 					boolean maintainAspectRatio;
+					@Attribute(required = false, name = "minSuggestedDuration")
 					String minSuggestedDuration;
+					@Attribute(required = false, name = "apiFramework")
 					String apiFramework;
+					@Element(required = false, name = "StaticResource")
 					StaticResource staticResource;
+					@Element(required = false, name = "IFrameResource")
 					String iframeResource;
+					@Element(required = false, name = "HTMLResource")
 					String htmlResource;
+					@Element(required = false, name = "NonLinearClickThrough")
 					String nonLinearClickThrough;
+					@Element(required = false, name = "NonLinearClickTracking")
 					String nonLinearClickTracking;
 				}
 			}
 
+			@Root (name = "StaticResource")
 			public static class StaticResource {
+				@Attribute(required =false, name = "type")
 				String type;
+				
+				@Text
 				String url;
 			}
 
 			public static class Tracking {
+				@Attribute(name = "event")
 				String event;
-				String progress;
+				@Text
 				String url;
 			}
 		}
