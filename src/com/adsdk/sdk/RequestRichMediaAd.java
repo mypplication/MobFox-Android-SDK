@@ -15,6 +15,7 @@ import org.xml.sax.XMLReader;
 
 import com.adsdk.sdk.video.ResponseHandler;
 import com.adsdk.sdk.video.RichMediaAd;
+import com.adsdk.sdk.video.VASTParser;
 
 
 public class RequestRichMediaAd extends RequestAd<RichMediaAd> {
@@ -61,20 +62,27 @@ public class RequestRichMediaAd extends RequestAd<RichMediaAd> {
 			XMLReader xr = sp.getXMLReader();
 			ResponseHandler myHandler = new ResponseHandler();
 			xr.setContentHandler(myHandler);
+			RichMediaAd richMediaAd;
 			if(Log.LOGGING_ENABLED){
 				String response = convertStreamToString(inputStream);
+				
+				
 				Log.d("Ad RequestPerform HTTP Response: " + response);
 				byte[] bytes = response.getBytes(RESPONSE_ENCODING);
 				InputSource src = new InputSource(new ByteArrayInputStream(bytes));
 				src.setEncoding(RESPONSE_ENCODING);
 				xr.parse(src);
-				return myHandler.getRichMediaAd();
+				richMediaAd = myHandler.getRichMediaAd();
+				
+				richMediaAd.setVideo(VASTParser.fillVideoDataFromVast(richMediaAd.getVideo()));//FIXME: chyba przegiecie->przenieÊç do VideoData.createFromVAST?
+				return richMediaAd;
 			}
 			else{
 				InputSource src = new InputSource(inputStream);
 				src.setEncoding(RESPONSE_ENCODING);
 				xr.parse(src);
-				return myHandler.getRichMediaAd();
+				richMediaAd = myHandler.getRichMediaAd();
+				return richMediaAd;
 			}
 		} catch (Exception e) {
 			throw new RequestException("Cannot parse Response:"
