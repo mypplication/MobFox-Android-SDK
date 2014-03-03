@@ -72,8 +72,4 @@ public class AdMobCustomBanner extends CustomEventBanner {
 	}
 
 
-	@Override
-	protected void onInvalidate() {
-	}
-
 }

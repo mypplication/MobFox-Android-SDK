@@ -1,7 +1,9 @@
 package com.adsdk.sdk.video;
 
 import java.io.CharArrayWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 import org.xml.sax.Attributes;
@@ -11,6 +13,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import android.content.pm.ActivityInfo;
 
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.customevents.CustomEvent;
 
 public class ResponseHandler extends DefaultHandler {
 
@@ -21,21 +24,21 @@ public class ResponseHandler extends DefaultHandler {
 	private CharArrayWriter contents = new CharArrayWriter();
 	private TrackerData currentTracker = new TrackerData();
 	private long currentExpiration;
-
+	private CustomEvent customEvent;
+	private List<CustomEvent> customEvents;
+	
 	private boolean insideMarkup = false;
 	private boolean insideVideo = false;
 	private boolean insideInterstitial = false;
 	private boolean insideVideoList = false;
 
 	@Override
-	public void characters(char[] ch, int start, int length)
-			throws SAXException {
+	public void characters(char[] ch, int start, int length) throws SAXException {
 		contents.write(ch, start, length);
 	}
 
 	@Override
-	public void endElement(String uri, String localName, String qName)
-			throws SAXException {
+	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if (localName.equals("creative")) {
 			if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
 				throw new SAXException("Creative tag found outside video node");
@@ -60,12 +63,10 @@ public class ResponseHandler extends DefaultHandler {
 			case TrackerData.TYPE_FIRSTQUARTILE:
 			case TrackerData.TYPE_THIRDQUARTILE:
 			case TrackerData.TYPE_TIME:
-				trackers = video.timeTrackingEvents
-				.get(currentTracker.time);
+				trackers = video.timeTrackingEvents.get(currentTracker.time);
 				if (trackers == null) {
 					trackers = new Vector<String>();
-					video.timeTrackingEvents.put(currentTracker.time,
-							trackers);
+					video.timeTrackingEvents.put(currentTracker.time, trackers);
 				}
 				break;
 			case TrackerData.TYPE_START:
@@ -98,8 +99,7 @@ public class ResponseHandler extends DefaultHandler {
 			}
 		} else if (localName.equals("htmloverlay")) {
 			if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
-				throw new SAXException(
-						"htmloverlay tag found outside video node");
+				throw new SAXException("htmloverlay tag found outside video node");
 			}
 			VideoData video = getRichMediaAd().getVideo();
 			video.htmlOverlayMarkup = contents.toString().trim();
@@ -113,31 +113,66 @@ public class ResponseHandler extends DefaultHandler {
 		} else if (localName.equals("interstitial")) {
 			insideInterstitial = false;
 		} else if (localName.equals("markup")) {
-			if ((getRichMediaAd() == null)
-					|| (getRichMediaAd().getInterstitial() == null)) {
-				throw new SAXException(
-						"markup tag found outside interstitial node");
+			if ((getRichMediaAd() == null) || (getRichMediaAd().getInterstitial() == null)) {
+				throw new SAXException("markup tag found outside interstitial node");
 			}
 			insideMarkup = false;
 			InterstitialData inter = getRichMediaAd().getInterstitial();
 			inter.interstitialMarkup = contents.toString().trim();
 		} else if (localName.equals("error")) {
 			getRichMediaAd().setType(Const.NO_AD);
+		} else if (localName.equals("customevent")) {
+			if(customEvent != null) {
+				customEvents.add(customEvent);
+				customEvent = null;
+			} else {
+				throw new SAXException("Found customevent end tag without customevent tag started");
+			}
+		} else if (localName.equals("class")) {
+			if (customEvent != null) {
+				customEvent.setClassName(contents.toString().trim());
+			} else {
+				throw new SAXException("Found class tag outside customevent node");
+			}
+		} else if (localName.equals("parameter")) {
+			if (customEvent != null) {
+				customEvent.setOptionalParameter(contents.toString().trim());
+			} else {
+				throw new SAXException("Found parameter tag outside customevent node");
+			}
+		} else if (localName.equals("pixel")) {
+			if (customEvent != null) {
+				customEvent.setPixelUrl(contents.toString().trim());
+			} else {
+				throw new SAXException("Found pixel tag outside customevent node");
+			}
 		}
 	}
 
 	@Override
 	public void startDocument() throws SAXException {
 		setRichMediaAd(new RichMediaAd());
+		customEvents = new ArrayList<CustomEvent>();
 		insideVideoList = false;
+	}
+	
+	@Override
+	public void endDocument() throws SAXException {
+		getRichMediaAd().setCustomEvents(customEvents);
+		super.endDocument();
 	}
 
 	@Override
-	public void startElement(String uri, String localName, String qName,
-			Attributes attributes) throws SAXException {
+	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		if (!insideMarkup) {
 			contents.reset();
-			if (localName.equals("activevideolist")) {
+			if (localName.equals("customevent")) {
+				if (customEvent == null) {
+					customEvent = new CustomEvent("", "", "");
+				} else {
+					throw new SAXException("Found custom event tag before previous custom event tag closed");
+				}
+			} else if (localName.equals("activevideolist")) {
 				videoList = new HashMap<String, Long>();
 				insideVideoList = true;
 			} else if (localName.equals("ad")) {
@@ -159,17 +194,13 @@ public class ResponseHandler extends DefaultHandler {
 				if ("fade-in".equalsIgnoreCase(animation)) {
 					getRichMediaAd().setAnimation(RichMediaAd.ANIMATION_FADE_IN);
 				} else if ("slide-in-top".equalsIgnoreCase(animation)) {
-					getRichMediaAd()
-					.setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_TOP);
+					getRichMediaAd().setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_TOP);
 				} else if ("slide-in-bottom".equalsIgnoreCase(animation)) {
-					getRichMediaAd()
-					.setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM);
+					getRichMediaAd().setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM);
 				} else if ("slide-in-left".equalsIgnoreCase(animation)) {
-					getRichMediaAd()
-					.setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_LEFT);
+					getRichMediaAd().setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_LEFT);
 				} else if ("slide-in-right".equalsIgnoreCase(animation)) {
-					getRichMediaAd()
-					.setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_RIGHT);
+					getRichMediaAd().setAnimation(RichMediaAd.ANIMATION_SLIDE_IN_RIGHT);
 				} else if ("flip-in".equalsIgnoreCase(animation)) {
 					getRichMediaAd().setAnimation(RichMediaAd.ANIMATION_FLIP_IN);
 				} else {
@@ -177,8 +208,7 @@ public class ResponseHandler extends DefaultHandler {
 				}
 			} else if (localName.equals("video")) {
 				if (insideVideoList) {
-					currentExpiration = getLong(attributes
-							.getValue("expiration")) * 1000;
+					currentExpiration = getLong(attributes.getValue("expiration")) * 1000;
 				} else {
 					insideVideo = true;
 					VideoData video = new VideoData();
@@ -191,17 +221,13 @@ public class ResponseHandler extends DefaultHandler {
 						video.orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 					}
 					if (getRichMediaAd() != null) {
-						if ((getRichMediaAd().getType() == Const.INTERSTITIAL)
-								&& (getRichMediaAd().getType() != Const.INTERSTITIAL_TO_VIDEO)
+						if ((getRichMediaAd().getType() == Const.INTERSTITIAL) && (getRichMediaAd().getType() != Const.INTERSTITIAL_TO_VIDEO)
 								&& (getRichMediaAd().getType() != Const.VIDEO_TO_INTERSTITIAL)) {
-							throw new SAXException(
-									"Found Video tag in an interstitial ad:"
-											+ getRichMediaAd().getType());
+							throw new SAXException("Found Video tag in an interstitial ad:" + getRichMediaAd().getType());
 						}
 						getRichMediaAd().setVideo(video);
 					} else {
-						throw new SAXException(
-								"Video tag found outside document root");
+						throw new SAXException("Video tag found outside document root");
 					}
 				}
 			} else if (localName.equals("interstitial")) {
@@ -213,8 +239,7 @@ public class ResponseHandler extends DefaultHandler {
 					inter.interstitialType = InterstitialData.INTERSTITIAL_URL;
 					String url = attributes.getValue("url");
 					if ((url == null) || (url.length() == 0)) {
-						throw new SAXException(
-								"Empty url for interstitial type " + type);
+						throw new SAXException("Empty url for interstitial type " + type);
 					}
 					inter.interstitialUrl = url;
 				} else if ("markup".equalsIgnoreCase(type)) {
@@ -224,8 +249,7 @@ public class ResponseHandler extends DefaultHandler {
 					inter.interstitialType = InterstitialData.INTERSTITIAL_URL;
 					String url = attributes.getValue("url");
 					if ((url == null) || (url.length() == 0)) {
-						throw new SAXException(
-								"Empty url for interstitial type " + type);
+						throw new SAXException("Empty url for interstitial type " + type);
 					}
 					inter.interstitialUrl = url;
 
@@ -239,22 +263,17 @@ public class ResponseHandler extends DefaultHandler {
 					inter.orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 				}
 				if (getRichMediaAd() != null) {
-					if ((getRichMediaAd().getType() == Const.VIDEO)
-							&& (getRichMediaAd().getType() != Const.INTERSTITIAL_TO_VIDEO)
+					if ((getRichMediaAd().getType() == Const.VIDEO) && (getRichMediaAd().getType() != Const.INTERSTITIAL_TO_VIDEO)
 							&& (getRichMediaAd().getType() != Const.VIDEO_TO_INTERSTITIAL)) {
-						throw new SAXException(
-								"Found Interstitial tag in a video ad:"
-										+ getRichMediaAd().getType());
+						throw new SAXException("Found Interstitial tag in a video ad:" + getRichMediaAd().getType());
 					}
 					getRichMediaAd().setInterstitial(inter);
 				} else {
-					throw new SAXException(
-							"Interstitial tag found outside document root");
+					throw new SAXException("Interstitial tag found outside document root");
 				}
 			} else if (localName.equals("creative")) {
 				if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
-					throw new SAXException(
-							"Creative tag found outside video node");
+					throw new SAXException("Creative tag found outside video node");
 				}
 				VideoData video = getRichMediaAd().getVideo();
 				String delivery = attributes.getValue("delivery");
@@ -284,149 +303,100 @@ public class ResponseHandler extends DefaultHandler {
 				video.bitrate = getInteger(attributes.getValue("bitrate"));
 			} else if (localName.equals("skipbutton")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"skipbutton tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("skipbutton tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
-					video.showSkipButton = getBoolean(attributes
-							.getValue("show"));
-					video.showSkipButtonAfter = getInteger(attributes
-							.getValue("showafter"));
+					video.showSkipButton = getBoolean(attributes.getValue("show"));
+					video.showSkipButtonAfter = getInteger(attributes.getValue("showafter"));
 					video.skipButtonImage = attributes.getValue("graphic");
 
 				} else if (insideInterstitial) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getInterstitial() == null)) {
-						throw new SAXException(
-								"skipbutton tag found inside wrong interstitial node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getInterstitial() == null)) {
+						throw new SAXException("skipbutton tag found inside wrong interstitial node");
 					}
 					InterstitialData inter = getRichMediaAd().getInterstitial();
-					inter.showSkipButton = getBoolean(attributes
-							.getValue("show"));
-					inter.showSkipButtonAfter = getInteger(attributes
-							.getValue("showafter"));
+					inter.showSkipButton = getBoolean(attributes.getValue("show"));
+					inter.showSkipButtonAfter = getInteger(attributes.getValue("showafter"));
 					inter.skipButtonImage = attributes.getValue("graphic");
 				}
 			} else if (localName.equals("navigation")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"navigation tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("navigation tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
-					video.showNavigationBars = getBoolean(attributes
-							.getValue("show"));
-					video.allowTapNavigationBars = getBoolean(attributes
-							.getValue("allowtap"));
+					video.showNavigationBars = getBoolean(attributes.getValue("show"));
+					video.allowTapNavigationBars = getBoolean(attributes.getValue("allowtap"));
 
 				} else if (insideInterstitial) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getInterstitial() == null)) {
-						throw new SAXException(
-								"navigation tag found inside wrong interstitial node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getInterstitial() == null)) {
+						throw new SAXException("navigation tag found inside wrong interstitial node");
 					}
 					InterstitialData inter = getRichMediaAd().getInterstitial();
-					inter.showNavigationBars = getBoolean(attributes
-							.getValue("show"));
-					inter.allowTapNavigationBars = getBoolean(attributes
-							.getValue("allowtap"));
+					inter.showNavigationBars = getBoolean(attributes.getValue("show"));
+					inter.allowTapNavigationBars = getBoolean(attributes.getValue("allowtap"));
 				}
 			} else if (localName.equals("topbar")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"topbar tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("topbar tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
-					video.showTopNavigationBar = getBoolean(attributes
-							.getValue("show"));
-					video.topNavigationBarBackground = attributes
-							.getValue("custombackgroundurl");
+					video.showTopNavigationBar = getBoolean(attributes.getValue("show"));
+					video.topNavigationBarBackground = attributes.getValue("custombackgroundurl");
 				} else if (insideInterstitial) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getInterstitial() == null)) {
-						throw new SAXException(
-								"topbar tag found inside wrong interstitial node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getInterstitial() == null)) {
+						throw new SAXException("topbar tag found inside wrong interstitial node");
 					}
 					InterstitialData inter = getRichMediaAd().getInterstitial();
-					inter.showTopNavigationBar = getBoolean(attributes
-							.getValue("show"));
-					inter.topNavigationBarBackground = attributes
-							.getValue("custombackgroundurl");
+					inter.showTopNavigationBar = getBoolean(attributes.getValue("show"));
+					inter.topNavigationBarBackground = attributes.getValue("custombackgroundurl");
 					String titleType = attributes.getValue("title");
 					if ("fixed".equalsIgnoreCase(titleType)) {
 						inter.topNavigationBarTitleType = InterstitialData.INTERSTITIAL_TITLE_FIXED;
-						inter.topNavigationBarTitle = attributes
-								.getValue("titlecontent");
-					} else if("variable".equalsIgnoreCase(titleType)) {
+						inter.topNavigationBarTitle = attributes.getValue("titlecontent");
+					} else if ("variable".equalsIgnoreCase(titleType)) {
 						inter.topNavigationBarTitleType = InterstitialData.INTERSTITIAL_TITLE_HTML;
-					}
-					else{
+					} else {
 						inter.topNavigationBarTitleType = InterstitialData.INTERSTITIAL_TITLE_HIDDEN;
 					}
 				}
 			} else if (localName.equals("bottombar")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"bottombar tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("bottombar tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
-					video.showBottomNavigationBar = getBoolean(attributes
-							.getValue("show"));
-					video.bottomNavigationBarBackground = attributes
-							.getValue("custombackgroundurl");
-					video.showPauseButton = getBoolean(attributes
-							.getValue("pausebutton"));
-					video.showReplayButton = getBoolean(attributes
-							.getValue("replaybutton"));
+					video.showBottomNavigationBar = getBoolean(attributes.getValue("show"));
+					video.bottomNavigationBarBackground = attributes.getValue("custombackgroundurl");
+					video.showPauseButton = getBoolean(attributes.getValue("pausebutton"));
+					video.showReplayButton = getBoolean(attributes.getValue("replaybutton"));
 					video.showTimer = getBoolean(attributes.getValue("timer"));
-					video.pauseButtonImage = attributes
-							.getValue("pausebuttonurl");
-					video.playButtonImage = attributes
-							.getValue("playbuttonurl");
-					video.replayButtonImage = attributes
-							.getValue("replaybuttonurl");
+					video.pauseButtonImage = attributes.getValue("pausebuttonurl");
+					video.playButtonImage = attributes.getValue("playbuttonurl");
+					video.replayButtonImage = attributes.getValue("replaybuttonurl");
 				} else if (insideInterstitial) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getInterstitial() == null)) {
-						throw new SAXException(
-								"bottombar tag found inside wrong interstitial node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getInterstitial() == null)) {
+						throw new SAXException("bottombar tag found inside wrong interstitial node");
 					}
 					InterstitialData inter = getRichMediaAd().getInterstitial();
-					inter.showBottomNavigationBar = getBoolean(attributes
-							.getValue("show"));
-					inter.bottomNavigationBarBackground = attributes
-							.getValue("custombackgroundurl");
-					inter.showBackButton = getBoolean(attributes
-							.getValue("backbutton"));
-					inter.showForwardButton = getBoolean(attributes
-							.getValue("forwardbutton"));
-					inter.showReloadButton = getBoolean(attributes
-							.getValue("reloadbutton"));
-					inter.showExternalButton = getBoolean(attributes
-							.getValue("externalbutton"));
+					inter.showBottomNavigationBar = getBoolean(attributes.getValue("show"));
+					inter.bottomNavigationBarBackground = attributes.getValue("custombackgroundurl");
+					inter.showBackButton = getBoolean(attributes.getValue("backbutton"));
+					inter.showForwardButton = getBoolean(attributes.getValue("forwardbutton"));
+					inter.showReloadButton = getBoolean(attributes.getValue("reloadbutton"));
+					inter.showExternalButton = getBoolean(attributes.getValue("externalbutton"));
 					inter.showTimer = getBoolean(attributes.getValue("timer"));
-					inter.backButtonImage = attributes
-							.getValue("backbuttonurl");
-					inter.forwardButtonImage = attributes
-							.getValue("forwardbuttonurl");
-					inter.reloadButtonImage = attributes
-							.getValue("reloadbuttonurl");
-					inter.externalButtonImage = attributes
-							.getValue("externalbuttonurl");
+					inter.backButtonImage = attributes.getValue("backbuttonurl");
+					inter.forwardButtonImage = attributes.getValue("forwardbuttonurl");
+					inter.reloadButtonImage = attributes.getValue("reloadbuttonurl");
+					inter.externalButtonImage = attributes.getValue("externalbuttonurl");
 				}
 			} else if (localName.equals("navicon")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"navicon tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("navicon tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
 					NavIconData icon = new NavIconData();
@@ -441,10 +411,8 @@ public class ResponseHandler extends DefaultHandler {
 					}
 					video.icons.add(icon);
 				} else if (insideInterstitial) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getInterstitial() == null)) {
-						throw new SAXException(
-								"navicon tag found inside wrong interstitial node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getInterstitial() == null)) {
+						throw new SAXException("navicon tag found inside wrong interstitial node");
 					}
 					InterstitialData inter = getRichMediaAd().getInterstitial();
 					NavIconData icon = new NavIconData();
@@ -461,10 +429,8 @@ public class ResponseHandler extends DefaultHandler {
 				}
 			} else if (localName.equals("tracker")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"tracker tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("tracker tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
 					currentTracker.reset();
@@ -501,10 +467,8 @@ public class ResponseHandler extends DefaultHandler {
 				}
 			} else if (localName.equals("htmloverlay")) {
 				if (insideVideo) {
-					if ((getRichMediaAd() == null)
-							|| (getRichMediaAd().getVideo() == null)) {
-						throw new SAXException(
-								"htmloverlay tag found inside wrong video node");
+					if ((getRichMediaAd() == null) || (getRichMediaAd().getVideo() == null)) {
+						throw new SAXException("htmloverlay tag found inside wrong video node");
 					}
 					VideoData video = getRichMediaAd().getVideo();
 					insideMarkup = true;
@@ -513,8 +477,7 @@ public class ResponseHandler extends DefaultHandler {
 						video.htmlOverlayType = VideoData.OVERLAY_URL;
 						String url = attributes.getValue("url");
 						if ((url == null) || (url.length() == 0)) {
-							throw new SAXException(
-									"Empty url for overlay type " + type);
+							throw new SAXException("Empty url for overlay type " + type);
 						}
 						video.htmlOverlayUrl = url;
 					} else if ("markup".equalsIgnoreCase(type)) {
@@ -524,16 +487,13 @@ public class ResponseHandler extends DefaultHandler {
 						video.htmlOverlayType = VideoData.OVERLAY_URL;
 						String url = attributes.getValue("url");
 						if ((url == null) || (url.length() == 0)) {
-							throw new SAXException(
-									"Empty url for overlay type " + type);
+							throw new SAXException("Empty url for overlay type " + type);
 						}
 						video.htmlOverlayUrl = url;
 
 					}
-					video.showHtmlOverlayAfter = getInteger(attributes
-							.getValue("showafter"));
-					video.showHtmlOverlay = getBoolean(attributes
-							.getValue("show"));
+					video.showHtmlOverlayAfter = getInteger(attributes.getValue("showafter"));
+					video.showHtmlOverlay = getBoolean(attributes.getValue("show"));
 				}
 			}
 		}

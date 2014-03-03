@@ -12,6 +12,10 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Handler;
 
+import com.adsdk.sdk.customevents.CustomEvent;
+import com.adsdk.sdk.customevents.CustomEventFullscreen;
+import com.adsdk.sdk.customevents.CustomEventFullscreen.CustomEventFullscreenListener;
+import com.adsdk.sdk.customevents.CustomEventFullscreenFactory;
 import com.adsdk.sdk.video.ResourceManager;
 import com.adsdk.sdk.video.RichMediaActivity;
 import com.adsdk.sdk.video.RichMediaAd;
@@ -33,6 +37,8 @@ public class AdManager {
 	private Handler mHandler;
 	private AdRequest mRequest = null;
 	private AdListener mListener;
+	private CustomEventFullscreenListener customFullscreenListener;
+	private CustomEventFullscreen customEventFullscreen;
 	private boolean mEnabled = true;
 	private RichMediaAd mResponse;
 	private String requestURL;
@@ -42,9 +48,7 @@ public class AdManager {
 	public static AdManager getAdManager(RichMediaAd ad) {
 		AdManager adManager = sRunningAds.remove(ad.getTimestamp());
 		if (adManager == null) {
-			Log.d(
-					"Cannot find AdManager with running ad:"
-							+ ad.getTimestamp());
+			Log.d("Cannot find AdManager with running ad:" + ad.getTimestamp());
 		}
 		return adManager;
 	}
@@ -52,14 +56,10 @@ public class AdManager {
 	public static void closeRunningAd(RichMediaAd ad, boolean result) {
 		AdManager adManager = sRunningAds.remove(ad.getTimestamp());
 		if (adManager == null) {
-			Log.d(
-					"Cannot find AdManager with running ad:"
-							+ ad.getTimestamp());
+			Log.d("Cannot find AdManager with running ad:" + ad.getTimestamp());
 			return;
 		}
-		Log.d(
-				"Notify closing event to AdManager with running ad:"
-						+ ad.getTimestamp());
+		Log.d("Notify closing event to AdManager with running ad:" + ad.getTimestamp());
 		adManager.notifyAdClose(ad, result);
 	}
 
@@ -69,9 +69,7 @@ public class AdManager {
 
 	}
 
-	public AdManager(Context ctx, final String requestURL, final String publisherId,
-			final boolean includeLocation)
-					throws IllegalArgumentException {
+	public AdManager(Context ctx, final String requestURL, final String publisherId, final boolean includeLocation) throws IllegalArgumentException {
 		Util.prepareAndroidAdId(ctx);
 		AdManager.setmContext(ctx);
 		this.requestURL = requestURL;
@@ -92,8 +90,7 @@ public class AdManager {
 			return;
 		}
 		if (mRequestThread == null) {
-			Log.d("Requesting Ad (v" + Const.VERSION + "-"
-					+ Const.PROTOCOL_VERSION + ")");
+			Log.d("Requesting Ad (v" + Const.VERSION + "-" + Const.PROTOCOL_VERSION + ")");
 			mResponse = null;
 			mRequestThread = new Thread(new Runnable() {
 				@Override
@@ -109,77 +106,41 @@ public class AdManager {
 						RequestRichMediaAd requestAd = new RequestRichMediaAd();
 						AdRequest request = getRequest();
 						mResponse = requestAd.sendRequest(request);
-						if(mResponse.getVideo()!=null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO){
+						if (mResponse.getVideo() != null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("Not capable of video");
 							notifyNoAdFound();
-						}
-						else if (mResponse.getType() == Const.VIDEO_TO_INTERSTITIAL || mResponse.getType() == Const.INTERSTITIAL_TO_VIDEO || mResponse.getType() == Const.VIDEO || mResponse.getType() == Const.INTERSTITIAL ) {
+						} else if ((mResponse.getType() == Const.VIDEO_TO_INTERSTITIAL || mResponse.getType() == Const.INTERSTITIAL_TO_VIDEO || mResponse.getType() == Const.VIDEO
+								|| mResponse.getType() == Const.INTERSTITIAL) && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response OK received");
-							if (mListener != null) {
-								mHandler.post(new Runnable() {
-
-									@Override
-									public void run() {
-										mListener.adLoadSucceeded(mResponse);
-									}
-								});
-							}
-						} else if (mResponse.getType() == Const.NO_AD){
+							notifyAdLoaded(mResponse);
+						} else if (mResponse.getType() == Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response NO AD received");
-							if (mListener != null) {
-								mHandler.post(new Runnable() {
-
-									@Override
-									public void run() {
-										notifyNoAdFound();
-									}
-								});
+							notifyNoAdFound();
+						} else if (!mResponse.getCustomEvents().isEmpty()) {
+							loadCustomEventFullscreen();
+							if(customEventFullscreen == null) {
+								mResponse.getCustomEvents().clear();
+								notifyNoAdFound();
 							}
-						}
-						else {
-							Log.w("response BANNER received");
-							if (mListener != null) {
-								mHandler.post(new Runnable() {
-
-									@Override
-									public void run() {
-										notifyNoAdFound();
-									}
-								});
-							}
+						} else {
+							notifyNoAdFound();
 						}
 					} catch (Throwable t) {
 						mResponse = new RichMediaAd();
 						mResponse.setType(Const.AD_FAILED);
-						if (mListener != null) {
-							Log.d("Ad Load failed. Reason:" + t);
-							t.printStackTrace();
-
-							mHandler.post(new Runnable() {
-
-								@Override
-								public void run() {
-									notifyNoAdFound();
-
-								}
-							});
-						}
+						notifyNoAdFound();
 					}
 					Log.d("finishing ad request thread");
 					mRequestThread = null;
 				}
 			});
-			mRequestThread
-			.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+			mRequestThread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
 				@Override
-				public void uncaughtException(Thread thread,
-						Throwable ex) {
+				public void uncaughtException(Thread thread, Throwable ex) {
 					mResponse = new RichMediaAd();
 					mResponse.setType(Const.AD_FAILED);
-					Log.e(
-							"Handling exception in ad request thread",
-							ex);
+					Log.e("Handling exception in ad request thread", ex);
 					mRequestThread = null;
 				}
 			});
@@ -189,7 +150,7 @@ public class AdManager {
 		}
 	}
 
-	public void setRequestURL(String requestURL){
+	public void setRequestURL(String requestURL) {
 		this.requestURL = requestURL;
 	}
 
@@ -199,8 +160,7 @@ public class AdManager {
 			return;
 		}
 		if (mRequestThread == null) {
-			Log.d("Requesting Ad (v" + Const.VERSION + "-"
-					+ Const.PROTOCOL_VERSION + ")");
+			Log.d("Requesting Ad (v" + Const.VERSION + "-" + Const.PROTOCOL_VERSION + ")");
 			mResponse = null;
 			mRequestThread = new Thread(new Runnable() {
 				@Override
@@ -216,61 +176,37 @@ public class AdManager {
 						RequestRichMediaAd requestAd = new RequestRichMediaAd(xml);
 						AdRequest request = getRequest();
 						mResponse = requestAd.sendRequest(request);
-						if (mResponse.getType() != Const.NO_AD) {
+						
+						
+						if (mResponse.getType() != Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response OK received");
-							if (mListener != null) {
-								mHandler.post(new Runnable() {
-
-									@Override
-									public void run() {
-										mListener.adLoadSucceeded(mResponse);
-									}
-								});
-							}
-						} else {
+							notifyAdLoaded(mResponse);
+						} else if (mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response NO AD received");
-							if (mListener != null) {
-								mHandler.post(new Runnable() {
-
-									@Override
-									public void run() {
-										notifyNoAdFound();
-									}
-								});
+							notifyNoAdFound();
+						} else {
+							loadCustomEventFullscreen();
+							if(customEventFullscreen == null) {
+								mResponse.getCustomEvents().clear();
+								notifyNoAdFound();
 							}
 						}
 					} catch (Throwable t) {
 						mResponse = new RichMediaAd();
 						mResponse.setType(Const.AD_FAILED);
-						if (mListener != null) {
-							Log.d("Ad Load failed. Reason:" + t);
-							t.printStackTrace();
-
-							mHandler.post(new Runnable() {
-
-								@Override
-								public void run() {
-									notifyNoAdFound();
-
-								}
-							});
-						}
+						notifyNoAdFound();
 					}
 					Log.d("finishing ad request thread");
 					mRequestThread = null;
 				}
 			});
-			mRequestThread
-			.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+			mRequestThread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
 				@Override
-				public void uncaughtException(Thread thread,
-						Throwable ex) {
+				public void uncaughtException(Thread thread, Throwable ex) {
 					mResponse = new RichMediaAd();
 					mResponse.setType(Const.AD_FAILED);
-					Log.e(
-							"Handling exception in ad request thread",
-							ex);
+					Log.e("Handling exception in ad request thread", ex);
 					mRequestThread = null;
 				}
 			});
@@ -305,9 +241,7 @@ public class AdManager {
 	public void showAd() {
 		Activity activity = (Activity) getContext();
 
-		if ((mResponse == null)
-				|| (mResponse.getType() == Const.NO_AD)
-				|| (mResponse.getType() == Const.AD_FAILED)) {
+		if (((mResponse == null) || (mResponse.getType() == Const.NO_AD) || (mResponse.getType() == Const.AD_FAILED)) && customEventFullscreen == null) {
 			notifyAdShown(mResponse, false);
 			return;
 		}
@@ -317,14 +251,16 @@ public class AdManager {
 			if (Util.isNetworkAvailable(getContext())) {
 				ad.setTimestamp(System.currentTimeMillis());
 				Log.v("Showing Ad:" + ad);
-				Intent intent = new Intent(activity,
-						RichMediaActivity.class);
-				intent.putExtra(AD_EXTRA, ad);
-				activity.startActivityForResult(intent, 0);
-				int enterAnim = Util.getEnterAnimation(ad.getAnimation());
-				int exitAnim = Util.getExitAnimation(ad.getAnimation());
-				RichMediaActivity.setActivityAnimation(activity,
-						enterAnim, exitAnim);
+				if (customEventFullscreen == null) {
+					Intent intent = new Intent(activity, RichMediaActivity.class);
+					intent.putExtra(AD_EXTRA, ad);
+					activity.startActivityForResult(intent, 0);
+					int enterAnim = Util.getEnterAnimation(ad.getAnimation());
+					int exitAnim = Util.getExitAnimation(ad.getAnimation());
+					RichMediaActivity.setActivityAnimation(activity, enterAnim, exitAnim);
+				} else {
+					customEventFullscreen.showFullscreen();
+				}
 				result = true;
 				sRunningAds.put(ad.getTimestamp(), this);
 			} else {
@@ -337,32 +273,82 @@ public class AdManager {
 		}
 	}
 
+	private void loadCustomEventFullscreen() {
+		customEventFullscreen = null;
+		while(!mResponse.getCustomEvents().isEmpty() && customEventFullscreen == null) {
+			try {
+				CustomEvent event = mResponse.getCustomEvents().get(0);
+				mResponse.getCustomEvents().remove(event);
+				customEventFullscreen = CustomEventFullscreenFactory.create(event.getClassName());
+				customEventFullscreen.loadFullscreen(mContext, customFullscreenListener, event.getOptionalParameter(), event.getPixelUrl());
+			} catch (Exception e) {
+				Log.d("Failed to create Custom Event Fullscreen.");
+			}
+
+		}
+	}
+
 	private void initialize() throws IllegalArgumentException {
 		mUserAgent = Util.getDefaultUserAgentString(getContext());
 		Log.LOGGING_ENABLED = Log.isLoggingEnabled(getmContext());
 		Log.d("Ad SDK Version:" + Const.VERSION);
 		this.mUniqueId1 = Util.getTelephonyDeviceId(getContext());
 		this.mUniqueId2 = Util.getDeviceId(getContext());
-		
+
 		this.androidID = Util.getDeviceId(getContext());
 		this.androidIMEI = Util.getTelephonyDeviceId(getContext());
 		this.androidAdId = Util.getAndroidAdId();
-		
+
 		if ((mPublisherId == null) || (mPublisherId.length() == 0)) {
 			Log.e("Publisher Id cannot be null or empty");
-			throw new IllegalArgumentException(
-					"User Id cannot be null or empty");
+			throw new IllegalArgumentException("User Id cannot be null or empty");
 		}
 		if ((mUniqueId2 == null) || (mUniqueId2.length() == 0)) {
 			Log.e("Cannot get system device Id");
-			throw new IllegalArgumentException(
-					"System Device Id cannot be null or empty");
+			throw new IllegalArgumentException("System Device Id cannot be null or empty");
 		}
-		Log.d("AdManager Publisher Id:" + mPublisherId
-				+ " Device Id:" + mUniqueId1 + " DeviceId2:" + mUniqueId2);
+		Log.d("AdManager Publisher Id:" + mPublisherId + " Device Id:" + mUniqueId1 + " DeviceId2:" + mUniqueId2);
 		mEnabled = (Util.getMemoryClass(getContext()) > 16);
 		Util.initializeAnimations(getContext());
+		customFullscreenListener = createCustomFullscreenListener();
+	}
 
+	private CustomEventFullscreenListener createCustomFullscreenListener() {
+		return new CustomEventFullscreenListener() {
+
+			@Override
+			public void onFullscreenOpened() {
+				notifyAdShown(mResponse, true);
+			}
+
+			@Override
+			public void onFullscreenLoaded(CustomEventFullscreen fullscreen) {
+				customEventFullscreen = fullscreen;
+				notifyAdLoaded(mResponse);
+			}
+
+			@Override
+			public void onFullscreenLeftApplication() {
+				notifyAdClicked();
+			}
+
+			@Override
+			public void onFullscreenFailed() {
+				loadCustomEventFullscreen();
+				if (customEventFullscreen != null) {
+					return;
+				} else if (mResponse.getType() != Const.NO_AD && mResponse.getType() != Const.AD_FAILED) {
+					notifyAdLoaded(mResponse);
+				} else {
+					notifyNoAdFound();
+				}
+			}
+
+			@Override
+			public void onFullscreenClosed() {
+				notifyAdClose(mResponse, true);
+			}
+		};
 	}
 
 	private void notifyNoAdFound() {
@@ -376,6 +362,30 @@ public class AdManager {
 			});
 		}
 		this.mResponse = null;
+	}
+
+	private void notifyAdLoaded(final RichMediaAd ad) {
+		if (mListener != null) {
+			mHandler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					mListener.adLoadSucceeded(ad);
+				}
+			});
+		}
+	}
+
+	private void notifyAdClicked() {
+		if (mListener != null) {
+			mHandler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					mListener.adClicked();
+				}
+			});
+		}
 	}
 
 	private void notifyAdShown(final RichMediaAd ad, final boolean ok) {
@@ -404,14 +414,14 @@ public class AdManager {
 	}
 
 	private AdRequest getRequest() {
-		if(androidAdId == "") {
+		if (androidAdId == "") {
 			androidAdId = Util.getAndroidAdId();
 		}
 		if (mRequest == null) {
 			mRequest = new AdRequest();
 			mRequest.setDeviceId(mUniqueId1);
 			mRequest.setDeviceId2(mUniqueId2);
-			mRequest.setAndroidID(androidID); 
+			mRequest.setAndroidID(androidID);
 			mRequest.setAndroidIMEI(androidIMEI);
 			mRequest.setAndroidAdId(androidAdId);
 			mRequest.setPublisherId(mPublisherId);
@@ -423,8 +433,7 @@ public class AdManager {
 			location = Util.getLocation(getContext());
 		}
 		if (location != null) {
-			Log.d("location is longitude: " + location.getLongitude()
-					+ ", latitude: " + location.getLatitude());
+			Log.d("location is longitude: " + location.getLongitude() + ", latitude: " + location.getLatitude());
 			mRequest.setLatitude(location.getLatitude());
 			mRequest.setLongitude(location.getLongitude());
 		} else {

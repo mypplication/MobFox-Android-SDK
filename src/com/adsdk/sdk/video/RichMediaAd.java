@@ -1,6 +1,10 @@
 package com.adsdk.sdk.video;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.adsdk.sdk.Ad;
+import com.adsdk.sdk.customevents.CustomEvent;
 
 
 public class RichMediaAd implements Ad {
@@ -19,6 +23,7 @@ public class RichMediaAd implements Ad {
 	private int               animation;
 	private VideoData         video;
 	private InterstitialData  interstitial;
+	private List<CustomEvent> customEvents;
 	private long              timestamp;
 
 	@Override
@@ -68,6 +73,14 @@ public class RichMediaAd implements Ad {
 		return "RichMediaAD [timestamp=" + timestamp + ", type=" + type
 				+ ", animation=" + animation + ", video=" + video
 				+ ", interstitial=" + interstitial + "]";
+	}
+
+	public List<CustomEvent> getCustomEvents() {
+		return customEvents;
+	}
+
+	public void setCustomEvents(List<CustomEvent> customEvents) {
+		this.customEvents = customEvents;
 	}
 
 }

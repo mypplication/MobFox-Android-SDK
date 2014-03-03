@@ -11,17 +11,16 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.view.View;
 
-public abstract class CustomEventBanner {
+public abstract class CustomEventFullscreen {
 	
 	protected String trackingPixel;
-	protected CustomEventBannerListener listener;
+	protected CustomEventFullscreenListener listener;
 	
-    public abstract void loadBanner(Context context,
-            CustomEventBannerListener customEventBannerListener, String optionalParameters, String trackingPixel, int width, int height);
+    public abstract void loadFullscreen(Context context,
+            CustomEventFullscreenListener customEventFullscreenListener, String optionalParameters, String trackingPixel);
     
-
+    public abstract void showFullscreen();
     
     protected void reportImpression() {
 		AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
@@ -47,17 +46,14 @@ public abstract class CustomEventBanner {
 		};
 		task.execute();
 	}
-    
-    
-    public interface CustomEventBannerListener {
-       
-        void onBannerLoaded(View bannerView);
-        
-        void onBannerFailed();
-
-        void onBannerExpanded();
-
-        void onBannerClosed();
-
+	
+	
+	public interface CustomEventFullscreenListener {
+        void onFullscreenLoaded(CustomEventFullscreen fullscreen);
+        void onFullscreenFailed();
+        void onFullscreenOpened();
+        void onFullscreenClosed();
+        void onFullscreenLeftApplication();
     }
+
 }
