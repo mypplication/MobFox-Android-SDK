@@ -30,7 +30,7 @@ import android.webkit.WebViewClient;
 import android.widget.RelativeLayout;
 
 import com.adsdk.sdk.AdListener;
-import com.adsdk.sdk.BannerAd;
+import com.adsdk.sdk.AdResponse;
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.data.ClickType;
@@ -45,7 +45,7 @@ public class BannerAdView extends RelativeLayout {
 
 	private boolean isInternalBrowser = false;
 
-	private BannerAd response;
+	private AdResponse response;
 	private Animation fadeInAnimation = null;
 	// private Animation fadeOutAnimation = null;
 	private WebSettings webSettings;
@@ -65,7 +65,7 @@ public class BannerAdView extends RelativeLayout {
 
 	private final Handler updateHandler = new Handler();
 
-	public BannerAdView(final Context context, final BannerAd response, int width, int height, final boolean animation, final AdListener adListener) {
+	public BannerAdView(final Context context, final AdResponse response, int width, int height, final boolean animation, final AdListener adListener) {
 		super(context);
 		mContext = context;
 		this.response = response;

@@ -5,7 +5,7 @@ import java.util.List;
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
 
-public class BannerAd implements Ad {
+public class AdResponse implements Ad {
 
 	public static final String WEB = "web";
 	public static final String OTHER = "other";
@@ -24,6 +24,9 @@ public class BannerAd implements Ad {
 	private List<CustomEvent> customEvents;
 	private boolean scale;
 	private boolean skipPreflight;
+	private long timestamp;
+	private int animation; //TODO: Parse this parameter if still supported
+	private Object vast; //TODO: Change Object class to VAST after merge
 
 	public int getBannerHeight() {
 		return this.bannerHeight;
@@ -140,6 +143,30 @@ public class BannerAd implements Ad {
 
 	public void setCustomEvents(List<CustomEvent> customEvents) {
 		this.customEvents = customEvents;
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public Object getVast() {
+		return vast;
+	}
+
+	public void setVast(Object vast) {
+		this.vast = vast;
+	}
+
+	public int getAnimation() {
+		return animation;
+	}
+
+	public void setAnimation(int animation) {
+		this.animation = animation;
 	}
 
 }

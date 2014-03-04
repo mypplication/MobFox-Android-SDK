@@ -22,14 +22,14 @@ import org.xml.sax.SAXException;
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
 
-public class RequestBannerAd extends RequestAd<BannerAd> {
+public class RequestGeneralAd extends RequestAd<AdResponse> {
 
 	private final static int RELOAD_AFTER_NO_AD = 20;
 
-	public RequestBannerAd() {
+	public RequestGeneralAd() {
 	}
 
-	public RequestBannerAd(InputStream xmlArg) {
+	public RequestGeneralAd(InputStream xmlArg) {
 		is = xmlArg;
 		Log.d("Parse is null" + (is == null));
 	}
@@ -124,11 +124,11 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 	}
 
 	@Override
-	BannerAd parse(final InputStream inputStream) throws RequestException {
+	AdResponse parse(final InputStream inputStream) throws RequestException {
 
 		final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db;
-		final BannerAd response = new BannerAd();
+		final AdResponse response = new AdResponse();
 
 		try {
 			db = dbf.newDocumentBuilder();
@@ -219,7 +219,7 @@ public class RequestBannerAd extends RequestAd<BannerAd> {
 	}
 
 	@Override
-	BannerAd parseTestString() throws RequestException {
+	AdResponse parseTestString() throws RequestException {
 		return parse(is);
 	}
 }

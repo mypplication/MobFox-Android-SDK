@@ -41,6 +41,7 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.adsdk.sdk.AdManager;
+import com.adsdk.sdk.AdResponse;
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.Util;
@@ -170,7 +171,7 @@ public class RichMediaActivity extends Activity {
 	private MediaController mMediaController;
 	private ImageView mSkipButton;
 	private InterstitialController mInterstitialController;
-	private RichMediaAd mAd;
+	private AdResponse mAd;
 	private VideoData mVideoData;
 	private InterstitialData mInterstitialData;
 
@@ -624,7 +625,10 @@ public class RichMediaActivity extends Activity {
 
 	@SuppressWarnings("deprecation")
 	private void initInterstitialView() {
-		this.mInterstitialData = this.mAd.getInterstitial();
+		this.mInterstitialData = new InterstitialData();
+//				this.mAd.getInterstitial(); //TODO: translate VAST into interstitial data
+		
+		
 		this.mInterstitialAutocloseReset = false;
 
 		this.setRequestedOrientation(this.mInterstitialData.orientation);
@@ -704,7 +708,8 @@ public class RichMediaActivity extends Activity {
 
 	private void initVideoView() {
 
-		this.mVideoData = this.mAd.getVideo();
+		this.mVideoData = new VideoData();
+//				this.mAd.getVast(); //TODO: translate VAST into VideoData
 
 		this.setRequestedOrientation(this.mVideoData.orientation);
 		if (this.mVideoData.orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
@@ -921,10 +926,10 @@ public class RichMediaActivity extends Activity {
 		if (this.mType == RichMediaActivity.TYPE_BROWSER) {
 			this.initWebBrowserView(true);
 			this.mWebBrowserView.loadUrl(this.uri.toString());
-			this.mEnterAnim = Util.getEnterAnimation(RichMediaAd.ANIMATION_FADE_IN);
-			this.mExitAnim = Util.getExitAnimation(RichMediaAd.ANIMATION_FADE_IN);
+			this.mEnterAnim = Util.getEnterAnimation(Util.ANIMATION_FADE_IN);
+			this.mExitAnim = Util.getExitAnimation(Util.ANIMATION_FADE_IN);
 		} else {
-			this.mAd = (RichMediaAd) extras.getSerializable(Const.AD_EXTRA);
+			this.mAd = (AdResponse) extras.getSerializable(Const.AD_EXTRA);
 			this.mEnterAnim = Util.getEnterAnimation(this.mAd.getAnimation());
 			this.mExitAnim = Util.getExitAnimation(this.mAd.getAnimation());
 

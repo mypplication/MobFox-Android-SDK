@@ -22,12 +22,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.TranslateAnimation;
 
-import com.adsdk.sdk.video.RichMediaAd;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
 import com.google.android.gms.common.ConnectionResult;
@@ -47,6 +42,16 @@ public class Util {
 	private static int sSlideInBottomAnimationId = 0;
 	private static int sSlideOutBottomAnimationId = 0;
 	private static String androidAdId;
+	
+	//from video ads:
+	public final static int   ANIMATION_FADE_IN         = 1;
+	public final static int   ANIMATION_SLIDE_IN_TOP    = 2;
+	public final static int   ANIMATION_SLIDE_IN_BOTTOM = 3;
+	public final static int   ANIMATION_SLIDE_IN_LEFT   = 4;
+	public final static int   ANIMATION_SLIDE_IN_RIGHT  = 5;
+	public final static int   ANIMATION_FLIP_IN         = 6;
+	public static final int   ANIMATION_NONE            = 0;
+
 
 	private static final float MINIMAL_ACCURACY = 1000;
 	private static final long MINIMAL_TIME_FROM_FIX = 1000 * 60 * 20;
@@ -258,105 +263,19 @@ public class Util {
 
 	}
 
-	public static AnimationSet getEnterAnimationSet(int animation) {
-		AnimationSet set = new AnimationSet(false);
-		AlphaAnimation alphaAnimation = new AlphaAnimation(0.0f, 1.0f);
-		alphaAnimation.setDuration(3000);
-		set.addAnimation(alphaAnimation);
-		TranslateAnimation translateAnimation;
-		// TranslateAnimation translateAnimation = new TranslateAnimation(0.0f,
-		// 0.0f, 0.0f, 0.0f);
-		// translateAnimation.setDuration(3000);
-		switch (animation) {
-		case RichMediaAd.ANIMATION_FADE_IN:
-			return set;
-		case RichMediaAd.ANIMATION_FLIP_IN:
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 1.0f,
-					Animation.RELATIVE_TO_SELF, 0.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_LEFT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
-					Animation.RELATIVE_TO_SELF, 0.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_RIGHT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 1.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
-					Animation.RELATIVE_TO_SELF, 0.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_TOP:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, -1.0f,
-					Animation.RELATIVE_TO_SELF, 0.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		default:
-			return null;
-		}
-	}
-
-	public static AnimationSet getExitAnimationSet(int animation) {
-		AnimationSet set = new AnimationSet(false);
-		AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f, 0.0f);
-		alphaAnimation.setDuration(3000);
-		set.addAnimation(alphaAnimation);
-		TranslateAnimation translateAnimation;
-		// TranslateAnimation translateAnimation = new TranslateAnimation(0.0f,
-		// 0.0f, 0.0f, 0.0f);
-		// translateAnimation.setDuration(3000);
-		switch (animation) {
-		case RichMediaAd.ANIMATION_FADE_IN:
-			return set;
-		case RichMediaAd.ANIMATION_FLIP_IN:
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
-					Animation.RELATIVE_TO_SELF, 1.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_LEFT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, -1.0f, Animation.RELATIVE_TO_SELF, 0.0f,
-					Animation.RELATIVE_TO_SELF, 0.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_RIGHT:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 1.0f, Animation.RELATIVE_TO_SELF, 0.0f,
-					Animation.RELATIVE_TO_SELF, 0.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		case RichMediaAd.ANIMATION_SLIDE_IN_TOP:
-			translateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f, Animation.RELATIVE_TO_SELF, 0.0f,
-					Animation.RELATIVE_TO_SELF, -1.0f);
-			translateAnimation.setDuration(1000);
-			set.addAnimation(translateAnimation);
-			return set;
-		default:
-			return null;
-		}
-	}
-
 	public static int getEnterAnimation(int animation) {
 		switch (animation) {
-		case RichMediaAd.ANIMATION_FADE_IN:
+		case ANIMATION_FADE_IN:
 			return sFadeInAnimationId;
-		case RichMediaAd.ANIMATION_FLIP_IN:
+		case ANIMATION_FLIP_IN:
 			return sFadeInAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM:
+		case ANIMATION_SLIDE_IN_BOTTOM:
 			return sSlideInBottomAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_LEFT:
+		case ANIMATION_SLIDE_IN_LEFT:
 			return sSlideInLeftAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_RIGHT:
+		case ANIMATION_SLIDE_IN_RIGHT:
 			return sSlideInRightAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_TOP:
+		case ANIMATION_SLIDE_IN_TOP:
 			return sSlideInTopAnimationId;
 		default:
 			return 0;
@@ -366,17 +285,17 @@ public class Util {
 
 	public static int getExitAnimation(int animation) {
 		switch (animation) {
-		case RichMediaAd.ANIMATION_FADE_IN:
+		case ANIMATION_FADE_IN:
 			return sFadeOutAnimationId;
-		case RichMediaAd.ANIMATION_FLIP_IN:
+		case ANIMATION_FLIP_IN:
 			return sFadeOutAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_BOTTOM:
+		case ANIMATION_SLIDE_IN_BOTTOM:
 			return sSlideOutBottomAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_LEFT:
+		case ANIMATION_SLIDE_IN_LEFT:
 			return sSlideOutLeftAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_RIGHT:
+		case ANIMATION_SLIDE_IN_RIGHT:
 			return sSlideOutRightAnimationId;
-		case RichMediaAd.ANIMATION_SLIDE_IN_TOP:
+		case ANIMATION_SLIDE_IN_TOP:
 			return sSlideOutTopAnimationId;
 		default:
 			return 0;

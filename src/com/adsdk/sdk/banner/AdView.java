@@ -21,10 +21,10 @@ import android.widget.FrameLayout;
 
 import com.adsdk.sdk.AdListener;
 import com.adsdk.sdk.AdRequest;
-import com.adsdk.sdk.BannerAd;
+import com.adsdk.sdk.AdResponse;
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
-import com.adsdk.sdk.RequestBannerAd;
+import com.adsdk.sdk.RequestGeneralAd;
 import com.adsdk.sdk.Util;
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.customevents.CustomEventBanner;
@@ -55,7 +55,7 @@ public class AdView extends FrameLayout {
 	private Timer reloadTimer;
 	private boolean isInternalBrowser = false;
 
-	private BannerAd response;
+	private AdResponse response;
 	private AdRequest request;
 
 	private String requestURL = null;
@@ -273,11 +273,11 @@ public class AdView extends FrameLayout {
 				@Override
 				public void run() {
 					Log.d(Const.TAG, "starting request thread");
-					final RequestBannerAd requestAd;
+					final RequestGeneralAd requestAd;
 					if (xml == null)
-						requestAd = new RequestBannerAd();
+						requestAd = new RequestGeneralAd();
 					else
-						requestAd = new RequestBannerAd(xml);
+						requestAd = new RequestGeneralAd(xml);
 
 					try {
 						AdView.this.response = requestAd.sendRequest(AdView.this.getRequest());
