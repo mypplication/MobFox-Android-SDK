@@ -44,7 +44,6 @@ import com.adsdk.sdk.AdManager;
 import com.adsdk.sdk.AdResponse;
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
-import com.adsdk.sdk.Util;
 import com.adsdk.sdk.video.InterstitialController.OnResetAutocloseListener;
 import com.adsdk.sdk.video.MediaController.OnPauseListener;
 import com.adsdk.sdk.video.MediaController.OnReplayListener;
@@ -148,14 +147,6 @@ public class RichMediaActivity extends Activity {
 	public static final int TYPE_VIDEO = 1;
 	public static final int TYPE_INTERSTITIAL = 2;
 
-	public static void setActivityAnimation(final Activity activity, final int in, final int out) {
-		try {
-			activity.overridePendingTransition(in, out);
-
-		} catch (final Exception e) {
-
-		}
-	}
 
 	private ResourceManager mResourceManager;
 	private FrameLayout mRootLayout;
@@ -189,9 +180,7 @@ public class RichMediaActivity extends Activity {
 	protected boolean mInterstitialAutocloseReset;
 	private boolean mPageLoaded = false;
 	private int mType;
-	private int mEnterAnim;
 
-	private int mExitAnim;
 	private boolean mResult;
 
 	DisplayMetrics metrics;
@@ -342,7 +331,6 @@ public class RichMediaActivity extends Activity {
 				intent.putExtra(Const.AD_TYPE_EXTRA, RichMediaActivity.TYPE_INTERSTITIAL);
 				try {
 					RichMediaActivity.this.startActivity(intent);
-					RichMediaActivity.setActivityAnimation(RichMediaActivity.this, RichMediaActivity.this.mEnterAnim, RichMediaActivity.this.mExitAnim);
 				} catch (final Exception e) {
 					Log.e("Cannot start Rich Ad activity:" + e, e);
 				}
@@ -580,8 +568,6 @@ public class RichMediaActivity extends Activity {
 			}
 		}
 		super.finish();
-
-		RichMediaActivity.setActivityAnimation(this, this.mEnterAnim, this.mExitAnim);
 	}
 
 	public int getDipSize(final int argSize) {
@@ -926,12 +912,8 @@ public class RichMediaActivity extends Activity {
 		if (this.mType == RichMediaActivity.TYPE_BROWSER) {
 			this.initWebBrowserView(true);
 			this.mWebBrowserView.loadUrl(this.uri.toString());
-			this.mEnterAnim = Util.getEnterAnimation(Util.ANIMATION_FADE_IN);
-			this.mExitAnim = Util.getExitAnimation(Util.ANIMATION_FADE_IN);
 		} else {
 			this.mAd = (AdResponse) extras.getSerializable(Const.AD_EXTRA);
-			this.mEnterAnim = Util.getEnterAnimation(this.mAd.getAnimation());
-			this.mExitAnim = Util.getExitAnimation(this.mAd.getAnimation());
 
 			this.mCanClose = false;
 			this.mType = extras.getInt(Const.AD_TYPE_EXTRA, -1);
@@ -1123,7 +1105,6 @@ public class RichMediaActivity extends Activity {
 				intent.putExtra(Const.AD_TYPE_EXTRA, RichMediaActivity.TYPE_VIDEO);
 				try {
 					this.startActivity(intent);
-					RichMediaActivity.setActivityAnimation(this, this.mEnterAnim, this.mExitAnim);
 					this.mResult = true;
 					this.setResult(Activity.RESULT_OK);
 				} catch (final Exception e) {

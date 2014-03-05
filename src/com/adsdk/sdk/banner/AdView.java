@@ -221,7 +221,6 @@ public class AdView extends FrameLayout {
 		this.request.setAdspaceWidth(adspaceWidth);
 		this.request.setAdspaceStrict(adspaceStrict);
 
-		this.request.setType(AdRequest.BANNER);
 		this.request.setRequestURL(requestURL);
 		return this.request;
 	}

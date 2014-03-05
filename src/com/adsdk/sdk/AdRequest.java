@@ -19,10 +19,6 @@ public class AdRequest {
 	private int adspaceWidth;
 	private int adspaceHeight;
 	private static final String REQUEST_TYPE_ANDROID = "android_app";
-	private int type = -1;
-
-	public static final int BANNER = 0;
-	public static final int VAD = 1;
 
 	private String ipAddress;
 
@@ -191,16 +187,7 @@ public class AdRequest {
 		b.appendQueryParameter("t", Long.toString(this.getTimestamp()));
 		b.appendQueryParameter("connection_type", this.getConnectionType());
 		b.appendQueryParameter("listads", this.getListAds());
-		switch(getType()){
-		case BANNER:
-			b.appendQueryParameter("c.mraid", "1");
-			b.appendQueryParameter("sdk","banner");
-			break;
-		case VAD:
-			b.appendQueryParameter("c.mraid", "0");
-			b.appendQueryParameter("sdk","vad");
-			break;
-		}
+		
 		b.appendQueryParameter("u_wv", this.getUserAgent());
 		b.appendQueryParameter("u_br", this.getUserAgent());
 		if(longitude != 0 && latitude != 0) {
@@ -227,14 +214,6 @@ public class AdRequest {
 
 	public void setRequestURL(String requestURL) {
 		this.requestURL = requestURL;
-	}
-
-	public int getType() {
-		return type;
-	}
-
-	public void setType(int type) {
-		this.type = type;
 	}
 
 	public boolean isAdspaceStrict() {

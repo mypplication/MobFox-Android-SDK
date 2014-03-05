@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
+import com.adsdk.sdk.video.VAST;
 
 public class AdResponse implements Ad {
 
@@ -25,8 +26,7 @@ public class AdResponse implements Ad {
 	private boolean scale;
 	private boolean skipPreflight;
 	private long timestamp;
-	private int animation; //TODO: Parse this parameter if still supported
-	private Object vast; //TODO: Change Object class to VAST after merge
+	private VAST vast;
 
 	public int getBannerHeight() {
 		return this.bannerHeight;
@@ -153,20 +153,12 @@ public class AdResponse implements Ad {
 		this.timestamp = timestamp;
 	}
 
-	public Object getVast() {
+	public VAST getVast() {
 		return vast;
 	}
 
-	public void setVast(Object vast) {
+	public void setVast(VAST vast) {
 		this.vast = vast;
-	}
-
-	public int getAnimation() {
-		return animation;
-	}
-
-	public void setAnimation(int animation) {
-		this.animation = animation;
 	}
 
 }

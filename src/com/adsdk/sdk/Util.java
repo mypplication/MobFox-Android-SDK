@@ -31,26 +31,7 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
 public class Util {
-	private static int sFadeInAnimationId = 0;
-	private static int sFadeOutAnimationId = 0;
-	private static int sSlideInRightAnimationId = 0;
-	private static int sSlideOutRightAnimationId = 0;
-	private static int sSlideInLeftAnimationId = 0;
-	private static int sSlideOutLeftAnimationId = 0;
-	private static int sSlideInTopAnimationId = 0;
-	private static int sSlideOutTopAnimationId = 0;
-	private static int sSlideInBottomAnimationId = 0;
-	private static int sSlideOutBottomAnimationId = 0;
 	private static String androidAdId;
-	
-	//from video ads:
-	public final static int   ANIMATION_FADE_IN         = 1;
-	public final static int   ANIMATION_SLIDE_IN_TOP    = 2;
-	public final static int   ANIMATION_SLIDE_IN_BOTTOM = 3;
-	public final static int   ANIMATION_SLIDE_IN_LEFT   = 4;
-	public final static int   ANIMATION_SLIDE_IN_RIGHT  = 5;
-	public final static int   ANIMATION_FLIP_IN         = 6;
-	public static final int   ANIMATION_NONE            = 0;
 
 
 	private static final float MINIMAL_ACCURACY = 1000;
@@ -245,60 +226,6 @@ public class Util {
 			return (Integer) getMemoryClassMethod.invoke(ac, new Object[] {});
 		} catch (Exception ex) {
 			return 16;
-		}
-	}
-
-	public static void initializeAnimations(Context ctx) {
-		Resources r = ctx.getResources();
-		sFadeInAnimationId = r.getIdentifier("fade_in", "anim", ctx.getPackageName());
-		sFadeOutAnimationId = r.getIdentifier("fade_out", "anim", ctx.getPackageName());
-		sSlideInBottomAnimationId = r.getIdentifier("slide_bottom_in", "anim", ctx.getPackageName());
-		sSlideOutBottomAnimationId = r.getIdentifier("slide_bottom_out", "anim", ctx.getPackageName());
-		sSlideInTopAnimationId = r.getIdentifier("slide_top_in", "anim", ctx.getPackageName());
-		sSlideOutTopAnimationId = r.getIdentifier("slide_top_out", "anim", ctx.getPackageName());
-		sSlideInLeftAnimationId = r.getIdentifier("slide_left_in", "anim", ctx.getPackageName());
-		sSlideOutLeftAnimationId = r.getIdentifier("slide_left_out", "anim", ctx.getPackageName());
-		sSlideInRightAnimationId = r.getIdentifier("slide_right_in", "anim", ctx.getPackageName());
-		sSlideOutRightAnimationId = r.getIdentifier("slide_right_out", "anim", ctx.getPackageName());
-
-	}
-
-	public static int getEnterAnimation(int animation) {
-		switch (animation) {
-		case ANIMATION_FADE_IN:
-			return sFadeInAnimationId;
-		case ANIMATION_FLIP_IN:
-			return sFadeInAnimationId;
-		case ANIMATION_SLIDE_IN_BOTTOM:
-			return sSlideInBottomAnimationId;
-		case ANIMATION_SLIDE_IN_LEFT:
-			return sSlideInLeftAnimationId;
-		case ANIMATION_SLIDE_IN_RIGHT:
-			return sSlideInRightAnimationId;
-		case ANIMATION_SLIDE_IN_TOP:
-			return sSlideInTopAnimationId;
-		default:
-			return 0;
-		}
-
-	}
-
-	public static int getExitAnimation(int animation) {
-		switch (animation) {
-		case ANIMATION_FADE_IN:
-			return sFadeOutAnimationId;
-		case ANIMATION_FLIP_IN:
-			return sFadeOutAnimationId;
-		case ANIMATION_SLIDE_IN_BOTTOM:
-			return sSlideOutBottomAnimationId;
-		case ANIMATION_SLIDE_IN_LEFT:
-			return sSlideOutLeftAnimationId;
-		case ANIMATION_SLIDE_IN_RIGHT:
-			return sSlideOutRightAnimationId;
-		case ANIMATION_SLIDE_IN_TOP:
-			return sSlideOutTopAnimationId;
-		default:
-			return 0;
 		}
 	}
 

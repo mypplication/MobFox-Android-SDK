@@ -44,8 +44,6 @@ public class AdManager {
 	private AdResponse mResponse;
 	private String requestURL;
 
-	private String mUserAgent;
-
 	public static AdManager getAdManager(AdResponse ad) {
 		AdManager adManager = sRunningAds.remove(ad.getTimestamp());
 		if (adManager == null) {
@@ -256,9 +254,6 @@ public class AdManager {
 					Intent intent = new Intent(activity, RichMediaActivity.class);
 					intent.putExtra(AD_EXTRA, ad);
 					activity.startActivityForResult(intent, 0);
-					int enterAnim = Util.getEnterAnimation(ad.getAnimation());
-					int exitAnim = Util.getExitAnimation(ad.getAnimation());
-					RichMediaActivity.setActivityAnimation(activity, enterAnim, exitAnim);
 				} else {
 					customEventFullscreen.showFullscreen();
 				}
@@ -290,7 +285,6 @@ public class AdManager {
 	}
 
 	private void initialize() throws IllegalArgumentException {
-		mUserAgent = Util.getDefaultUserAgentString(getContext());
 		Log.LOGGING_ENABLED = Log.isLoggingEnabled(getmContext());
 		Log.d("Ad SDK Version:" + Const.VERSION);
 		this.mUniqueId1 = Util.getTelephonyDeviceId(getContext());
@@ -310,7 +304,6 @@ public class AdManager {
 		}
 		Log.d("AdManager Publisher Id:" + mPublisherId + " Device Id:" + mUniqueId1 + " DeviceId2:" + mUniqueId2);
 		mEnabled = (Util.getMemoryClass(getContext()) > 16);
-		Util.initializeAnimations(getContext());
 		customFullscreenListener = createCustomFullscreenListener();
 	}
 
@@ -448,7 +441,6 @@ public class AdManager {
 		request.setTimestamp(System.currentTimeMillis());
 		//
 		
-		this.request.setType(AdRequest.VAD);
 		this.request.setRequestURL(requestURL);
 		return this.request;
 	}
