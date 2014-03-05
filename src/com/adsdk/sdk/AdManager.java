@@ -9,10 +9,8 @@ import java.util.HashMap;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Handler;
-import android.telephony.TelephonyManager;
 
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.customevents.CustomEventFullscreen;

@@ -40,10 +40,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import com.adsdk.sdk.Ad;
+import com.adsdk.sdk.AdListener;
 import com.adsdk.sdk.AdManager;
 import com.adsdk.sdk.AdResponse;
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
+import com.adsdk.sdk.banner.BannerAdView;
+import com.adsdk.sdk.mraid.MraidView;
+import com.adsdk.sdk.mraid.MraidView.MraidListener;
+import com.adsdk.sdk.mraid.MraidView.ViewState;
 import com.adsdk.sdk.video.InterstitialController.OnResetAutocloseListener;
 import com.adsdk.sdk.video.MediaController.OnPauseListener;
 import com.adsdk.sdk.video.MediaController.OnReplayListener;
@@ -146,7 +152,9 @@ public class RichMediaActivity extends Activity {
 	public static final int TYPE_BROWSER = 0;
 	public static final int TYPE_VIDEO = 1;
 	public static final int TYPE_INTERSTITIAL = 2;
-
+	public static final int TYPE_INTERSTITIAL_FROM_BANNER = 3; // textAd,
+																// imageAd,
+																// mraidAd
 
 	private ResourceManager mResourceManager;
 	private FrameLayout mRootLayout;
@@ -565,6 +573,9 @@ public class RichMediaActivity extends Activity {
 				if (this.mAd.getType() == Const.INTERSTITIAL || this.mAd.getType() == Const.VIDEO_TO_INTERSTITIAL || this.mAd.getType() == Const.INTERSTITIAL_TO_VIDEO)
 					AdManager.closeRunningAd(this.mAd, this.mResult);
 				break;
+			case TYPE_INTERSTITIAL_FROM_BANNER:
+				AdManager.closeRunningAd(this.mAd, this.mResult);
+				break;
 			}
 		}
 		super.finish();
@@ -599,6 +610,11 @@ public class RichMediaActivity extends Activity {
 				this.finish();
 			}
 			break;
+		case TYPE_INTERSTITIAL_FROM_BANNER:
+			this.mResult = true;
+			this.setResult(Activity.RESULT_OK);
+			this.finish();
+			break;
 		case TYPE_BROWSER:
 			if (this.mWebBrowserView.canGoBack())
 				this.mWebBrowserView.goBack();
@@ -609,12 +625,107 @@ public class RichMediaActivity extends Activity {
 
 	}
 
+	private void initInterstitialFromBannerView() { // TODO: listener methods?
+		final FrameLayout layout = new FrameLayout(this);
+		if (mAd.getType() == Const.TEXT || mAd.getType() == Const.IMAGE) {
+			BannerAdView banner = new BannerAdView(this, mAd, 0, 0, false, createAdListenerForInterstitials());
+			banner.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			layout.addView(banner);
+		}
+		if (mAd.getType() == Const.MRAID) {
+			MraidView mMRAIDView = new MraidView(this);
+			layout.addView(mMRAIDView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			mMRAIDView.setMraidListener(createMraidListener());
+			mMRAIDView.loadHtmlData(mAd.getText());
+
+		}
+
+		this.mSkipButton = new ImageView(this);
+		this.mSkipButton.setAdjustViewBounds(false);
+		FrameLayout.LayoutParams params = null;
+
+		int buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
+
+		int size = Math.min(this.getResources().getDisplayMetrics().widthPixels, this.getResources().getDisplayMetrics().heightPixels);
+		buttonSize = (int) (size * 0.1);
+
+		params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
+
+		final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
+		params.topMargin = margin;
+		params.rightMargin = margin;
+
+		this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+
+		this.mSkipButton.setOnClickListener(this.mOnInterstitialSkipListener);
+
+		this.mCanClose = true;
+		this.mSkipButton.setVisibility(View.VISIBLE);
+
+		layout.addView(this.mSkipButton, params);
+
+		this.mRootLayout.addView(layout);
+		switch (this.mInterstitialData.interstitialType) {
+		case InterstitialData.INTERSTITIAL_MARKUP:
+			this.mInterstitialView.setMarkup(this.mInterstitialData.interstitialMarkup);
+			break;
+		case InterstitialData.INTERSTITIAL_URL:
+			this.mInterstitialView.loadUrl(this.mInterstitialData.interstitialUrl);
+			break;
+		}
+		Log.i(this.mInterstitialView.getWebView().getSettings().getUserAgentString());
+	}
+
+	private MraidListener createMraidListener() {
+		return new MraidListener() {
+
+			@Override
+			public void onReady(MraidView view) {
+			}
+
+			@Override
+			public void onFailure(MraidView view) {
+			}
+
+			@Override
+			public void onExpand(MraidView view) {
+			}
+
+			@Override
+			public void onClose(MraidView view, ViewState newViewState) {
+			}
+		};
+	}
+
+	private AdListener createAdListenerForInterstitials() {
+		return new AdListener() {
+
+			@Override
+			public void noAdFound() {
+			}
+
+			@Override
+			public void adShown(Ad ad, boolean succeeded) {
+			}
+
+			@Override
+			public void adLoadSucceeded(Ad ad) {
+			}
+
+			@Override
+			public void adClosed(Ad ad, boolean completed) {
+			}
+
+			@Override
+			public void adClicked() {
+			}
+		};
+	}
+
 	@SuppressWarnings("deprecation")
 	private void initInterstitialView() {
-		this.mInterstitialData = new InterstitialData();
-//				this.mAd.getInterstitial(); //TODO: translate VAST into interstitial data
-		
-		
+		this.mInterstitialData = VASTParser.fillInterstitialDataFromVast(mAd.getVast());
+
 		this.mInterstitialAutocloseReset = false;
 
 		this.setRequestedOrientation(this.mInterstitialData.orientation);
@@ -694,8 +805,7 @@ public class RichMediaActivity extends Activity {
 
 	private void initVideoView() {
 
-		this.mVideoData = new VideoData();
-//				this.mAd.getVast(); //TODO: translate VAST into VideoData
+		this.mVideoData = VASTParser.fillVideoDataFromVast(mAd.getVast());
 
 		this.setRequestedOrientation(this.mVideoData.orientation);
 		if (this.mVideoData.orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
@@ -927,6 +1037,11 @@ public class RichMediaActivity extends Activity {
 				case Const.INTERSTITIAL_TO_VIDEO:
 					this.mType = RichMediaActivity.TYPE_INTERSTITIAL;
 					break;
+				case Const.TEXT:
+				case Const.MRAID:
+				case Const.IMAGE:
+					this.mType = TYPE_INTERSTITIAL_FROM_BANNER;
+					break;
 				}
 			switch (this.mType) {
 			case TYPE_VIDEO:
@@ -936,6 +1051,10 @@ public class RichMediaActivity extends Activity {
 			case TYPE_INTERSTITIAL:
 				Log.v("Type interstitial");
 				this.initInterstitialView();
+				break;
+			case TYPE_INTERSTITIAL_FROM_BANNER:
+				Log.v("Type interstitial like banner");
+				this.initInterstitialFromBannerView();
 				break;
 			}
 		}

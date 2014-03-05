@@ -21,6 +21,8 @@ import org.xml.sax.SAXException;
 
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
+import com.adsdk.sdk.video.VAST;
+import com.adsdk.sdk.video.VASTParser;
 
 public class RequestGeneralAd extends RequestAd<AdResponse> {
 
@@ -193,6 +195,11 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 				response.setRefresh(0);
 				response.setScale(this.getValueAsBoolean(doc, "scale"));
 				response.setSkipPreflight(this.getValueAsBoolean(doc, "skippreflight"));
+			} else if ("vastAd".equalsIgnoreCase(type)) {
+				VAST vast = VASTParser.createVastFromString((this.getValue(doc, "htmlString")));
+				response.setVast(vast);
+				
+//				response.setType(Const.);  //TODO: Choose type depending on VAST contents
 			} else if ("noAd".equalsIgnoreCase(type)) {
 				response.setType(Const.NO_AD);
 				if (response.getRefresh() <= 0) {
