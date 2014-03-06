@@ -391,7 +391,7 @@ public class RichMediaActivity extends Activity {
 		public void onVideoUnpause() {
 
 			Log.d("###########TRACKING UNPAUSE VIDEO");
-			final Vector<String> trackers = RichMediaActivity.this.mVideoData.unpauseEvents;
+			final Vector<String> trackers = RichMediaActivity.this.mVideoData.resumeEvents;
 			for (int i = 0; i < trackers.size(); i++) {
 
 				Log.d("Track url:" + trackers.get(i));
@@ -665,15 +665,6 @@ public class RichMediaActivity extends Activity {
 		layout.addView(this.mSkipButton, params);
 
 		this.mRootLayout.addView(layout);
-		switch (this.mInterstitialData.interstitialType) {
-		case InterstitialData.INTERSTITIAL_MARKUP:
-			this.mInterstitialView.setMarkup(this.mInterstitialData.interstitialMarkup);
-			break;
-		case InterstitialData.INTERSTITIAL_URL:
-			this.mInterstitialView.loadUrl(this.mInterstitialData.interstitialUrl);
-			break;
-		}
-		Log.i(this.mInterstitialView.getWebView().getSettings().getUserAgentString());
 	}
 
 	private MraidListener createMraidListener() {
@@ -724,7 +715,7 @@ public class RichMediaActivity extends Activity {
 
 	@SuppressWarnings("deprecation")
 	private void initInterstitialView() {
-		this.mInterstitialData = VASTParser.fillInterstitialDataFromVast(mAd.getVast());
+		this.mInterstitialData = mAd.getInterstitialData();
 
 		this.mInterstitialAutocloseReset = false;
 
@@ -805,7 +796,7 @@ public class RichMediaActivity extends Activity {
 
 	private void initVideoView() {
 
-		this.mVideoData = VASTParser.fillVideoDataFromVast(mAd.getVast());
+		this.mVideoData = mAd.getVideoData();
 
 		this.setRequestedOrientation(this.mVideoData.orientation);
 		if (this.mVideoData.orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
@@ -876,7 +867,7 @@ public class RichMediaActivity extends Activity {
 			mMediaController.toggle();
 		if (!this.mVideoData.pauseEvents.isEmpty())
 			this.mMediaController.setOnPauseListener(this.mOnVideoPauseListener);
-		if (!this.mVideoData.unpauseEvents.isEmpty())
+		if (!this.mVideoData.resumeEvents.isEmpty())
 			this.mMediaController.setOnUnpauseListener(this.mOnVideoUnpauseListener);
 		if (!this.mVideoData.replayEvents.isEmpty())
 			this.mMediaController.setOnReplayListener(this.mOnVideoReplayListener);

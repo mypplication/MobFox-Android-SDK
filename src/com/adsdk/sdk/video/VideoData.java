@@ -15,6 +15,7 @@ public class VideoData implements Serializable {
 	public static final int DISPLAY_FULLSCREEN = 0;
 	public static final int DISPLAY_NORMAL = 1;
 
+	private int sequence;
 	int orientation;
 
 	int delivery;
@@ -56,7 +57,7 @@ public class VideoData implements Serializable {
 	Vector<String> muteEvents = new Vector<String>();
 	Vector<String> unmuteEvents = new Vector<String>();
 	Vector<String> pauseEvents = new Vector<String>();
-	Vector<String> unpauseEvents = new Vector<String>();
+	Vector<String> resumeEvents = new Vector<String>();
 	Vector<String> skipEvents = new Vector<String>();
 	Vector<String> replayEvents = new Vector<String>();
 
@@ -93,7 +94,7 @@ public class VideoData implements Serializable {
 				+ ",\ncompleteEvents=" + getCompleteEvents() + ",\nmuteEvents="
 				+ muteEvents + ",\nunmuteEvents=" + unmuteEvents
 				+ ",\npauseEvents=" + pauseEvents + ",\nunpauseEvents="
-				+ unpauseEvents + ",\nskipEvents=" + skipEvents
+				+ resumeEvents + ",\nskipEvents=" + skipEvents
 				+ ",\nreplayEvents=" + replayEvents + ",\nshowHtmlOverlay="
 				+ showHtmlOverlay + ",\nshowHtmlOverlayAfter="
 				+ showHtmlOverlayAfter + ",\nhtmlOverlayType="
@@ -115,5 +116,13 @@ public class VideoData implements Serializable {
 
 	public void setStartEvents(Vector<String> startEvents) {
 		this.startEvents = startEvents;
+	}
+
+	public int getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(int sequence) {
+		this.sequence = sequence;
 	}
 }

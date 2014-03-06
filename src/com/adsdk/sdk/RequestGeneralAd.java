@@ -21,8 +21,10 @@ import org.xml.sax.SAXException;
 
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
+import com.adsdk.sdk.video.InterstitialData;
 import com.adsdk.sdk.video.VAST;
 import com.adsdk.sdk.video.VASTParser;
+import com.adsdk.sdk.video.VideoData;
 
 public class RequestGeneralAd extends RequestAd<AdResponse> {
 
@@ -197,9 +199,23 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 				response.setSkipPreflight(this.getValueAsBoolean(doc, "skippreflight"));
 			} else if ("vastAd".equalsIgnoreCase(type)) {
 				VAST vast = VASTParser.createVastFromString((this.getValue(doc, "htmlString")));
-				response.setVast(vast);
-				
-//				response.setType(Const.);  //TODO: Choose type depending on VAST contents
+				VideoData video = VASTParser.fillVideoDataFromVast(vast);
+				response.setVideoData(video);
+				InterstitialData interstitial = VASTParser.fillInterstitialDataFromVast(vast);
+				response.setInterstitialData(interstitial);
+				if (video != null && interstitial != null) {
+					if(video.getSequence() < interstitial.getSequence()) {
+						response.setType(Const.VIDEO_TO_INTERSTITIAL);
+					} else {
+						response.setType(Const.INTERSTITIAL_TO_VIDEO);
+					}
+				} else if (video != null) {
+					response.setType(Const.VIDEO);
+				} else if (interstitial != null) {
+					response.setType(Const.INTERSTITIAL);
+				} else {
+					response.setType(Const.NO_AD);
+				}
 			} else if ("noAd".equalsIgnoreCase(type)) {
 				response.setType(Const.NO_AD);
 				if (response.getRefresh() <= 0) {

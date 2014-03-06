@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.http.HttpStatus;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -32,6 +33,7 @@ import com.adsdk.sdk.Log;
 import com.adsdk.sdk.video.InterstitialController.BrowserControl;
 import com.adsdk.sdk.video.WebViewClient.OnPageLoadedListener;
 
+@SuppressLint("ViewConstructor")
 public class WebFrame extends FrameLayout implements BrowserControl {
 
 	private WebView mWebView;
@@ -88,6 +90,8 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
+	@SuppressLint("SetJavaScriptEnabled")
 	public WebFrame(Activity context, boolean allowNavigation,
 			boolean scroll, boolean showExit) {
 		super(context);
@@ -114,11 +118,11 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 			ImageView bg = new ImageView(context);
 			bg.setBackgroundColor(Color.TRANSPARENT);
 			addView(bg, new FrameLayout.LayoutParams(
-					android.view.ViewGroup.LayoutParams.FILL_PARENT,
-					android.view.ViewGroup.LayoutParams.FILL_PARENT, Gravity.CENTER));
+					android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+					android.view.ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER));
 			addView(mWebView, new FrameLayout.LayoutParams(
-					android.view.ViewGroup.LayoutParams.FILL_PARENT,
-					android.view.ViewGroup.LayoutParams.FILL_PARENT, Gravity.CENTER));
+					android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+					android.view.ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER));
 			mExitButton = new ImageView(context);
 			mExitButton.setAdjustViewBounds(false);
 			mExitButton.setOnClickListener(new OnClickListener() {
@@ -148,8 +152,8 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 		}
 		else{
 			addView(mWebView, new FrameLayout.LayoutParams(
-					android.view.ViewGroup.LayoutParams.FILL_PARENT,
-					android.view.ViewGroup.LayoutParams.FILL_PARENT, Gravity.CENTER));
+					android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+					android.view.ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER));
 		}
 
 	}

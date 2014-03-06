@@ -103,7 +103,7 @@ public class AdManager {
 						RequestGeneralAd requestAd = new RequestGeneralAd();
 						AdRequest request = getRequest();
 						mResponse = requestAd.sendRequest(request);
-						if (mResponse.getVast() != null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO && mResponse.getCustomEvents().isEmpty()) {
+						if (mResponse.getVideoData() != null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("Not capable of video");
 							notifyNoAdFound();
 						} else if ((mResponse.getType() == Const.VIDEO_TO_INTERSTITIAL || mResponse.getType() == Const.INTERSTITIAL_TO_VIDEO || mResponse.getType() == Const.VIDEO

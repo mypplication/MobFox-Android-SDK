@@ -12,6 +12,7 @@ public class InterstitialData implements Serializable {
 	public static final int   INTERSTITIAL_TITLE_FIXED = 0;
 	public static final int   INTERSTITIAL_TITLE_HTML  = 1;
 	public static final int   INTERSTITIAL_TITLE_HIDDEN  = 2;
+	private int sequence;
 	int                       autoclose;
 	int                       orientation;
 	int                       interstitialType;
@@ -66,6 +67,14 @@ public class InterstitialData implements Serializable {
 				+ ",\nshowExternalButton=" + showExternalButton
 				+ ",\nexternalButtonImage=" + externalButtonImage
 				+ ",\nshowTimer=" + showTimer + ",\nicons=" + icons + "\n]";
+	}
+
+	public int getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(int sequence) {
+		this.sequence = sequence;
 	}
 
 }
