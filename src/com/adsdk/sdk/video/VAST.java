@@ -23,7 +23,7 @@ public class VAST {
 
 	@Root(name = "Ad")
 	public static class Ad {
-		@Attribute(name = "id")
+		@Attribute(required = false, name = "id")
 		String id;
 		
 		@Attribute(required = false, name = "sequence")
@@ -46,19 +46,19 @@ public class VAST {
 		
 		@Root(name = "Wrapper")
 		public static class Wrapper {
-			@Element(required = false, name = "AdSystem")
+			@Element(name = "AdSystem")
 			AdSystem adSystem;
 			
-			@ElementList(required = false, inline=true)
+			@ElementList(inline=true)
 			List<Impression> impressions;
 			
-			@Element(required = false, name = "VASTAdTagURI")
+			@Element(name = "VASTAdTagURI")
 			String VASTAdTagUri;
 			
 			@Element(required = false, name = "Error")
 			String error;
 			
-			@ElementList(name = "Creatives")
+			@ElementList(required = false, name = "Creatives")
 			List<Creative> creatives;
 		}
 		
@@ -73,10 +73,10 @@ public class VAST {
 
 		@Root (name = "InLine")
 		public static class InLine {
-			@Element (required = false, name = "AdSystem")
+			@Element (name = "AdSystem")
 			AdSystem adSystem;
 			
-			@Element (required = false, name = "AdTitle")
+			@Element (name = "AdTitle")
 			String adTitle;
 			
 			@Element (required = false, name = "Description")
@@ -88,7 +88,7 @@ public class VAST {
 			@Element (required = false, name = "Error")
 			String error;
 			
-			@ElementList(required = false, inline = true)
+			@ElementList(inline = true)
 			List<Impression> impressions;
 			
 			@ElementList(name = "Creatives")
@@ -98,7 +98,7 @@ public class VAST {
 
 		@Root (name = "Creative")
 		public static class Creative {
-			@Attribute(name = "id")
+			@Attribute(required = false, name = "id")
 			String id;
 			
 			@Attribute(required = false, name = "sequence")
@@ -124,32 +124,37 @@ public class VAST {
 				@Attribute(required = false, name = "skipoffset")
 				String skipoffset;
 				
+<<<<<<< HEAD
 				@Element(name = "Duration") //TODO: conversion?
 				String duration; // required, format: HH:MM:SS or HH:MM:SS.mmm
+=======
+				@Element(name = "Duration")
+				String duration;
+>>>>>>> vAST- decide required and optional elements.
 				
 				@ElementList(name = "MediaFiles")
-				List<MediaFile> mediaFiles; // required (1-*)
+				List<MediaFile> mediaFiles;
 				
 				@ElementList(required = false, name = "TrackingEvents")
-				List<Tracking> trackingEvents; // optional (1-*)
+				List<Tracking> trackingEvents; 
 				
 				@Element(required = false, name = "VideoClicks")
 				VideoClicks videoClicks;
 
 				@Root(name = "MediaFile")
 				public static class MediaFile {
-					@Attribute(name = "id")
+					@Attribute(required = false, name = "id")
 					String id;
 					
-					@Attribute(required = false, name = "delivery")
+					@Attribute(name = "delivery")
 					String delivery;
-					@Attribute(required = false, name = "type")
+					@Attribute(name = "type")
 					String type;
 					@Attribute(required = false, name = "bitrate")
 					String bitrate;
-					@Attribute(required = false, name = "width")
+					@Attribute(name = "width")
 					int width;
-					@Attribute(required = false, name = "height")
+					@Attribute(name = "height")
 					int height;
 					@Attribute(required = false, name = "scalable")
 					boolean scalable;
@@ -199,9 +204,9 @@ public class VAST {
 				public static class Companion {
 					@Attribute(required = false, name = "id")
 					String id;
-					@Attribute(required = false, name = "width")
+					@Attribute(name = "width")
 					int width;
-					@Attribute(required = false, name = "height")
+					@Attribute(name = "height")
 					int height;
 					@Attribute(required = false, name = "assetWidth")
 					int assetWidth;
@@ -244,9 +249,9 @@ public class VAST {
 				public static class NonLinear {
 					@Attribute(required = false, name = "id")
 					String id;
-					@Attribute(required = false, name = "width")
+					@Attribute(name = "width")
 					int width;
-					@Attribute(required = false, name = "height")
+					@Attribute(name = "height")
 					int height;
 					@Attribute(required = false, name = "expandedWidth")
 					int expandedWidth;
