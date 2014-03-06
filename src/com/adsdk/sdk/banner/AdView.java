@@ -476,6 +476,7 @@ public class AdView extends FrameLayout {
 			@Override
 			public void onBannerExpanded() {
 				if (listener != null) {
+					listener.adClicked();
 					listener.adShown(null, true);
 				}
 			}
@@ -509,6 +510,7 @@ public class AdView extends FrameLayout {
 			@Override
 			public void onExpand(MraidView arg0) {
 				if (listener != null) {
+					listener.adClicked();
 					listener.adShown(null, true);
 				}
 			}
