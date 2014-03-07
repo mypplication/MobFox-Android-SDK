@@ -59,11 +59,17 @@ public class AdManager {
 		Log.d("Notify closing event to AdManager with running ad:" + ad.getTimestamp());
 		adManager.notifyAdClose(ad, result);
 	}
+	
+	public static void notifyAdClick(AdResponse ad) {
+		AdManager adManager = sRunningAds.get(ad.getTimestamp());
+		if (adManager != null) {
+			adManager.notifyAdClicked();
+		}
+	}
 
 	public void release() {
 		TrackerService.release();
 		ResourceManager.cancel();
-
 	}
 
 	public AdManager(Context ctx, final String requestURL, final String publisherId, final boolean includeLocation) throws IllegalArgumentException {

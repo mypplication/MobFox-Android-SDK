@@ -40,6 +40,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import com.adsdk.sdk.Ad;
 import com.adsdk.sdk.AdListener;
 import com.adsdk.sdk.AdManager;
 import com.adsdk.sdk.AdResponse;
@@ -172,8 +173,6 @@ public class RichMediaActivity extends Activity {
 	private AdResponse mAd;
 	private VideoData mVideoData;
 	private InterstitialData mInterstitialData;
-	private AdListener adListener;
-	private Handler handler;
 
 	private Uri uri;
 	private Timer mInterstitialLoadingTimer;
@@ -579,7 +578,6 @@ public class RichMediaActivity extends Activity {
 				break;
 			}
 		}
-		notifyAdClose(mAd, mResult);
 		super.finish();
 	}
 
@@ -630,7 +628,7 @@ public class RichMediaActivity extends Activity {
 	private void initInterstitialFromBannerView() {
 		final FrameLayout layout = new FrameLayout(this);
 		if (mAd.getType() == Const.TEXT || mAd.getType() == Const.IMAGE) {
-			BannerAdView banner = new BannerAdView(this, mAd, 0, 0, false, adListener);
+			BannerAdView banner = new BannerAdView(this, mAd, 0, 0, false, createLocalAdListener());
 			banner.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 			layout.addView(banner);
 		}
@@ -669,6 +667,32 @@ public class RichMediaActivity extends Activity {
 		this.mRootLayout.addView(layout);
 	}
 
+	private AdListener createLocalAdListener() {
+		return new AdListener() {
+			
+			@Override
+			public void noAdFound() {
+			}
+			
+			@Override
+			public void adShown(Ad ad, boolean succeeded) {
+			}
+			
+			@Override
+			public void adLoadSucceeded(Ad ad) {
+			}
+			
+			@Override
+			public void adClosed(Ad ad, boolean completed) {
+			}
+			
+			@Override
+			public void adClicked() {
+				notifyAdClicked();
+			}
+		};
+	}
+
 	private MraidListener createMraidListener() {
 		return new MraidListener() {
 
@@ -687,33 +711,12 @@ public class RichMediaActivity extends Activity {
 
 			@Override
 			public void onClose(MraidView view, ViewState newViewState) {
-
 			}
 		};
 	}
 
 	private void notifyAdClicked() {
-		if (adListener != null && handler != null) {
-			handler.post(new Runnable() {
-
-				@Override
-				public void run() {
-					adListener.adClicked();
-				}
-			});
-		}
-	}
-
-	private void notifyAdClose(final AdResponse ad, final boolean ok) {
-		if (adListener != null && handler != null) {
-			Log.d("Ad Close. Result:" + ok);
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					adListener.adClosed(ad, ok);
-				}
-			});
-		}
+		AdManager.notifyAdClick(mAd);
 	}
 
 	@SuppressWarnings("deprecation")
