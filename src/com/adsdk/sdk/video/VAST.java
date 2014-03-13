@@ -8,7 +8,6 @@ import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.simpleframework.xml.Text;
 
-//TODO: required/optional elements
 @Root(name = "VAST")
 public class VAST {
 	

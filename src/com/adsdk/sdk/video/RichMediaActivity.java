@@ -642,14 +642,13 @@ public class RichMediaActivity extends Activity {
 
 		this.mSkipButton = new ImageView(this);
 		this.mSkipButton.setAdjustViewBounds(false);
-		FrameLayout.LayoutParams params = null;
 
 		int buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
 
 		int size = Math.min(this.getResources().getDisplayMetrics().widthPixels, this.getResources().getDisplayMetrics().heightPixels);
 		buttonSize = (int) (size * 0.1);
 
-		params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
+		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
 
 		final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, this.getResources().getDisplayMetrics());
 		params.topMargin = margin;
@@ -697,7 +696,7 @@ public class RichMediaActivity extends Activity {
 		return new MraidListener() {
 
 			@Override
-			public void onReady(MraidView view) { // FIXME: make sure if redundant
+			public void onReady(MraidView view) {
 			}
 
 			@Override

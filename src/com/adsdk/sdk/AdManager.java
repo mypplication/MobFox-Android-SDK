@@ -116,6 +116,8 @@ public class AdManager {
 								|| mResponse.getType() == Const.INTERSTITIAL) && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response OK received");
 							notifyAdLoaded(mResponse);
+						} else if (mResponse.getCustomEvents().isEmpty() && (mResponse.getType() == Const.TEXT || mResponse.getType() == Const.MRAID || mResponse.getType() == Const.IMAGE)) { 
+							notifyAdLoaded(mResponse);
 						} else if (mResponse.getType() == Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response NO AD received");
 							notifyNoAdFound();
