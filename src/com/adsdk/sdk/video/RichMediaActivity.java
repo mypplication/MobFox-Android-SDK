@@ -317,6 +317,18 @@ public class RichMediaActivity extends Activity {
 			RichMediaActivity.this.mVideoView.requestFocus();
 		}
 	};
+	
+	OnClickListener mOnVideoClickListener = new OnClickListener() {
+		
+		@Override
+		public void onClick(View v) {
+			String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
+
+			navigate(s);
+			notifyAdClicked();
+			mOnVideoCanCloseEventListener.onTimeEvent(0); //to show skip button
+		}
+	};
 
 	OnCompletionListener mOnVideoCompletionListener = new OnCompletionListener() {
 
@@ -429,7 +441,7 @@ public class RichMediaActivity extends Activity {
 
 			Log.d("###########CAN CLOSE VIDEO:" + time);
 			RichMediaActivity.this.mCanClose = true;
-			if (RichMediaActivity.this.mVideoData.showSkipButton && RichMediaActivity.this.mSkipButton != null) {
+			if (RichMediaActivity.this.mSkipButton.getVisibility()!=View.VISIBLE && RichMediaActivity.this.mVideoData.showSkipButton && RichMediaActivity.this.mSkipButton != null) {
 
 				RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(RichMediaActivity.this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
 
@@ -923,6 +935,11 @@ public class RichMediaActivity extends Activity {
 		this.mLoadingView.addView(loadingText, params);
 		this.mVideoLayout.addView(this.mLoadingView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
 
+		if(this.mVideoData.videoClickThrough != null) {
+			this.mVideoView.setOnClickListener(mOnVideoClickListener);
+		}
+		
+		
 		this.mVideoView.setOnPreparedListener(this.mOnVideoPreparedListener);
 		this.mVideoView.setOnCompletionListener(this.mOnVideoCompletionListener);
 		this.mVideoView.setOnErrorListener(this.mOnVideoErrorListener);

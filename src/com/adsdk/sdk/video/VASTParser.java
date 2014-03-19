@@ -15,6 +15,7 @@ import com.adsdk.sdk.video.VAST.Ad;
 import com.adsdk.sdk.video.VAST.Ad.Creative;
 import com.adsdk.sdk.video.VAST.Ad.Creative.CompanionAds.Companion;
 import com.adsdk.sdk.video.VAST.Ad.Creative.Linear.MediaFile;
+import com.adsdk.sdk.video.VAST.Ad.Creative.NonLinearAds.NonLinear;
 import com.adsdk.sdk.video.VAST.Ad.Creative.Tracking;
 
 public class VASTParser {
@@ -40,6 +41,7 @@ public class VASTParser {
 	public static VideoData fillVideoDataFromVast(VAST vast) {
 		VideoData video = new VideoData();
 		Creative creative = null;
+		Ad vastAd = null;
 		MediaFile mediaFile = null;
 		for (Ad ad : vast.ads) {
 			if (ad.inLine == null) {
@@ -47,6 +49,7 @@ public class VASTParser {
 			}
 			for (Creative c : ad.inLine.creatives) {
 				if (c.linear != null && c.linear.mediaFiles != null && !c.linear.mediaFiles.isEmpty()) {
+					vastAd = ad;
 					creative = c;
 					mediaFile = c.linear.mediaFiles.get(0);
 					break;
@@ -60,7 +63,9 @@ public class VASTParser {
 			return null;
 		}
 		video.setSequence(creative.sequence);
-		video.orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+//		video.orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+		video.orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR;
+		
 		if (mediaFile.delivery != null && mediaFile.delivery.contains("streaming")) {
 			video.delivery = VideoData.DELIVERY_STREAMING;
 		} else {
@@ -140,10 +145,43 @@ public class VASTParser {
 
 		}
 
+		if (creative.linear.videoClicks != null && creative.linear.videoClicks.clickThrough != null) {
+			video.videoClickThrough = creative.linear.videoClicks.clickThrough;
+		}
+
+		NonLinear nonLinear = null;
+		for (Creative c : vastAd.inLine.creatives) {
+			if (c.nonLinearAds != null && c.nonLinearAds.nonLinears != null && !c.nonLinearAds.nonLinears.isEmpty()) {
+				nonLinear = c.nonLinearAds.nonLinears.get(0);
+				break;
+			}
+			if (nonLinear != null) {
+				break;
+			}
+		}
+
+		if (nonLinear != null) {
+			if (nonLinear.staticResource != null) {
+				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
+				if (nonLinear.staticResource.type.contains("image")) {
+					video.htmlOverlayMarkup = "<img src=\"" + nonLinear.staticResource.url + "\">";
+				} else if (nonLinear.staticResource.type.contains("x-javascript")) {
+					video.htmlOverlayMarkup = "<script src=\"" + nonLinear.staticResource.url + "\"></script>";
+				}
+			} else if (nonLinear.iframeResource != null) {
+				video.htmlOverlayType = VideoData.OVERLAY_URL;
+				video.htmlOverlayUrl = nonLinear.iframeResource;
+			} else if (nonLinear.htmlResource != null) {
+				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
+				video.htmlOverlayMarkup = nonLinear.htmlResource;
+			}
+		}
+
 		//
 		// HashMap<Integer, Vector<String>> timeTrackingEvents = new
 		// HashMap<Integer, Vector<String>>();
-		// Vector<String> replayEvents = new Vector<String>(); //TODO: will be used?
+		// Vector<String> replayEvents = new Vector<String>(); //TODO: will be
+		// used?
 		//
 		// boolean showHtmlOverlay = false;
 		//
@@ -167,7 +205,7 @@ public class VASTParser {
 				continue;
 			}
 			for (Creative c : ad.inLine.creatives) {
-				if (c.companionAds != null && !c.companionAds.companions.isEmpty()) {
+				if (c.companionAds != null && c.companionAds.companions != null && !c.companionAds.companions.isEmpty()) {
 					creative = c;
 					companion = c.companionAds.companions.get(0);
 					break;
@@ -263,13 +301,8 @@ public class VASTParser {
 					int hours = Integer.parseInt(durationMatcher.group(1));
 					int minutes = Integer.parseInt(durationMatcher.group(2));
 					int seconds = Integer.parseInt(durationMatcher.group(3));
-					int millis = 0;
-					String millisString = durationMatcher.group(4);
-					if (millisString != null) {
-						millis = Integer.parseInt(millisString);
-					}
 
-					skipoffset = millis + 1000 * seconds + 60 * 1000 * minutes + 3600 * 1000 * hours;
+					skipoffset = seconds + 60 * minutes + 3600 * hours;
 				} catch (NumberFormatException e) {
 					Log.e("Failed to parse skipoffset: " + skipoffsetString);
 				}
@@ -282,7 +315,6 @@ public class VASTParser {
 				}
 			}
 		}
-
 		return skipoffset;
 	}
 

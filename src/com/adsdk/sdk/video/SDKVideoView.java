@@ -417,7 +417,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 				&& (ev.getAction() == MotionEvent.ACTION_DOWN)) {
 			toggleMediaControlsVisiblity();
 		}
-		return false;
+		return super.onTouchEvent(ev);
 	}
 
 	@Override

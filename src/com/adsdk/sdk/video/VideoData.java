@@ -68,6 +68,7 @@ public class VideoData implements Serializable {
 	int htmlOverlayType;
 	String htmlOverlayUrl;
 	String htmlOverlayMarkup;
+	String videoClickThrough; 
 
 	@Override
 	public String toString() {

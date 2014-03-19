@@ -111,7 +111,7 @@ public class TrackerService {
 									continue;
 								URL u = null;
 								try {
-									u = new URL(event.url);
+									u = new URL(event.url.trim());
 								} catch (MalformedURLException e) {
 									Log.d("Wrong tracking url:"
 											+ event.url);
