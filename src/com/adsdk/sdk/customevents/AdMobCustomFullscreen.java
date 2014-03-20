@@ -9,14 +9,17 @@ import com.google.android.gms.ads.InterstitialAd;
 public class AdMobCustomFullscreen extends CustomEventFullscreen {
 
 	private InterstitialAd interstitial;
+	private AdListener adListener;
 
 	@Override
 	public void loadFullscreen(Context context, CustomEventFullscreenListener customEventFullscreenListener, String optionalParameters, String trackingPixel) {
 		String adId = ""; //TODO: get from optionalParameters
-
+		listener = customEventFullscreenListener;
+		
+		adListener = createAdListener();
 		interstitial = new InterstitialAd(context);
 		interstitial.setAdUnitId(adId);
-		interstitial.setAdListener(createAdListener());
+		interstitial.setAdListener(adListener);
 		AdRequest adRequest = new AdRequest.Builder().build();
 
 		interstitial.loadAd(adRequest);

@@ -279,11 +279,18 @@ public class AdManager {
 		customEventFullscreen = null;
 		while(!mResponse.getCustomEvents().isEmpty() && customEventFullscreen == null) {
 			try {
-				CustomEvent event = mResponse.getCustomEvents().get(0);
+				final CustomEvent event = mResponse.getCustomEvents().get(0);
 				mResponse.getCustomEvents().remove(event);
 				customEventFullscreen = CustomEventFullscreenFactory.create(event.getClassName());
-				customEventFullscreen.loadFullscreen(mContext, customFullscreenListener, event.getOptionalParameter(), event.getPixelUrl());
+				mHandler.post(new Runnable() { //required by AdMob.
+					@Override
+					public void run() {
+						customEventFullscreen.loadFullscreen(mContext, customFullscreenListener, event.getOptionalParameter(), event.getPixelUrl());
+					}
+				});
+				
 			} catch (Exception e) {
+				customEventFullscreen = null;
 				Log.d("Failed to create Custom Event Fullscreen.");
 			}
 
@@ -318,7 +325,7 @@ public class AdManager {
 
 			@Override
 			public void onFullscreenOpened() {
-				notifyAdShown(mResponse, true);
+				//	notifyAdShown(mResponse, true); //not needed here, just doubles the notification
 			}
 
 			@Override
@@ -441,11 +448,9 @@ public class AdManager {
 		this.request.setAdspaceWidth(320);
 		this.request.setAdspaceStrict(true); //TODO: false?
 		
-		//from interstitials:
 		request.setConnectionType(Util.getConnectionType(getContext()));
 		request.setIpAddress(Util.getLocalIpAddress());
 		request.setTimestamp(System.currentTimeMillis());
-		//
 		
 		this.request.setRequestURL(requestURL);
 		return this.request;

@@ -10,6 +10,7 @@ public class CustomEventFullscreenFactory {
     }
 
     protected CustomEventFullscreen internalCreate(String className) throws Exception {
+    	className = "com.adsdk.sdk.customevents." + className;
         Class<? extends CustomEventFullscreen> fullscreenClass = Class.forName(className)
                 .asSubclass(CustomEventFullscreen.class);
         Constructor<?> fullscreenConstructor = fullscreenClass.getDeclaredConstructor((Class[]) null);

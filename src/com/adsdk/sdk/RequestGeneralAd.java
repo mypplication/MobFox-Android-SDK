@@ -78,10 +78,10 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 		return null;
 	}
 
-	private String getValue(final Element element, final String name) {
+	private String getTextValue(final Element element, final String name) {
 		NodeList nodeList = element.getElementsByTagName(name);
 		if (nodeList.getLength() > 0) {
-			return nodeList.item(0).getNodeValue();
+			return nodeList.item(0).getFirstChild().getNodeValue();
 		} else {
 			return null;
 		}
@@ -91,22 +91,21 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 	private List<CustomEvent> getCustomEvents(Document doc) {
 		List<CustomEvent> customEvents = new ArrayList<CustomEvent>();
 
-		Element element = doc.getElementById("customevents");
+		NodeList elements = doc.getElementsByTagName("customevents");
+		Element element = (Element) elements.item(0);
 		if (element != null) {
 
 			NodeList nodeList = element.getElementsByTagName("customevent");
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				Node n = nodeList.item(i);
-				if (n instanceof Element) {
 					Element el = (Element) n;
-					String className = getValue(el, "class");
-					String parameter = getValue(el, "classparameter");
-					String pixel = getValue(el, "pixel");
+				String className = getTextValue(el, "class");
+				String parameter = getTextValue(el, "parameter");
+				String pixel = getTextValue(el, "pixel");
 					CustomEvent event = new CustomEvent(className, parameter, pixel);
 					customEvents.add(event);
 				}
 			}
-		}
 
 		return customEvents;
 	}

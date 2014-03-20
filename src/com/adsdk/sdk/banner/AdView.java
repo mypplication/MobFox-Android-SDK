@@ -231,7 +231,6 @@ public class AdView extends FrameLayout {
 		registerScreenStateBroadcastReceiver();
 		telephonyPermission = context.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE);
 		Util.prepareAndroidAdId(context);
-		customAdListener = createCustomAdListener(adListener);
 	}
 
 	public boolean isInternalBrowser() {
@@ -442,6 +441,7 @@ public class AdView extends FrameLayout {
 					customEventBanner.loadBanner(mContext, customAdListener, event.getOptionalParameter(), event.getPixelUrl(), 300, 50);
 				}
 			} catch (Exception e) {
+				customEventBanner = null;
 				Log.d("Failed to create Custom Event Banner.");
 			}
 		}
@@ -560,6 +560,7 @@ public class AdView extends FrameLayout {
 		if (mBannerView != null) {
 			mBannerView.setAdListener(bannerListener);
 		}
+		customAdListener = createCustomAdListener(adListener);
 	}
 
 	public void setInternalBrowser(final boolean isInternalBrowser) {
