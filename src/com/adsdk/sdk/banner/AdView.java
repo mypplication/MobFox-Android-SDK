@@ -36,6 +36,7 @@ import com.adsdk.sdk.mraid.MraidView.ViewState;
 
 public class AdView extends FrameLayout {
 
+	private static final int CUSTOM_EVENT_RELOAD_INTERVAL = 30;
 	public static final int LIVE = 0;
 	public static final int TEST = 1;
 
@@ -412,6 +413,8 @@ public class AdView extends FrameLayout {
 			if(customEventBanner == null) {
 				response.getCustomEvents().clear();
 				customAdListener.onBannerFailed();
+			} else {
+				response.setRefresh(CUSTOM_EVENT_RELOAD_INTERVAL);
 			}
 		}
 		
