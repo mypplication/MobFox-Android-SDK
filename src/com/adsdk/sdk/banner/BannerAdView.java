@@ -65,9 +65,7 @@ public class BannerAdView extends RelativeLayout {
 
 	private final Handler updateHandler = new Handler();
 
-	public BannerAdView(final Context context, final BannerAd response,
-			int width, int height, final boolean animation,
-			final AdListener adListener) {
+	public BannerAdView(final Context context, final BannerAd response, int width, int height, final boolean animation, final AdListener adListener) {
 		super(context);
 		mContext = context;
 		this.response = response;
@@ -96,8 +94,7 @@ public class BannerAdView extends RelativeLayout {
 
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
-			public boolean shouldOverrideUrlLoading(final WebView view,
-					final String url) {
+			public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
 				if (response.getSkipOverlay() == 1) {
 					doOpenUrl(url);
 					Log.i("TouchListener", "false");
@@ -118,22 +115,18 @@ public class BannerAdView extends RelativeLayout {
 
 	private void doOpenUrl(final String url) {
 		notifyAdClicked();
-		if (this.response.getClickUrl() != null
-				&& this.response.getSkipOverlay() == 1) {
+		if (this.response.getClickUrl() != null && this.response.getSkipOverlay() == 1) {
 			makeTrackingRequest(this.response.getClickUrl());
 		}
 
-		if (this.response.getClickType() != null
-				&& this.response.getClickType().equals(ClickType.INAPP)
-				&& (url.startsWith("http://") || url.startsWith("https://"))) {
+		if (this.response.getClickType() != null && this.response.getClickType().equals(ClickType.INAPP) && (url.startsWith("http://") || url.startsWith("https://"))) {
 			if (url.endsWith(".mp4")) {
 				Intent i = new Intent(Intent.ACTION_VIEW);
 				i.setDataAndType(Uri.parse(url), "video/mp4");
 				startActivity(i);
 				// this.getContext().startActivity(intent);
 			} else {
-				final Intent intent = new Intent(this.getContext(),
-						InAppWebView.class);
+				final Intent intent = new Intent(this.getContext(), InAppWebView.class);
 				intent.putExtra(Const.REDIRECT_URI, url);
 				startActivity(intent);
 				// this.getContext().startActivity(intent);
@@ -166,8 +159,7 @@ public class BannerAdView extends RelativeLayout {
 				try {
 					HttpClient client = new DefaultHttpClient();
 					HttpGet request = new HttpGet();
-					request.setHeader("User-Agent",
-							System.getProperty("http.agent"));
+					request.setHeader("User-Agent", System.getProperty("http.agent"));
 					request.setURI(new URI(clickUrl));
 					client.execute(request);
 				} catch (URISyntaxException e) {
@@ -199,8 +191,7 @@ public class BannerAdView extends RelativeLayout {
 			}
 
 			Log.v("set layer " + mWebView_SetLayerType);
-			mWebView_LAYER_TYPE_SOFTWARE = WebView.class
-					.getField("LAYER_TYPE_SOFTWARE");
+			mWebView_LAYER_TYPE_SOFTWARE = WebView.class.getField("LAYER_TYPE_SOFTWARE");
 			Log.v("set1 layer " + mWebView_LAYER_TYPE_SOFTWARE);
 
 		} catch (SecurityException e) {
@@ -213,13 +204,10 @@ public class BannerAdView extends RelativeLayout {
 	}
 
 	private static void setLayer(WebView webView) {
-		if (mWebView_SetLayerType != null
-				&& mWebView_LAYER_TYPE_SOFTWARE != null) {
+		if (mWebView_SetLayerType != null && mWebView_LAYER_TYPE_SOFTWARE != null) {
 			try {
 				Log.v("Set Layer is supported");
-				mWebView_SetLayerType.invoke(webView,
-						mWebView_LAYER_TYPE_SOFTWARE.getInt(WebView.class),
-						null);
+				mWebView_SetLayerType.invoke(webView, mWebView_LAYER_TYPE_SOFTWARE.getInt(WebView.class), null);
 			} catch (InvocationTargetException ite) {
 				Log.v("Set InvocationTargetException");
 			} catch (IllegalArgumentException e) {
@@ -237,25 +225,19 @@ public class BannerAdView extends RelativeLayout {
 		Log.d(Const.TAG, "Create view flipper");
 		final float scale = mContext.getResources().getDisplayMetrics().density;
 		if (width != 0 && height != 0) {
-			this.setLayoutParams(new RelativeLayout.LayoutParams((int) (width
-					* scale + 0.5f), (int) (height * scale + 0.5f)));
+			this.setLayoutParams(new RelativeLayout.LayoutParams((int) (width * scale + 0.5f), (int) (height * scale + 0.5f)));
 		} else {
-			this.setLayoutParams(new RelativeLayout.LayoutParams(
-					(int) (300 * scale + 0.5f), (int) (50 * scale + 0.5f)));
+			this.setLayoutParams(new RelativeLayout.LayoutParams((int) (300 * scale + 0.5f), (int) (50 * scale + 0.5f)));
 		}
 
-		final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+		final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 				android.view.ViewGroup.LayoutParams.MATCH_PARENT);
 		this.addView(this.webView, params);
 
 		Log.d(Const.TAG, "animation: " + this.animation);
 		if (this.animation) {
 
-			this.fadeInAnimation = new TranslateAnimation(
-					Animation.RELATIVE_TO_PARENT, 0.0f,
-					Animation.RELATIVE_TO_PARENT, 0.0f,
-					Animation.RELATIVE_TO_PARENT, +1.0f,
+			this.fadeInAnimation = new TranslateAnimation(Animation.RELATIVE_TO_PARENT, 0.0f, Animation.RELATIVE_TO_PARENT, 0.0f, Animation.RELATIVE_TO_PARENT, +1.0f,
 					Animation.RELATIVE_TO_PARENT, 0.0f);
 			this.fadeInAnimation.setDuration(1000);
 
@@ -285,8 +267,7 @@ public class BannerAdView extends RelativeLayout {
 			@Override
 			public void run() {
 				if (adListener != null) {
-					Log.d(Const.TAG, "notify bannerListener of ad clicked: "
-							+ BannerAdView.this.adListener.getClass().getName());
+					Log.d(Const.TAG, "notify bannerListener of ad clicked: " + BannerAdView.this.adListener.getClass().getName());
 					adListener.adClicked();
 				}
 			}
@@ -299,10 +280,7 @@ public class BannerAdView extends RelativeLayout {
 			@Override
 			public void run() {
 				if (adListener != null) {
-					Log.d(Const.TAG,
-							"notify bannerListener of load succeeded: "
-									+ BannerAdView.this.adListener.getClass()
-											.getName());
+					Log.d(Const.TAG, "notify bannerListener of load succeeded: " + BannerAdView.this.adListener.getClass().getName());
 					adListener.adLoadSucceeded(null);
 				}
 			}
@@ -329,17 +307,13 @@ public class BannerAdView extends RelativeLayout {
 		try {
 			if (this.response.getType() == Const.IMAGE) {
 
-				String text = MessageFormat.format(Const.IMAGE_BODY,
-						this.response.getImageUrl(),
-						this.response.getBannerWidth(),
-						this.response.getBannerHeight());
+				String text = MessageFormat.format(Const.IMAGE_BODY, this.response.getImageUrl(), this.response.getBannerWidth(), this.response.getBannerHeight());
 				Log.d(Const.TAG, "set image: " + text);
 				text = Uri.encode(Const.HIDE_BORDER + text);
 				webView.loadData(text, "text/html", Const.ENCODING);
 				this.notifyLoadAdSucceeded();
 			} else if (this.response.getType() == Const.TEXT) {
-				final String text = Uri.encode(Const.HIDE_BORDER
-						+ this.response.getText());
+				final String text = Uri.encode(Const.HIDE_BORDER + this.response.getText());
 				Log.d(Const.TAG, "set text: " + text);
 				webView.loadData(text, "text/html", Const.ENCODING);
 				this.notifyLoadAdSucceeded();
