@@ -123,13 +123,8 @@ public class VAST {
 				@Attribute(required = false, name = "skipoffset")
 				String skipoffset;
 				
-<<<<<<< HEAD
-				@Element(name = "Duration") //TODO: conversion?
-				String duration; // required, format: HH:MM:SS or HH:MM:SS.mmm
-=======
 				@Element(name = "Duration")
 				String duration;
->>>>>>> vAST- decide required and optional elements.
 				
 				@ElementList(name = "MediaFiles")
 				List<MediaFile> mediaFiles;
