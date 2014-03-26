@@ -255,6 +255,12 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onClick(final View arg0) {
 
+			if (RichMediaActivity.this.mVideoData.overlayClickThrough != null) {
+				String s = RichMediaActivity.this.mVideoData.overlayClickThrough.trim();
+				navigate(s);
+				notifyAdClicked();
+			}
+
 			Log.d(Const.TAG, "RichMediaActivity mOverlayClickListener");
 			if (RichMediaActivity.this.mMediaController != null)
 				RichMediaActivity.this.mMediaController.toggle();
@@ -317,16 +323,19 @@ public class RichMediaActivity extends Activity {
 			RichMediaActivity.this.mVideoView.requestFocus();
 		}
 	};
-	
+
 	OnClickListener mOnVideoClickListener = new OnClickListener() {
-		
+
 		@Override
 		public void onClick(View v) {
-			String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
+			if (RichMediaActivity.this.mVideoData.videoClickThrough != null) {
 
-			navigate(s);
-			notifyAdClicked();
-			mOnVideoCanCloseEventListener.onTimeEvent(0); //to show skip button
+				String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
+				navigate(s);
+				notifyAdClicked();
+				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip
+																// button
+			}
 		}
 	};
 
@@ -441,7 +450,8 @@ public class RichMediaActivity extends Activity {
 
 			Log.d("###########CAN CLOSE VIDEO:" + time);
 			RichMediaActivity.this.mCanClose = true;
-			if (RichMediaActivity.this.mSkipButton.getVisibility()!=View.VISIBLE && RichMediaActivity.this.mVideoData.showSkipButton && RichMediaActivity.this.mSkipButton != null) {
+			if (RichMediaActivity.this.mSkipButton.getVisibility() != View.VISIBLE && RichMediaActivity.this.mVideoData.showSkipButton
+					&& RichMediaActivity.this.mSkipButton != null) {
 
 				RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(RichMediaActivity.this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
 
@@ -680,23 +690,23 @@ public class RichMediaActivity extends Activity {
 
 	private AdListener createLocalAdListener() {
 		return new AdListener() {
-			
+
 			@Override
 			public void noAdFound() {
 			}
-			
+
 			@Override
 			public void adShown(Ad ad, boolean succeeded) {
 			}
-			
+
 			@Override
 			public void adLoadSucceeded(Ad ad) {
 			}
-			
+
 			@Override
 			public void adClosed(Ad ad, boolean completed) {
 			}
-			
+
 			@Override
 			public void adClicked() {
 				notifyAdClicked();
@@ -862,7 +872,11 @@ public class RichMediaActivity extends Activity {
 				this.mOverlayView.loadUrl(this.mVideoData.htmlOverlayUrl);
 			else
 				this.mOverlayView.setMarkup(this.mVideoData.htmlOverlayMarkup);
-			final FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+
+			final float scale = getResources().getDisplayMetrics().density;
+			final FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams((int) (mVideoData.overlayWidth * scale + 0.5f),
+					(int) (mVideoData.overlayHeight * scale + 0.5f));
+			// final FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 			if (this.mVideoData.showBottomNavigationBar && this.mVideoData.showTopNavigationBar) {
 				overlayParams.bottomMargin = (int) (this.mWindowWidth * 0.11875);
 				overlayParams.topMargin = (int) (this.mWindowWidth * 0.11875);
@@ -875,6 +889,8 @@ public class RichMediaActivity extends Activity {
 
 				overlayParams.topMargin = (int) (this.mWindowWidth * 0.11875);
 				overlayParams.gravity = Gravity.BOTTOM;
+			} else {
+				overlayParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
 			}
 			this.mVideoLayout.addView(this.mOverlayView, overlayParams);
 		}
@@ -935,10 +951,10 @@ public class RichMediaActivity extends Activity {
 		this.mLoadingView.addView(loadingText, params);
 		this.mVideoLayout.addView(this.mLoadingView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
 
-		if(this.mVideoData.videoClickThrough != null) {
+		if (this.mVideoData.videoClickThrough != null) {
 			this.mVideoView.setOnClickListener(mOnVideoClickListener);
 		}
-		
+
 		
 		this.mVideoView.setOnPreparedListener(this.mOnVideoPreparedListener);
 		this.mVideoView.setOnCompletionListener(this.mOnVideoCompletionListener);

@@ -26,6 +26,8 @@ public class VideoData implements Serializable {
 	int bitrate;
 	int width;
 	int height;
+	int overlayWidth;
+	int overlayHeight;
 	String videoUrl;
 
 	int duration;
@@ -68,7 +70,8 @@ public class VideoData implements Serializable {
 	int htmlOverlayType;
 	String htmlOverlayUrl;
 	String htmlOverlayMarkup;
-	String videoClickThrough; 
+	String videoClickThrough;
+	String overlayClickThrough;
 
 	@Override
 	public String toString() {

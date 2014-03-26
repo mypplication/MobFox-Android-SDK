@@ -274,7 +274,7 @@ public class VAST {
 
 			@Root (name = "StaticResource")
 			public static class StaticResource {
-				@Attribute(required =false, name = "type")
+				@Attribute(required =false, name = "creativeType")
 				String type;
 				
 				@Text

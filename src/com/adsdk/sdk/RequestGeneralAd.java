@@ -98,14 +98,14 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 			NodeList nodeList = element.getElementsByTagName("customevent");
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				Node n = nodeList.item(i);
-					Element el = (Element) n;
+				Element el = (Element) n;
 				String className = getTextValue(el, "class");
 				String parameter = getTextValue(el, "parameter");
 				String pixel = getTextValue(el, "pixel");
-					CustomEvent event = new CustomEvent(className, parameter, pixel);
-					customEvents.add(event);
-				}
+				CustomEvent event = new CustomEvent(className, parameter, pixel);
+				customEvents.add(event);
 			}
+		}
 
 		return customEvents;
 	}
@@ -203,7 +203,7 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 				InterstitialData interstitial = VASTParser.fillInterstitialDataFromVast(vast);
 				response.setInterstitialData(interstitial);
 				if (video != null && interstitial != null) {
-					if(video.getSequence() < interstitial.getSequence()) {
+					if (video.getSequence() < interstitial.getSequence()) {
 						response.setType(Const.VIDEO_TO_INTERSTITIAL);
 					} else {
 						response.setType(Const.INTERSTITIAL_TO_VIDEO);

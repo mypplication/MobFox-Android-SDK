@@ -1,5 +1,6 @@
 package com.adsdk.sdk.video;
 
+import java.text.MessageFormat;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,6 +11,7 @@ import org.simpleframework.xml.core.Persister;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources.NotFoundException;
 
+import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.video.VAST.Ad;
 import com.adsdk.sdk.video.VAST.Ad.Creative;
@@ -155,18 +157,22 @@ public class VASTParser {
 				nonLinear = c.nonLinearAds.nonLinears.get(0);
 				break;
 			}
-			if (nonLinear != null) {
-				break;
-			}
 		}
 
 		if (nonLinear != null) {
+			video.overlayClickThrough = nonLinear.nonLinearClickThrough;
+			video.overlayHeight = nonLinear.height;
+			video.overlayWidth = nonLinear.width;
+			video.showHtmlOverlayAfter = 0;
+			video.showHtmlOverlay = true;
 			if (nonLinear.staticResource != null) {
 				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
 				if (nonLinear.staticResource.type.contains("image")) {
-					video.htmlOverlayMarkup = "<img src=\"" + nonLinear.staticResource.url + "\">";
+					String text = MessageFormat.format(Const.IMAGE_BODY, nonLinear.staticResource.url.trim(), nonLinear.width, nonLinear.height);
+					text = Const.HIDE_BORDER +text;
+					video.htmlOverlayMarkup = text;
 				} else if (nonLinear.staticResource.type.contains("x-javascript")) {
-					video.htmlOverlayMarkup = "<script src=\"" + nonLinear.staticResource.url + "\"></script>";
+					video.htmlOverlayMarkup = "<script src=\"" + nonLinear.staticResource.url.trim() + "\"></script>";
 				}
 			} else if (nonLinear.iframeResource != null) {
 				video.htmlOverlayType = VideoData.OVERLAY_URL;
