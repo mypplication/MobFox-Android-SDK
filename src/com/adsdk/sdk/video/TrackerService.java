@@ -2,10 +2,10 @@ package com.adsdk.sdk.video;
 
 import static com.adsdk.sdk.Const.MAX_NUMBER_OF_TRACKING_RETRIES;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -72,8 +72,7 @@ public class TrackerService {
 	private static boolean hasMoreUpdates() {
 		synchronized (sLock) {
 			boolean hasMore = !sTrackEvents.isEmpty();
-			Log.d("More updates:" + hasMore + " size:"
-					+ sTrackEvents.size());
+			Log.d("More updates:" + hasMore + " size:" + sTrackEvents.size());
 			return hasMore;
 		}
 	}
@@ -109,15 +108,15 @@ public class TrackerService {
 										+ sTrackEvents.size());
 								if (event == null)
 									continue;
-								URL u = null;
+								String u = null;
 								try {
-									u = new URL(event.url.trim());
-								} catch (MalformedURLException e) {
+									u = URLEncoder.encode(event.url.trim(),"UTF-8");
+								} catch (UnsupportedEncodingException e) {
 									Log.d("Wrong tracking url:"
 											+ event.url);
 									continue;
 								}
-
+								
 								Log.d("Sending conversion Request");
 								Log.d("Perform tracking HTTP Get Url: "
 										+ event.url);
@@ -128,7 +127,9 @@ public class TrackerService {
 								HttpConnectionParams.setConnectionTimeout(
 										client.getParams(),
 										Const.CONNECTION_TIMEOUT);
-								HttpGet get = new HttpGet(u.toString());
+	
+								HttpGet get = new HttpGet(u);
+	
 								get.setHeader("User-Agent", System.getProperty("http.agent"));
 								HttpResponse response;
 								try {
