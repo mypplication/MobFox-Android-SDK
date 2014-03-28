@@ -257,8 +257,11 @@ public class RichMediaActivity extends Activity {
 
 			if (RichMediaActivity.this.mVideoData.overlayClickThrough != null) {
 				String s = RichMediaActivity.this.mVideoData.overlayClickThrough.trim();
-				navigate(s);
+				
 				notifyAdClicked();
+				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
+				intent.setData(Uri.parse(s));
+				RichMediaActivity.this.startActivity(intent);
 			}
 
 			Log.d(Const.TAG, "RichMediaActivity mOverlayClickListener");
@@ -331,10 +334,12 @@ public class RichMediaActivity extends Activity {
 			if (RichMediaActivity.this.mVideoData.videoClickThrough != null) {
 
 				String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
-				navigate(s);
 				notifyAdClicked();
-				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip
-																// button
+				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip button
+				
+				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
+				intent.setData(Uri.parse(s));
+				RichMediaActivity.this.startActivity(intent);
 			}
 		}
 	};
@@ -502,6 +507,15 @@ public class RichMediaActivity extends Activity {
 
 		@Override
 		public void onClick(final View arg0) {
+			
+			if (RichMediaActivity.this.mInterstitialData.interstitialClickThrough != null) {
+				String s = RichMediaActivity.this.mInterstitialData.interstitialClickThrough.trim();
+				notifyAdClicked();
+				
+				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
+				intent.setData(Uri.parse(s));
+				RichMediaActivity.this.startActivity(intent);
+			}
 
 			Log.d(Const.TAG, "RichMediaActivity mInterstitialClickListener");
 			if (RichMediaActivity.this.mInterstitialController != null) {
@@ -805,14 +819,14 @@ public class RichMediaActivity extends Activity {
 			this.mCanClose = false;
 		this.mInterstitialView.setOnClickListener(this.mInterstitialClickListener);
 		this.mRootLayout.addView(layout);
-		switch (this.mInterstitialData.interstitialType) {
-		case InterstitialData.INTERSTITIAL_MARKUP:
-			this.mInterstitialView.setMarkup(this.mInterstitialData.interstitialMarkup);
-			break;
-		case InterstitialData.INTERSTITIAL_URL:
-			this.mInterstitialView.loadUrl(this.mInterstitialData.interstitialUrl);
-			break;
-		}
+//		switch (this.mInterstitialData.interstitialType) {	//TODO: make sure that not necessary (called in onResume)
+//		case InterstitialData.INTERSTITIAL_MARKUP:
+//			this.mInterstitialView.setMarkup(this.mInterstitialData.interstitialMarkup);
+//			break;
+//		case InterstitialData.INTERSTITIAL_URL:
+//			this.mInterstitialView.loadUrl(this.mInterstitialData.interstitialUrl);
+//			break;
+//		}
 		Log.i(this.mInterstitialView.getWebView().getSettings().getUserAgentString());
 	}
 

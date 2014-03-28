@@ -203,7 +203,8 @@ public class VASTParser {
 
 	public static InterstitialData fillInterstitialDataFromVast(VAST vast) {
 		InterstitialData interstitial = new InterstitialData();
-
+		interstitial.orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR;
+		
 		Creative creative = null;
 		Companion companion = null;
 		for (Ad ad : vast.ads) {
@@ -224,12 +225,15 @@ public class VASTParser {
 		if (companion == null) {
 			return null;
 		}
-
+		
+		interstitial.interstitialClickThrough = companion.companionClickThrough;
 		interstitial.setSequence(creative.sequence);
 		if (companion.staticResource != null) {
 			interstitial.interstitialType = InterstitialData.INTERSTITIAL_MARKUP;
 			if (companion.staticResource.type.contains("image")) {
-				interstitial.interstitialMarkup = "<img src=\"" + companion.staticResource.url + "\">";
+				String text = MessageFormat.format(Const.IMAGE_BODY, companion.staticResource.url.trim(), companion.width, companion.height);
+				text =  Const.INTERSTITIAL_HIDE_BORDER + text;
+				interstitial.interstitialMarkup = text;
 			} else if (companion.staticResource.type.contains("x-javascript")) {
 				interstitial.interstitialMarkup = "<script src=\"" + companion.staticResource.url + "\"></script>";
 			}

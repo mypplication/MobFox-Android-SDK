@@ -21,6 +21,7 @@ public class InterstitialData implements Serializable {
 	boolean                   showSkipButton;
 	int                       showSkipButtonAfter;
 	String                    skipButtonImage;
+	String                    interstitialClickThrough;
 
 	boolean                   showNavigationBars;
 	boolean                   allowTapNavigationBars;

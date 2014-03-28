@@ -16,6 +16,8 @@ public interface Const {
 	public static final String REDIRECT_URI = "REDIRECT_URI";
 
 	public static final String HIDE_BORDER = "<style>* { -webkit-tap-highlight-color: rgba(0,0,0,0);} img {width:100%;height:100%}</style>";
+	public static final String INTERSTITIAL_HIDE_BORDER = "<style>* { -webkit-tap-highlight-color: rgba(0,0,0,0);} body {height:100%; width:100%;} img {max-width:100%; max-height:100%; width:auto; height:auto; position: absolute; margin: auto; top: 0; left: 0; right: 0; bottom: 0;}</style>";
+
 	//	public static final String HIDE_BORDER = "<style>* { -webkit-tap-highlight-color: rgba(0,0,0,0) }</style>";
 
 	public static final int TOUCH_DISTANCE = 30;
