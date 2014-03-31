@@ -256,6 +256,11 @@ public class RichMediaActivity extends Activity {
 		public void onClick(final View arg0) {
 
 			if (RichMediaActivity.this.mVideoData.overlayClickThrough != null) {
+				if(RichMediaActivity.this.mVideoData.overlayClickTracking != null) {
+					trackClick(RichMediaActivity.this.mVideoData.overlayClickTracking);
+				}
+				
+				
 				String s = RichMediaActivity.this.mVideoData.overlayClickThrough.trim();
 				
 				notifyAdClicked();
@@ -333,6 +338,12 @@ public class RichMediaActivity extends Activity {
 		public void onClick(View v) {
 			if (RichMediaActivity.this.mVideoData.videoClickThrough != null) {
 
+				if(RichMediaActivity.this.mVideoData.videoClickTracking != null) {
+					for(String tracking:RichMediaActivity.this.mVideoData.videoClickTracking) {
+						trackClick(tracking);
+					}
+				}	
+				
 				String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
 				notifyAdClicked();
 				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip button
@@ -387,6 +398,7 @@ public class RichMediaActivity extends Activity {
 				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
+				trackers.remove(i);
 				event.timestamp = System.currentTimeMillis();
 				TrackerService.requestTrack(event);
 			}
@@ -590,6 +602,13 @@ public class RichMediaActivity extends Activity {
 
 		}
 	};
+	
+	private void trackClick(String trackUrl) {
+		final TrackEvent event = new TrackEvent();
+		event.url = trackUrl;
+		event.timestamp = System.currentTimeMillis();
+		TrackerService.requestTrack(event);
+	}
 
 	private ResourceHandler mHandler;
 

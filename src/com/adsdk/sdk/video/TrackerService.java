@@ -2,10 +2,9 @@ package com.adsdk.sdk.video;
 
 import static com.adsdk.sdk.Const.MAX_NUMBER_OF_TRACKING_RETRIES;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.HttpURLConnection;
-import java.net.URLEncoder;
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -79,12 +78,8 @@ public class TrackerService {
 
 	private static TrackEvent getNextUpdate() {
 		synchronized (sLock) {
-			if (sTrackEvents.peek() == null) {
-				return null;
-			} else {
-				TrackEvent nextTrackEvent = sTrackEvents.poll();
-				return nextTrackEvent;
-			}
+			TrackEvent nextTrackEvent = sTrackEvents.poll();
+			return nextTrackEvent;
 		}
 	}
 
@@ -101,41 +96,27 @@ public class TrackerService {
 						while (!sStopped) {
 							while (hasMoreUpdates() && !sStopped) {
 								TrackEvent event = getNextUpdate();
-								Log.d("Sending tracking :" + event.url
-										+ " Time:"
-										+ event.timestamp
-										+ " Events left:"
-										+ sTrackEvents.size());
-								if (event == null)
-									continue;
-								String u = null;
-								try {
-									u = URLEncoder.encode(event.url.trim(),"UTF-8");
-								} catch (UnsupportedEncodingException e) {
-									Log.d("Wrong tracking url:"
-											+ event.url);
-									continue;
+								if (event == null) {
+									continue;									
 								}
+								Log.d("Sending tracking :" + event.url + " Time:" + event.timestamp + " Events left:" + sTrackEvents.size());
 								
 								Log.d("Sending conversion Request");
-								Log.d("Perform tracking HTTP Get Url: "
-										+ event.url);
+								
+								Log.d("Perform tracking HTTP Get Url: " + event.url);
 								DefaultHttpClient client = new DefaultHttpClient();
-								HttpConnectionParams.setSoTimeout(
-										client.getParams(),
-										Const.SOCKET_TIMEOUT);
-								HttpConnectionParams.setConnectionTimeout(
-										client.getParams(),
-										Const.CONNECTION_TIMEOUT);
-	
-								HttpGet get = new HttpGet(u);
-	
+								HttpConnectionParams.setSoTimeout(client.getParams(), Const.SOCKET_TIMEOUT);
+								HttpConnectionParams.setConnectionTimeout(client.getParams(), Const.CONNECTION_TIMEOUT);
+
+								HttpGet get = new HttpGet();
 								get.setHeader("User-Agent", System.getProperty("http.agent"));
+								
 								HttpResponse response;
 								try {
+									get.setURI(new URI(event.url.trim()));
+									
 									response = client.execute(get);
-									if (response.getStatusLine()
-											.getStatusCode() != HttpURLConnection.HTTP_OK) {
+									if (response.getStatusLine().getStatusCode() != HttpURLConnection.HTTP_OK) {
 										requestRetry(event);
 									} else {
 										Log.d("Tracking OK");

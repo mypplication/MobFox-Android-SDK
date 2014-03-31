@@ -2,6 +2,7 @@ package com.adsdk.sdk.video;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 public class VideoData implements Serializable {
@@ -72,6 +73,8 @@ public class VideoData implements Serializable {
 	String htmlOverlayMarkup;
 	String videoClickThrough;
 	String overlayClickThrough;
+	List<String>  videoClickTracking;
+	String overlayClickTracking;
 
 	@Override
 	public String toString() {

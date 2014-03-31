@@ -1,6 +1,8 @@
 package com.adsdk.sdk.video;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,9 +18,12 @@ import com.adsdk.sdk.Log;
 import com.adsdk.sdk.video.VAST.Ad;
 import com.adsdk.sdk.video.VAST.Ad.Creative;
 import com.adsdk.sdk.video.VAST.Ad.Creative.CompanionAds.Companion;
+import com.adsdk.sdk.video.VAST.Ad.Creative.Linear.ClickTracking;
 import com.adsdk.sdk.video.VAST.Ad.Creative.Linear.MediaFile;
+import com.adsdk.sdk.video.VAST.Ad.Creative.NonLinearAds;
 import com.adsdk.sdk.video.VAST.Ad.Creative.NonLinearAds.NonLinear;
 import com.adsdk.sdk.video.VAST.Ad.Creative.Tracking;
+import com.adsdk.sdk.video.VAST.Ad.Impression;
 
 public class VASTParser {
 
@@ -103,9 +108,68 @@ public class VASTParser {
 		// String replayButtonImage;
 		// Vector<NavIconData> icons = new Vector<NavIconData>();
 
-		for (Tracking t : creative.linear.trackingEvents) {
+		getTrackingEvents(video, creative.linear.trackingEvents);
+		
+		for(Impression i : vastAd.inLine.impressions) {
+			video.startEvents.add(i.url);
+		}
+
+		if (creative.linear.videoClicks != null && creative.linear.videoClicks.clickThrough != null) {
+			if(creative.linear.videoClicks.clickTracking != null) {
+				video.videoClickTracking = new ArrayList<String>();
+				for(ClickTracking t : creative.linear.videoClicks.clickTracking) {
+					video.videoClickTracking.add(t.url);
+				}
+			}
+			video.videoClickThrough = creative.linear.videoClicks.clickThrough;
+		}
+
+		NonLinearAds nonLinearAds = null;
+		NonLinear nonLinear = null;
+		for (Creative c : vastAd.inLine.creatives) {
+			if (c.nonLinearAds != null && c.nonLinearAds.nonLinears != null && !c.nonLinearAds.nonLinears.isEmpty()) {
+				nonLinear = c.nonLinearAds.nonLinears.get(0);
+				nonLinearAds = c.nonLinearAds;
+				break;
+			}
+		}
+
+		if (nonLinear != null) {
+			video.overlayClickThrough = nonLinear.nonLinearClickThrough;
+			video.overlayClickTracking = nonLinear.nonLinearClickTracking.trim();
+			video.overlayHeight = nonLinear.height;
+			video.overlayWidth = nonLinear.width;
+			video.showHtmlOverlayAfter = 0;
+			video.showHtmlOverlay = true;
+			if (nonLinear.staticResource != null) {
+				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
+				if (nonLinear.staticResource.type.contains("image")) {
+					String text = MessageFormat.format(Const.IMAGE_BODY, nonLinear.staticResource.url.trim(), nonLinear.width, nonLinear.height);
+					text = Const.HIDE_BORDER +text;
+					video.htmlOverlayMarkup = text;
+				} else if (nonLinear.staticResource.type.contains("x-javascript")) {
+					video.htmlOverlayMarkup = "<script src=\"" + nonLinear.staticResource.url.trim() + "\"></script>";
+				}
+			} else if (nonLinear.iframeResource != null) {
+				video.htmlOverlayType = VideoData.OVERLAY_URL;
+				video.htmlOverlayUrl = nonLinear.iframeResource;
+			} else if (nonLinear.htmlResource != null) {
+				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
+				video.htmlOverlayMarkup = nonLinear.htmlResource;
+			}
+			
+			getTrackingEvents(video, nonLinearAds.trackingEvents);
+			
+		}
+
+		return video;
+
+	}
+	
+	public static void getTrackingEvents (VideoData video, List<Tracking> events) {
+		for (Tracking t : events) {
 			String name = t.event;
-			if (name.equals("start")) {
+			if (name.equals("start") || name.equals("creativeView")) { //assumption is we have only one video creative
 				video.startEvents.add(t.url);
 			} else if (name.equals("complete")) {
 				video.completeEvents.add(t.url);
@@ -117,7 +181,7 @@ public class VASTParser {
 				video.pauseEvents.add(t.url);
 			} else if (name.equals("resume")) {
 				video.resumeEvents.add(t.url);
-			} else if (name.equals("skip")) {
+			} else if (name.equals("skip") || name.equals("close")) {
 				video.skipEvents.add(t.url);
 			} else if (name.equals("firstQuartile")) {
 				int time = video.duration / 4;
@@ -144,61 +208,7 @@ public class VASTParser {
 				}
 				trackers.add(t.url);
 			}
-
 		}
-
-		if (creative.linear.videoClicks != null && creative.linear.videoClicks.clickThrough != null) {
-			video.videoClickThrough = creative.linear.videoClicks.clickThrough;
-		}
-
-		NonLinear nonLinear = null;
-		for (Creative c : vastAd.inLine.creatives) {
-			if (c.nonLinearAds != null && c.nonLinearAds.nonLinears != null && !c.nonLinearAds.nonLinears.isEmpty()) {
-				nonLinear = c.nonLinearAds.nonLinears.get(0);
-				break;
-			}
-		}
-
-		if (nonLinear != null) {
-			video.overlayClickThrough = nonLinear.nonLinearClickThrough;
-			video.overlayHeight = nonLinear.height;
-			video.overlayWidth = nonLinear.width;
-			video.showHtmlOverlayAfter = 0;
-			video.showHtmlOverlay = true;
-			if (nonLinear.staticResource != null) {
-				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
-				if (nonLinear.staticResource.type.contains("image")) {
-					String text = MessageFormat.format(Const.IMAGE_BODY, nonLinear.staticResource.url.trim(), nonLinear.width, nonLinear.height);
-					text = Const.HIDE_BORDER +text;
-					video.htmlOverlayMarkup = text;
-				} else if (nonLinear.staticResource.type.contains("x-javascript")) {
-					video.htmlOverlayMarkup = "<script src=\"" + nonLinear.staticResource.url.trim() + "\"></script>";
-				}
-			} else if (nonLinear.iframeResource != null) {
-				video.htmlOverlayType = VideoData.OVERLAY_URL;
-				video.htmlOverlayUrl = nonLinear.iframeResource;
-			} else if (nonLinear.htmlResource != null) {
-				video.htmlOverlayType = VideoData.OVERLAY_MARKUP;
-				video.htmlOverlayMarkup = nonLinear.htmlResource;
-			}
-		}
-
-		//
-		// HashMap<Integer, Vector<String>> timeTrackingEvents = new
-		// HashMap<Integer, Vector<String>>();
-		// Vector<String> replayEvents = new Vector<String>(); //TODO: will be
-		// used?
-		//
-		// boolean showHtmlOverlay = false;
-		//
-		// int showHtmlOverlayAfter;
-		//
-		// int htmlOverlayType;
-		// String htmlOverlayUrl;
-		// String htmlOverlayMarkup;
-
-		return video;
-
 	}
 
 	public static InterstitialData fillInterstitialDataFromVast(VAST vast) {
@@ -282,13 +292,7 @@ public class VASTParser {
 				int hours = Integer.parseInt(matcher.group(1));
 				int minutes = Integer.parseInt(matcher.group(2));
 				int seconds = Integer.parseInt(matcher.group(3));
-				int millis = 0;
-				String millisString = matcher.group(4);
-				if (millisString != null) {
-					millis = Integer.parseInt(millisString);
-				}
-
-				duration = millis + 1000 * seconds + 60 * 1000 * minutes + 3600 * 1000 * hours;
+				duration = seconds + 60 * minutes + 3600 * hours;
 			} catch (NumberFormatException e) {
 				Log.e("Failed to parse duration: " + time);
 			}
