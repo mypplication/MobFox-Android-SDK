@@ -22,6 +22,7 @@ public class InterstitialData implements Serializable {
 	int                       showSkipButtonAfter;
 	String                    skipButtonImage;
 	String                    interstitialClickThrough;
+	String 					  interstitialClickTracking;
 
 	boolean                   showNavigationBars;
 	boolean                   allowTapNavigationBars;
@@ -41,6 +42,8 @@ public class InterstitialData implements Serializable {
 	String                    reloadButtonImage;
 	String                    externalButtonImage;
 	Vector<NavIconData>       icons                    = new Vector<NavIconData>();
+	Vector<String>			  startEvents = new Vector<String>();
+	Vector<String>			  impressionEvents = new Vector<String>();
 
 	@Override
 	public String toString() {

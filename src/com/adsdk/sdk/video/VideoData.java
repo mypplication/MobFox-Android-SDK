@@ -56,6 +56,7 @@ public class VideoData implements Serializable {
 
 	HashMap<Integer, Vector<String>> timeTrackingEvents = new HashMap<Integer, Vector<String>>();
 	Vector<String> startEvents = new Vector<String>();
+	Vector<String> impressionEvents = new Vector<String>();
 	Vector<String> completeEvents = new Vector<String>();
 	Vector<String> muteEvents = new Vector<String>();
 	Vector<String> unmuteEvents = new Vector<String>();

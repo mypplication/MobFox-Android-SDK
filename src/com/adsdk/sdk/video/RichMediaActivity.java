@@ -393,15 +393,19 @@ public class RichMediaActivity extends Activity {
 
 			Log.d("###########TRACKING START VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.startEvents;
+			if(RichMediaActivity.this.mAd.getType() != Const.INTERSTITIAL_TO_VIDEO) {
+				trackers.addAll(RichMediaActivity.this.mVideoData.impressionEvents);
+			}
+			
 			for (int i = 0; i < trackers.size(); i++) {
-
 				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
 				event.url = trackers.get(i);
-				trackers.remove(i);
 				event.timestamp = System.currentTimeMillis();
 				TrackerService.requestTrack(event);
 			}
+			trackers.clear();
+			RichMediaActivity.this.mVideoData.impressionEvents.clear();
 		}
 	};
 
@@ -521,6 +525,10 @@ public class RichMediaActivity extends Activity {
 		public void onClick(final View arg0) {
 			
 			if (RichMediaActivity.this.mInterstitialData.interstitialClickThrough != null) {
+				if(RichMediaActivity.this.mInterstitialData.interstitialClickTracking != null) {
+					trackClick(RichMediaActivity.this.mInterstitialData.interstitialClickTracking);
+				}
+				
 				String s = RichMediaActivity.this.mInterstitialData.interstitialClickThrough.trim();
 				notifyAdClicked();
 				
@@ -569,6 +577,23 @@ public class RichMediaActivity extends Activity {
 		@Override
 		public void onPageLoaded() {
 			Log.v("onPageLoaded");
+			if(RichMediaActivity.this.mInterstitialData != null) {
+				final Vector<String> trackers = RichMediaActivity.this.mInterstitialData.startEvents;
+				if(RichMediaActivity.this.mAd.getType() != Const.VIDEO_TO_INTERSTITIAL) {
+					trackers.addAll(RichMediaActivity.this.mInterstitialData.impressionEvents);
+				}
+				
+				for (int i = 0; i < trackers.size(); i++) {
+					Log.d("Track url:" + trackers.get(i));
+					final TrackEvent event = new TrackEvent();
+					event.url = trackers.get(i);
+					event.timestamp = System.currentTimeMillis();
+					TrackerService.requestTrack(event);
+				}
+				trackers.clear();
+				RichMediaActivity.this.mInterstitialData.impressionEvents.clear();
+			}
+
 			if (RichMediaActivity.this.mInterstitialData != null && RichMediaActivity.this.mInterstitialData.autoclose > 0)
 				if (RichMediaActivity.this.mInterstitialAutocloseTimer == null && !RichMediaActivity.this.mInterstitialAutocloseReset) {
 					final InterstitialAutocloseTask autocloseTask = new InterstitialAutocloseTask(RichMediaActivity.this);

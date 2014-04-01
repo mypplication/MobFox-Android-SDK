@@ -111,7 +111,7 @@ public class VASTParser {
 		getTrackingEvents(video, creative.linear.trackingEvents);
 		
 		for(Impression i : vastAd.inLine.impressions) {
-			video.startEvents.add(i.url);
+			video.impressionEvents.add(i.url);
 		}
 
 		if (creative.linear.videoClicks != null && creative.linear.videoClicks.clickThrough != null) {
@@ -225,6 +225,9 @@ public class VASTParser {
 				if (c.companionAds != null && c.companionAds.companions != null && !c.companionAds.companions.isEmpty()) {
 					creative = c;
 					companion = c.companionAds.companions.get(0);
+					for(Impression i : ad.inLine.impressions) {
+						interstitial.impressionEvents.add(i.url);
+					}
 					break;
 				}
 			}
@@ -237,6 +240,16 @@ public class VASTParser {
 		}
 		
 		interstitial.interstitialClickThrough = companion.companionClickThrough;
+		interstitial.interstitialClickTracking = companion.companionClickTracking;
+		
+		for (Tracking t:companion.trackingEvents) {
+			String name = t.event;
+			if (name.equals("creativeView")) {
+				interstitial.startEvents.add(t.url);
+			}
+		}
+		
+		
 		interstitial.setSequence(creative.sequence);
 		if (companion.staticResource != null) {
 			interstitial.interstitialType = InterstitialData.INTERSTITIAL_MARKUP;
