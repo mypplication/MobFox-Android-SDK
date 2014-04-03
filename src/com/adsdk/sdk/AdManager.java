@@ -112,8 +112,7 @@ public class AdManager {
 						if (mResponse.getVideoData() != null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("Not capable of video");
 							notifyNoAdFound();
-						} else if ((mResponse.getType() == Const.VIDEO_TO_INTERSTITIAL || mResponse.getType() == Const.INTERSTITIAL_TO_VIDEO || mResponse.getType() == Const.VIDEO
-								|| mResponse.getType() == Const.INTERSTITIAL) && mResponse.getCustomEvents().isEmpty()) {
+						} else if (mResponse.getType() == Const.VIDEO && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response OK received");
 							notifyAdLoaded(mResponse);
 						} else if (mResponse.getCustomEvents().isEmpty() && (mResponse.getType() == Const.TEXT || mResponse.getType() == Const.MRAID || mResponse.getType() == Const.IMAGE)) { 

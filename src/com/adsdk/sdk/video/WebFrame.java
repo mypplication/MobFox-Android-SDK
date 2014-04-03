@@ -16,7 +16,6 @@ import org.apache.http.HttpStatus;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -30,16 +29,14 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.adsdk.sdk.Log;
-import com.adsdk.sdk.video.InterstitialController.BrowserControl;
 import com.adsdk.sdk.video.WebViewClient.OnPageLoadedListener;
 
 @SuppressLint("ViewConstructor")
-public class WebFrame extends FrameLayout implements BrowserControl {
+public class WebFrame extends FrameLayout {
 
 	private WebView mWebView;
 	private WebViewClient mWebViewClient;
 	private Activity mActivity;
-	private InterstitialController mController;
 	private ImageView mExitButton;
 	private boolean enableZoom=true;
 
@@ -268,70 +265,7 @@ public class WebFrame extends FrameLayout implements BrowserControl {
 		return true;
 	}
 
-	@Override
-	public boolean canGoBack() {
-		return mWebView.canGoBack();
-	}
-
-	@Override
-	public void goBack() {
-		mWebView.goBack();
-	}
-
-	@Override
-	public boolean canGoForward() {
-		return mWebView.canGoForward();
-	}
-
-	@Override
-	public void goForward() {
-		mWebView.goForward();
-	}
-
-	@Override
-	public void reload() {
-		mWebView.reload();
-	}
-
-	public void setBrowserController(InterstitialController controller) {
-		if (mController != null) {
-			mController.hide();
-		}
-		mController = controller;
-		attachController();
-	}
-
-	private void attachController() {
-		if (mController != null) {
-			mController.setBrowser(this);
-		}
-	}
-
-	@Override
-	public int getTime() {
-		int time = 0;
-		long finishedLoadedTime = mWebViewClient.getFinishedLoadingTime();
-		if (finishedLoadedTime > 0) {
-			return (int) (System.currentTimeMillis() - finishedLoadedTime);
-		}
-		return time;
-	}
-
-	@Override
-	public void launchExternalBrowser() {
-
-		String url = mWebViewClient.getAllowedUrl();
-		if ((url == null) || (url.length() == 0)) {
-			url = "about:blank";
-		}
-		Intent intent = new Intent("android.intent.action.VIEW", Uri.parse(url));
-		mActivity.startActivity(intent);
-	}
-
-	@Override
-	public String getPageTitle() {
-		return mWebView.getTitle();
-	}
+	
 
 	public void setOnPageLoadedListener(OnPageLoadedListener l) {
 		this.mWebViewClient.setOnPageLoadedListener(l);

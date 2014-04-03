@@ -60,11 +60,8 @@ public interface Const {
 	public final static int IMAGE = 0;
 	public final static int TEXT = 1;
 	public final static int NO_AD = 2;
-	public final static int VIDEO_TO_INTERSTITIAL = 3;
-	public final static int INTERSTITIAL_TO_VIDEO = 4;
-	public final static int VIDEO = 5;
-	public final static int INTERSTITIAL = 6;
-	public final static int MRAID = 7;
+	public final static int VIDEO = 3;
+	public final static int MRAID = 4;
 	
 	public static final String mraid = "(function() {\r\n" + 
 			"  var isIOS = (/iphone|ipad|ipod/i).test(window.navigator.userAgent.toLowerCase());\r\n" + 

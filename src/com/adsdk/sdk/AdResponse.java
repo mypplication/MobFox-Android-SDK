@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.adsdk.sdk.customevents.CustomEvent;
 import com.adsdk.sdk.data.ClickType;
-import com.adsdk.sdk.video.InterstitialData;
 import com.adsdk.sdk.video.VideoData;
 
 public class AdResponse implements Ad {
@@ -27,7 +26,6 @@ public class AdResponse implements Ad {
 	private boolean scale;
 	private boolean skipPreflight;
 	private long timestamp;
-	private InterstitialData interstitialData;
 	private VideoData videoData;
 
 	public int getBannerHeight() {
@@ -153,14 +151,6 @@ public class AdResponse implements Ad {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
-	}
-
-	public InterstitialData getInterstitialData() {
-		return interstitialData;
-	}
-
-	public void setInterstitialData(InterstitialData interstitialData) {
-		this.interstitialData = interstitialData;
 	}
 
 	public VideoData getVideoData() {

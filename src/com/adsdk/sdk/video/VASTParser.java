@@ -17,7 +17,6 @@ import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.video.VAST.Ad;
 import com.adsdk.sdk.video.VAST.Ad.Creative;
-import com.adsdk.sdk.video.VAST.Ad.Creative.CompanionAds.Companion;
 import com.adsdk.sdk.video.VAST.Ad.Creative.Linear.ClickTracking;
 import com.adsdk.sdk.video.VAST.Ad.Creative.Linear.MediaFile;
 import com.adsdk.sdk.video.VAST.Ad.Creative.NonLinearAds;
@@ -209,91 +208,6 @@ public class VASTParser {
 				trackers.add(t.url);
 			}
 		}
-	}
-
-	public static InterstitialData fillInterstitialDataFromVast(VAST vast) {
-		InterstitialData interstitial = new InterstitialData();
-		interstitial.orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR;
-		
-		Creative creative = null;
-		Companion companion = null;
-		for (Ad ad : vast.ads) {
-			if (ad.inLine == null) {
-				continue;
-			}
-			for (Creative c : ad.inLine.creatives) {
-				if (c.companionAds != null && c.companionAds.companions != null && !c.companionAds.companions.isEmpty()) {
-					creative = c;
-					companion = c.companionAds.companions.get(0);
-					for(Impression i : ad.inLine.impressions) {
-						interstitial.impressionEvents.add(i.url);
-					}
-					break;
-				}
-			}
-			if (creative != null) {
-				break;
-			}
-		}
-		if (companion == null) {
-			return null;
-		}
-		
-		interstitial.interstitialClickThrough = companion.companionClickThrough;
-		interstitial.interstitialClickTracking = companion.companionClickTracking;
-		
-		for (Tracking t:companion.trackingEvents) {
-			String name = t.event;
-			if (name.equals("creativeView")) {
-				interstitial.startEvents.add(t.url);
-			}
-		}
-		
-		
-		interstitial.setSequence(creative.sequence);
-		if (companion.staticResource != null) {
-			interstitial.interstitialType = InterstitialData.INTERSTITIAL_MARKUP;
-			if (companion.staticResource.type.contains("image")) {
-				String text = MessageFormat.format(Const.IMAGE_BODY, companion.staticResource.url.trim(), companion.width, companion.height);
-				text =  Const.INTERSTITIAL_HIDE_BORDER + text;
-				interstitial.interstitialMarkup = text;
-			} else if (companion.staticResource.type.contains("x-javascript")) {
-				interstitial.interstitialMarkup = "<script src=\"" + companion.staticResource.url + "\"></script>";
-			}
-		} else if (companion.iframeResource != null) {
-			interstitial.interstitialType = InterstitialData.INTERSTITIAL_URL;
-			interstitial.interstitialUrl = companion.iframeResource;
-		} else if (companion.htmlResource != null) {
-			interstitial.interstitialType = InterstitialData.INTERSTITIAL_MARKUP;
-			interstitial.interstitialMarkup = companion.htmlResource;
-		}
-
-		interstitial.showSkipButton = true;
-		interstitial.showSkipButtonAfter = 1;
-
-		// int autoclose;
-		// int orientation;
-		// String skipButtonImage;
-		//
-		// boolean showNavigationBars;
-		// boolean allowTapNavigationBars;
-		// boolean showTopNavigationBar;
-		// String topNavigationBarBackground;
-		// int topNavigationBarTitleType;
-		// String topNavigationBarTitle;
-		// boolean showBottomNavigationBar;
-		// String bottomNavigationBarBackground;
-		// boolean showBackButton;
-		// boolean showForwardButton;
-		// boolean showReloadButton;
-		// boolean showExternalButton;
-		// boolean showTimer;
-		// String backButtonImage;
-		// String forwardButtonImage;
-		// String reloadButtonImage;
-		// String externalButtonImage;
-
-		return interstitial;
 	}
 
 	public static int getDurationFromString(String time) {
