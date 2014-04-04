@@ -187,6 +187,8 @@ public class AdRequest {
 		b.appendQueryParameter("t", Long.toString(this.getTimestamp()));
 		b.appendQueryParameter("connection_type", this.getConnectionType());
 		b.appendQueryParameter("listads", this.getListAds());
+		b.appendQueryParameter("c_customevents", "1");
+		b.appendQueryParameter("c.mraid", "1");
 		
 		b.appendQueryParameter("u_wv", this.getUserAgent());
 		b.appendQueryParameter("u_br", this.getUserAgent());

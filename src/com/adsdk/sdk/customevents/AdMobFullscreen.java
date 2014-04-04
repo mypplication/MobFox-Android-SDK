@@ -6,14 +6,14 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 
-public class AdMobCustomFullscreen extends CustomEventFullscreen {
+public class AdMobFullscreen extends CustomEventFullscreen {
 
 	private InterstitialAd interstitial;
 	private AdListener adListener;
 
 	@Override
 	public void loadFullscreen(Context context, CustomEventFullscreenListener customEventFullscreenListener, String optionalParameters, String trackingPixel) {
-		String adId = ""; //TODO: get from optionalParameters
+		String adId = optionalParameters;
 		listener = customEventFullscreenListener;
 		
 		adListener = createAdListener();
@@ -51,7 +51,7 @@ public class AdMobCustomFullscreen extends CustomEventFullscreen {
 			@Override
 			public void onAdLoaded() {
 				if(listener != null) {
-					listener.onFullscreenLoaded(AdMobCustomFullscreen.this);
+					listener.onFullscreenLoaded(AdMobFullscreen.this);
 				}
 			}
 			

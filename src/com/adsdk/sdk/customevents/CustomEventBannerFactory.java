@@ -10,7 +10,7 @@ public class CustomEventBannerFactory {
 	}
 
 	protected CustomEventBanner internalCreate(String className) throws Exception {
-		className = "com.adsdk.sdk.customevents." + className;
+		className = "com.adsdk.sdk.customevents." + className + "Banner";
 		Class<? extends CustomEventBanner> bannerClass = Class.forName(className).asSubclass(CustomEventBanner.class);
 		Constructor<?> bannerConstructor = bannerClass.getDeclaredConstructor((Class[]) null);
 		bannerConstructor.setAccessible(true);

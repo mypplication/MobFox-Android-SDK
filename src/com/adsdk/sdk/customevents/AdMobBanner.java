@@ -7,14 +7,14 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 
-public class AdMobCustomBanner extends CustomEventBanner {
+public class AdMobBanner extends CustomEventBanner {
 
 	private AdView adView;
 	
 	@Override
 	public void loadBanner(Context context, CustomEventBannerListener customEventBannerListener, String optionalParameters, String trackingPixel, int width, int height) {
 		
-		String adId = ""; //TODO: get from additional parameters
+		String adId = optionalParameters;
 		listener = customEventBannerListener;
 
 		try {

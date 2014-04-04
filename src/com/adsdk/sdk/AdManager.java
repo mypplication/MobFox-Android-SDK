@@ -419,7 +419,7 @@ public class AdManager {
 		}
 	}
 
-	private AdRequest getRequest() { //FIXME: Make like banner request
+	private AdRequest getRequest() {
 		if (this.request == null) {
 			this.request = new AdRequest();
 			request.setDeviceId(mUniqueId1);
@@ -445,7 +445,7 @@ public class AdManager {
 		
 		this.request.setAdspaceHeight(480);
 		this.request.setAdspaceWidth(320);
-		this.request.setAdspaceStrict(true); //TODO: false?
+		this.request.setAdspaceStrict(false);
 		
 		request.setConnectionType(Util.getConnectionType(getContext()));
 		request.setIpAddress(Util.getLocalIpAddress());

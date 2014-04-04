@@ -82,7 +82,7 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 		if (nodeList.getLength() > 0) {
 			return nodeList.item(0).getFirstChild().getNodeValue();
 		} else {
-			return null;
+			return "";
 		}
 
 	}
