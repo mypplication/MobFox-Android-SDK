@@ -109,9 +109,12 @@ public final class MobFoxAdapter implements MediationBannerAdapter<MobFoxExtras,
 		interstitialListener = listener;
 
 		if (extras != null)
-			mAdManager = new AdManager(activity, VREQUEST_URL, serverParameters.pubIdNumber, extras.getLocation());
+			mAdManager = new AdManager(activity, REQUEST_URL, VREQUEST_URL, serverParameters.pubIdNumber, extras.getLocation());
 		else
-			mAdManager = new AdManager(activity, VREQUEST_URL, serverParameters.pubIdNumber, true);
+			mAdManager = new AdManager(activity, REQUEST_URL, VREQUEST_URL, serverParameters.pubIdNumber, true);
+		
+		mAdManager.setVideoAdsEnabled(true);
+		
 		mAdManager.setListener(new AdListener() {
 
 			@Override

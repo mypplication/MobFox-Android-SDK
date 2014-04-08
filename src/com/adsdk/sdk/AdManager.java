@@ -40,7 +40,15 @@ public class AdManager {
 	private CustomEventFullscreen customEventFullscreen;
 	private boolean mEnabled = true;
 	private AdResponse mResponse;
-	private String requestURL;
+	private String interstitialRequestURL;
+	private String videoRequestURL;
+	private boolean isInterstitialAdsEnabled = true;
+	private boolean isVideoAdsEnabled;
+	private boolean prioritizeVideoAds;
+	private boolean alreadyRequestedVideo;
+	private boolean alreadyRequestedInterstitial;
+	private int videoMinimalDuration;
+	private int videoMaxDuration;
 
 	public static AdManager getAdManager(AdResponse ad) {
 		AdManager adManager = sRunningAds.remove(ad.getTimestamp());
@@ -72,10 +80,11 @@ public class AdManager {
 		ResourceManager.cancel();
 	}
 
-	public AdManager(Context ctx, final String requestURL, final String publisherId, final boolean includeLocation) throws IllegalArgumentException {
+	public AdManager(Context ctx, final String interstitialRequestURL, final String videoReqestURL, final String publisherId, final boolean includeLocation) throws IllegalArgumentException {
 		Util.prepareAndroidAdId(ctx);
 		AdManager.setmContext(ctx);
-		this.requestURL = requestURL;
+		this.interstitialRequestURL = interstitialRequestURL;
+		this.setVideoRequestURL(videoReqestURL);
 		this.mPublisherId = publisherId;
 		this.mIncludeLocation = includeLocation;
 		this.mRequestThread = null;
@@ -92,9 +101,15 @@ public class AdManager {
 			Log.w("Cannot request rich adds on low memory devices");
 			return;
 		}
+		alreadyRequestedInterstitial = false;
+		alreadyRequestedVideo = false;
+
 		if (mRequestThread == null) {
 			Log.d("Requesting Ad (v" + Const.VERSION + "-" + Const.PROTOCOL_VERSION + ")");
 			mResponse = null;
+			if(!isVideoAdsEnabled) {
+				prioritizeVideoAds = false;
+			}
 			mRequestThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -107,9 +122,33 @@ public class AdManager {
 					Log.d("starting request thread");
 					try {
 						RequestGeneralAd requestAd = new RequestGeneralAd();
-						AdRequest request = getRequest();
+						if(isInterstitialAdsEnabled && !prioritizeVideoAds) {							
+							request = getInterstitialRequest();
+							alreadyRequestedInterstitial = true;
+						} else if(isVideoAdsEnabled) {
+							request = getVideoRequest();
+							alreadyRequestedVideo = true;
+						} else {
+							Log.d("Both video and interstitial ads disabled");
+							notifyNoAdFound();
+							mRequestThread = null;
+							return;
+						}
+		
 						mResponse = requestAd.sendRequest(request);
-						if (mResponse.getVideoData() != null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO && mResponse.getCustomEvents().isEmpty()) {
+						if(mResponse.getType() == Const.NO_AD && (mResponse.getCustomEvents() == null || mResponse.getCustomEvents().isEmpty())) {
+							if(isVideoAdsEnabled && !alreadyRequestedVideo) {
+								request = getVideoRequest();
+								alreadyRequestedVideo = true;
+								mResponse = requestAd.sendRequest(request);
+							} else if(isInterstitialAdsEnabled && !alreadyRequestedInterstitial) {
+								request = getInterstitialRequest();
+								alreadyRequestedInterstitial = true;
+								mResponse = requestAd.sendRequest(request);
+							}
+						}
+						
+						if (mResponse.getVideoData() != null && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.FROYO && (mResponse.getCustomEvents()==null || mResponse.getCustomEvents().isEmpty())) {
 							Log.d("Not capable of video");
 							notifyNoAdFound();
 						} else if (mResponse.getType() == Const.VIDEO && mResponse.getCustomEvents().isEmpty()) {
@@ -117,10 +156,10 @@ public class AdManager {
 							notifyAdLoaded(mResponse);
 						} else if (mResponse.getCustomEvents().isEmpty() && (mResponse.getType() == Const.TEXT || mResponse.getType() == Const.MRAID || mResponse.getType() == Const.IMAGE)) { 
 							notifyAdLoaded(mResponse);
-						} else if (mResponse.getType() == Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
+						} else if (mResponse.getType() == Const.NO_AD && mResponse.getCustomEvents() != null && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response NO AD received");
 							notifyNoAdFound();
-						} else if (!mResponse.getCustomEvents().isEmpty()) {
+						} else if (mResponse.getCustomEvents() != null && !mResponse.getCustomEvents().isEmpty()) {
 							loadCustomEventFullscreen();
 							if(customEventFullscreen == null) {
 								mResponse.getCustomEvents().clear();
@@ -154,8 +193,12 @@ public class AdManager {
 		}
 	}
 
-	public void setRequestURL(String requestURL) {
-		this.requestURL = requestURL;
+	public void setInterstitialRequestURL(String requestURL) {
+		this.interstitialRequestURL = requestURL;
+	}
+
+	public void setVideoRequestURL(String videoRequestURL) {
+		this.videoRequestURL = videoRequestURL;
 	}
 
 	public void requestAd(final InputStream xml) {
@@ -163,6 +206,9 @@ public class AdManager {
 			Log.w("Cannot request rich adds on low memory devices");
 			return;
 		}
+		alreadyRequestedInterstitial = false;
+		alreadyRequestedVideo = false;
+
 		if (mRequestThread == null) {
 			Log.d("Requesting Ad (v" + Const.VERSION + "-" + Const.PROTOCOL_VERSION + ")");
 			mResponse = null;
@@ -178,10 +224,28 @@ public class AdManager {
 					Log.d("starting request thread");
 					try {
 						RequestGeneralAd requestAd = new RequestGeneralAd(xml);
-						AdRequest request = getRequest();
+						if(isInterstitialAdsEnabled && !prioritizeVideoAds) {							
+							request = getInterstitialRequest();
+						} else if(isVideoAdsEnabled) {
+							request = getVideoRequest();
+						} else {
+							Log.d("Both video and interstitial ads disabled");
+							notifyNoAdFound();
+							mRequestThread = null;
+							return;
+						}
 						mResponse = requestAd.sendRequest(request);
 						
-						
+						if(mResponse.getType() == Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
+							if(isVideoAdsEnabled && !alreadyRequestedVideo) {
+								request = getVideoRequest();
+								mResponse = requestAd.sendRequest(request);
+							} else if(isInterstitialAdsEnabled && !alreadyRequestedInterstitial) {
+								request = getInterstitialRequest();
+								mResponse = requestAd.sendRequest(request);
+							}
+						}
+									
 						if (mResponse.getType() != Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
 							Log.d("response OK received");
 							notifyAdLoaded(mResponse);
@@ -419,7 +483,7 @@ public class AdManager {
 		}
 	}
 
-	private AdRequest getRequest() {
+	private AdRequest getInterstitialRequest() {
 		if (this.request == null) {
 			this.request = new AdRequest();
 			request.setDeviceId(mUniqueId1);
@@ -431,6 +495,46 @@ public class AdManager {
 			this.request.setUserAgent(Util.getDefaultUserAgentString(mContext));
 			this.request.setUserAgent2(Util.buildUserAgent());
 		}
+		Location location = null;
+		request.setVideoRequest(false);
+		if (this.mIncludeLocation)
+			location = Util.getLocation(mContext);
+		if (location != null) {
+			Log.d("location is longitude: " + location.getLongitude() + ", latitude: " + location.getLatitude());
+			request.setLatitude(location.getLatitude());
+			request.setLongitude(location.getLongitude());
+		} else {
+			request.setLatitude(0.0);
+			request.setLongitude(0.0);
+		}
+		
+		this.request.setAdspaceHeight(480);
+		this.request.setAdspaceWidth(320);
+		this.request.setAdspaceStrict(false);
+		
+		request.setConnectionType(Util.getConnectionType(getContext()));
+		request.setIpAddress(Util.getLocalIpAddress());
+		request.setTimestamp(System.currentTimeMillis());
+		
+		this.request.setRequestURL(interstitialRequestURL);
+		return this.request;
+	}
+	
+	private AdRequest getVideoRequest() {
+		if (this.request == null) {
+			this.request = new AdRequest();
+			request.setDeviceId(mUniqueId1);
+			request.setDeviceId2(mUniqueId2);
+			request.setAndroidID(androidID);
+			request.setAndroidIMEI(androidIMEI);
+			request.setAndroidAdId(androidAdId);
+			this.request.setPublisherId(this.mPublisherId);
+			this.request.setUserAgent(Util.getDefaultUserAgentString(mContext));
+			this.request.setUserAgent2(Util.buildUserAgent());
+		}
+		request.setVideoRequest(true);
+		request.setVideoMaxDuration(videoMaxDuration);
+		request.setVideoMinDuration(videoMinimalDuration);
 		Location location = null;
 		if (this.mIncludeLocation)
 			location = Util.getLocation(mContext);
@@ -451,7 +555,7 @@ public class AdManager {
 		request.setIpAddress(Util.getLocalIpAddress());
 		request.setTimestamp(System.currentTimeMillis());
 		
-		this.request.setRequestURL(requestURL);
+		this.request.setRequestURL(videoRequestURL);
 		return this.request;
 	}
 
@@ -465,6 +569,38 @@ public class AdManager {
 
 	private static void setmContext(Context mContext) {
 		AdManager.mContext = mContext;
+	}
+
+	public void setInterstitialAdsEnabled(boolean enableInterstitialAds) {
+		this.isInterstitialAdsEnabled = enableInterstitialAds;
+	}
+
+	public void setVideoAdsEnabled(boolean enableVideoAds) {
+		this.isVideoAdsEnabled = enableVideoAds;
+	}
+
+	public boolean isPrioritizeVideoAds() {
+		return prioritizeVideoAds;
+	}
+
+	public void setPrioritizeVideoAds(boolean prioritizeVideoAds) {
+		this.prioritizeVideoAds = prioritizeVideoAds;
+	}
+
+	public int getVideoMinimalDuration() {
+		return videoMinimalDuration;
+	}
+
+	public void setVideoMinimalDuration(int videoMinimalDuration) {
+		this.videoMinimalDuration = videoMinimalDuration;
+	}
+
+	public int getVideoMaxDuration() {
+		return videoMaxDuration;
+	}
+
+	public void setVideoMaxDuration(int videoMaxDuration) {
+		this.videoMaxDuration = videoMaxDuration;
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.adsdk.sdk.video;
 
+import java.io.InputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +44,28 @@ public class VASTParser {
 
 		return vast;
 	}
+	
+	public static VAST createVastFromStream(InputStream inputStream) {
+		VAST vast = null;
+		Serializer serial = new Persister();
+
+		try {
+			vast = serial.read(VAST.class, inputStream);
+		} catch (NotFoundException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return vast;
+	}
+	
 
 	public static VideoData fillVideoDataFromVast(VAST vast) {
+		if(vast == null) {
+			return null;
+		}
+		
 		VideoData video = new VideoData();
 		Creative creative = null;
 		Ad vastAd = null;
@@ -88,8 +109,8 @@ public class VASTParser {
 		if (creative.linear.duration != null) {
 			video.duration = getDurationFromString(creative.linear.duration);
 		}
+		video.showSkipButton = true;
 		if (creative.linear.skipoffset != null) {
-			video.showSkipButton = true;
 			video.showSkipButtonAfter = getSkipoffsetFromString(creative.linear.skipoffset, video.duration);
 		}
 

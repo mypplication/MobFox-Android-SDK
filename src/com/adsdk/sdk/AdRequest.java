@@ -18,7 +18,10 @@ public class AdRequest {
 	private boolean adspaceStrict;
 	private int adspaceWidth;
 	private int adspaceHeight;
+	private int videoMinDuration;
+	private int videoMaxDuration;
 	private static final String REQUEST_TYPE_ANDROID = "android_app";
+	private boolean isVideoRequest;
 
 	private String ipAddress;
 
@@ -189,6 +192,18 @@ public class AdRequest {
 		b.appendQueryParameter("listads", this.getListAds());
 		b.appendQueryParameter("c_customevents", "1");
 		b.appendQueryParameter("c.mraid", "1");
+		if(isVideoRequest) {
+			b.appendQueryParameter("r_type", "video");
+			b.appendQueryParameter("r_resp", "vast20");
+			if(videoMaxDuration != 0) {
+				b.appendQueryParameter("v_dur_max", Integer.toString(videoMaxDuration));
+			}
+			if(videoMinDuration != 0) {
+				b.appendQueryParameter("v_dur_min", Integer.toString(videoMinDuration));
+			}
+		} else {
+			b.appendQueryParameter("r_type", "banner");
+		}
 		
 		b.appendQueryParameter("u_wv", this.getUserAgent());
 		b.appendQueryParameter("u_br", this.getUserAgent());
@@ -264,6 +279,30 @@ public class AdRequest {
 
 	public void setAndroidAdId(String androidAdId) {
 		this.androidAdId = androidAdId;
+	}
+
+	public boolean isVideoRequest() {
+		return isVideoRequest;
+	}
+
+	public void setVideoRequest(boolean isVideoRequest) {
+		this.isVideoRequest = isVideoRequest;
+	}
+
+	public int getVideoMinDuration() {
+		return videoMinDuration;
+	}
+
+	public void setVideoMinDuration(int videoMinDuration) {
+		this.videoMinDuration = videoMinDuration;
+	}
+
+	public int getVideoMaxDuration() {
+		return videoMaxDuration;
+	}
+
+	public void setVideoMaxDuration(int videoMaxDuration) {
+		this.videoMaxDuration = videoMaxDuration;
 	}
 
 }

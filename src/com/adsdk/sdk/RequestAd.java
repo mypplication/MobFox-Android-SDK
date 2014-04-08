@@ -35,7 +35,7 @@ public abstract class RequestAd<T> {
 				response = client.execute(get);
 				int responseCode = response.getStatusLine().getStatusCode();
 				if (responseCode == HttpURLConnection.HTTP_OK) {
-					return parse(response.getEntity().getContent());
+					return parse(response.getEntity().getContent(), request.isVideoRequest());
 				} else {
 					throw new RequestException("Server Error. Response code:"
 							+ responseCode);
@@ -57,6 +57,6 @@ public abstract class RequestAd<T> {
 
 	abstract T parseTestString() throws RequestException;
 
-	abstract T parse(InputStream inputStream) throws RequestException;
+	abstract T parse(InputStream inputStream, boolean isVideo) throws RequestException;
 
 }
