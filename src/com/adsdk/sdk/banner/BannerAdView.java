@@ -22,6 +22,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.view.MotionEvent;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.webkit.WebSettings;
@@ -44,6 +45,7 @@ public class BannerAdView extends RelativeLayout {
 	private boolean animation;
 
 	private boolean isInternalBrowser = false;
+	private boolean wasUserAction = false;
 
 	private AdResponse response;
 	private Animation fadeInAnimation = null;
@@ -78,6 +80,12 @@ public class BannerAdView extends RelativeLayout {
 
 	private WebView createWebView(final Context context) {
 		final WebView webView = new WebView(this.getContext()) {
+			
+			@Override
+			public boolean onTouchEvent(MotionEvent event) {
+				wasUserAction = true;
+				return super.onTouchEvent(event);
+			}
 
 			@Override
 			public void draw(final Canvas canvas) {
@@ -95,14 +103,17 @@ public class BannerAdView extends RelativeLayout {
 		webView.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
-				if (response.getSkipOverlay() == 1) {
-					doOpenUrl(url);
-					Log.i("TouchListener", "false");
+				if (wasUserAction) {
+					if (response.getSkipOverlay() == 1) {
+						doOpenUrl(url);
+						Log.i("TouchListener", "false");
+						return true;
+					}
+					Log.i("TouchListener", "default");
+					openLink();
 					return true;
 				}
-				Log.i("TouchListener", "default");
-				openLink();
-				return true;
+				return false;
 			}
 
 		});
