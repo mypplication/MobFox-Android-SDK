@@ -876,6 +876,11 @@ public class RichMediaActivity extends Activity {
 				case Const.TEXT:
 				case Const.MRAID:
 				case Const.IMAGE:
+					if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
+						setOrientationOldApi();
+					} else {
+						setOrientation();
+					}
 					this.mType = TYPE_INTERSTITIAL;
 					break;
 				}
@@ -889,12 +894,6 @@ public class RichMediaActivity extends Activity {
 				this.initInterstitialFromBannerView();
 				break;
 			}
-		}
-		
-		if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
-			setOrientationOldApi();
-		} else {
-			setOrientation();
 		}
 
 		this.setContentView(this.mRootLayout);
