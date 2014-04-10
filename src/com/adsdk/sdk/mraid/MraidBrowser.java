@@ -32,6 +32,16 @@
 
 package com.adsdk.sdk.mraid;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.adsdk.sdk.mraid.Drawables.BACKGROUND;
+import static com.adsdk.sdk.mraid.Drawables.CLOSE;
+import static com.adsdk.sdk.mraid.Drawables.LEFT_ARROW;
+import static com.adsdk.sdk.mraid.Drawables.REFRESH;
+import static com.adsdk.sdk.mraid.Drawables.RIGHT_ARROW;
+import static com.adsdk.sdk.mraid.Drawables.UNLEFT_ARROW;
+import static com.adsdk.sdk.mraid.Drawables.UNRIGHT_ARROW;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -54,10 +64,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
-
-import static android.view.ViewGroup.LayoutParams.FILL_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.adsdk.sdk.mraid.Drawables.*;
 
 public class MraidBrowser extends Activity {
     
@@ -84,7 +90,8 @@ public class MraidBrowser extends Activity {
         enableCookies();
     }
 
-    private void initializeWebView(Intent intent) {
+    @SuppressLint("SetJavaScriptEnabled")
+	private void initializeWebView(Intent intent) {
         WebSettings webSettings = mWebView.getSettings();
         
         webSettings.setJavaScriptEnabled(true);
@@ -209,20 +216,21 @@ public class MraidBrowser extends Activity {
         CookieSyncManager.getInstance().startSync();
     }
 
-    private View getMraidBrowserView() {
+    @SuppressWarnings("deprecation")
+	private View getMraidBrowserView() {
         LinearLayout mraidBrowserView = new LinearLayout(this);
-        LinearLayout.LayoutParams browserLayoutParams = new LinearLayout.LayoutParams(FILL_PARENT, FILL_PARENT);
+        LinearLayout.LayoutParams browserLayoutParams = new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);
         mraidBrowserView.setLayoutParams(browserLayoutParams);
         mraidBrowserView.setOrientation(LinearLayout.VERTICAL);
 
         RelativeLayout outerLayout = new RelativeLayout(this);
-        LinearLayout.LayoutParams outerLayoutParams = new LinearLayout.LayoutParams(FILL_PARENT, WRAP_CONTENT);
+        LinearLayout.LayoutParams outerLayoutParams = new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
         outerLayout.setLayoutParams(outerLayoutParams);
         mraidBrowserView.addView(outerLayout);
 
         LinearLayout innerLayout = new LinearLayout(this);
         innerLayout.setId(INNER_LAYOUT_ID);
-        RelativeLayout.LayoutParams innerLayoutParams = new RelativeLayout.LayoutParams(FILL_PARENT, WRAP_CONTENT);
+        RelativeLayout.LayoutParams innerLayoutParams = new RelativeLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
         innerLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         innerLayout.setLayoutParams(innerLayoutParams);
         innerLayout.setBackgroundDrawable(BACKGROUND.decodeImage(MraidBrowser.this));
@@ -239,7 +247,7 @@ public class MraidBrowser extends Activity {
         innerLayout.addView(mCloseButton);
 
         mWebView = new WebView(this);
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(FILL_PARENT, FILL_PARENT);
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);
         layoutParams.addRule(RelativeLayout.ABOVE, INNER_LAYOUT_ID);
         mWebView.setLayoutParams(layoutParams);
         outerLayout.addView(mWebView);

@@ -51,7 +51,8 @@ public class BaseWebView extends WebView {
         WebViews.setDisableJSChromeClient(this);
     }
 
-    protected void enablePlugins(final boolean enabled) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	protected void enablePlugins(final boolean enabled) {
         // Android 4.3 and above has no concept of plugin states
         if (VersionCode.currentApiLevel().isAtLeast(VersionCode.JELLY_BEAN_MR2)) {
             return;

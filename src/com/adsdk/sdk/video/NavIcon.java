@@ -1,7 +1,7 @@
 package com.adsdk.sdk.video;import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -15,11 +15,9 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-
 import com.adsdk.sdk.Log;
 
+@SuppressLint("ViewConstructor")
 public class NavIcon extends AspectRatioImageViewWidth implements OnClickListener {
 
 	private Context mContext;

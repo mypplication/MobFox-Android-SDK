@@ -45,7 +45,6 @@ import static com.adsdk.sdk.mraid.Mraids.isInlineVideoAvailable;
 import static com.adsdk.sdk.mraid.Mraids.isSmsAvailable;
 import static com.adsdk.sdk.mraid.Mraids.isStorePictureSupported;
 import static com.adsdk.sdk.mraid.Mraids.isTelAvailable;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -57,12 +56,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -77,6 +76,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.StateListDrawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.CalendarContract;
@@ -96,7 +96,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
-
 import com.adsdk.sdk.mraid.MraidView.BaseMraidListener;
 import com.adsdk.sdk.mraid.MraidView.ExpansionStyle;
 import com.adsdk.sdk.mraid.MraidView.NativeCloseButtonStyle;
@@ -235,10 +234,10 @@ class MraidDisplayController extends MraidAbstractController {
         mHandler.post(mCheckViewabilityTask);
     }
 
-    private int getDisplayRotation() {
+	private int getDisplayRotation() {
         WindowManager wm = (WindowManager) getContext()
                 .getSystemService(Context.WINDOW_SERVICE);
-        return wm.getDefaultDisplay().getOrientation();
+        return wm.getDefaultDisplay().getRotation();
     }
 
     private void onOrientationChanged(int currentRotation) {
@@ -337,7 +336,7 @@ class MraidDisplayController extends MraidAbstractController {
 
         expandLayouts(expansionContentView, (int) (width * mDensity), (int) (height * mDensity));
         mRootView.addView(mExpansionLayout, new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT));
+                RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
 
         if (mNativeCloseButtonStyle == MraidView.NativeCloseButtonStyle.ALWAYS_VISIBLE ||
                 (!mAdWantsCustomCloseButton &&
@@ -503,7 +502,8 @@ class MraidDisplayController extends MraidAbstractController {
         }
     }
 
-    private Map<String, Object> translateJSParamsToAndroidCalendarEventMapping(Map<String, String> params) throws Exception {
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+	private Map<String, Object> translateJSParamsToAndroidCalendarEventMapping(Map<String, String> params) throws Exception {
         Map<String, Object> validatedParamsMapping = new HashMap<String, Object>();
         if (!params.containsKey("description") || !params.containsKey("start")) {
             throw new IllegalArgumentException("Missing start and description fields");
@@ -553,7 +553,8 @@ class MraidDisplayController extends MraidAbstractController {
         return validatedParamsMapping;
     }
 
-    private Date parseDate(String dateTime) {
+    @SuppressLint("SimpleDateFormat")
+	private Date parseDate(String dateTime) {
         Date result = null;
         for (int i=0; i<DATE_FORMATS.length; i++) {
             try {
@@ -707,10 +708,10 @@ class MraidDisplayController extends MraidAbstractController {
         });
 
         mExpansionLayout.addView(dimmingView, new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT));
+                RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
 
         mAdContainerLayout.addView(expansionContentView, new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT));
+                RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(expandWidth, expandHeight);
         lp.addRule(RelativeLayout.CENTER_IN_PARENT);
@@ -731,7 +732,8 @@ class MraidDisplayController extends MraidAbstractController {
         }
     }
 
-    protected void setNativeCloseButtonEnabled(boolean enabled) {
+    @SuppressWarnings("deprecation")
+	protected void setNativeCloseButtonEnabled(boolean enabled) {
         if (mRootView == null) return;
 
         if (enabled) {

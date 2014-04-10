@@ -1,7 +1,7 @@
 package com.adsdk.sdk.video;import java.lang.ref.WeakReference;
 import java.util.Formatter;
 import java.util.Locale;
-
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -16,16 +16,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.MediaController.MediaPlayerControl;
 import android.widget.TextView;
-
-import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
-import com.adsdk.sdk.Util;
 
+@SuppressLint("ViewConstructor")
 public class MediaController extends FrameLayout {
 
 	private static final int DEFAULT_TIMEOUT = 5000;
@@ -81,14 +77,14 @@ public class MediaController extends FrameLayout {
 
 	protected void buildNavigationBarView(DisplayMetrics metrics) {		int barHeight = metrics.widthPixels;
 		this.setLayoutParams(new FrameLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
-				android.view.ViewGroup.LayoutParams.FILL_PARENT));
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT));
 		mTopBar = new LinearLayout(mContext);
 		mTopBar.setOrientation(LinearLayout.HORIZONTAL);
 		mTopBar.setWeightSum(1);
 		mTopBar.setBackgroundColor(Color.TRANSPARENT);
 		FrameLayout.LayoutParams paramsFrame = new FrameLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 				(int)(barHeight*0.119));
 		paramsFrame.gravity = Gravity.TOP|Gravity.FILL_HORIZONTAL;
 		mTopBar.setGravity(Gravity.CENTER_VERTICAL);
@@ -100,7 +96,7 @@ public class MediaController extends FrameLayout {
 		mBottomBar.setOrientation(LinearLayout.HORIZONTAL);
 		mBottomBar.setGravity(Gravity.CENTER_VERTICAL);
 		paramsFrame = new FrameLayout.LayoutParams(
-				android.view.ViewGroup.LayoutParams.FILL_PARENT,
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 				(int)(barHeight*0.119));
 		paramsFrame.gravity = Gravity.BOTTOM;
 		mBottomBar.setWeightSum(1);
@@ -112,7 +108,7 @@ public class MediaController extends FrameLayout {
 		LinearLayout buttonPanel = new LinearLayout(mContext);
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
 				android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-				android.view.ViewGroup.LayoutParams.FILL_PARENT);
+				android.view.ViewGroup.LayoutParams.MATCH_PARENT);
 		params.gravity = Gravity.LEFT;
 		buttonPanel.setOrientation(LinearLayout.HORIZONTAL);
 		buttonPanel.setGravity(Gravity.CENTER_VERTICAL);
@@ -157,6 +153,7 @@ public class MediaController extends FrameLayout {
 
 	}
 
+	@SuppressWarnings("deprecation")
 	private void initNavigationBarControllerView(int padding,DisplayMetrics metrics) {
 		int barHeight = metrics.widthPixels;
 		if (!mVideoData.showBottomNavigationBar) {
@@ -341,6 +338,7 @@ public class MediaController extends FrameLayout {
 
 	private ResourceHandler mHandler = new ResourceHandler(this);
 
+	@SuppressWarnings("deprecation")
 	private void handleMessage(Message msg) {
 		switch (msg.what) {
 		case FADE_OUT:

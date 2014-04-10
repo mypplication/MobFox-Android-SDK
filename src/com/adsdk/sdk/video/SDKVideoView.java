@@ -3,7 +3,6 @@ package com.adsdk.sdk.video;
 import static com.adsdk.sdk.Const.TAG;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Vector;
 
 import android.annotation.SuppressLint;
@@ -17,6 +16,7 @@ import android.media.MediaPlayer.OnInfoListener;
 import android.net.Uri;
 import android.os.ConditionVariable;
 import android.os.Handler;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -65,7 +65,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	private Runnable mTimeEventRunnable;
 	private ConditionVariable mTimeEventThreadDone = new ConditionVariable(
 			false);
-	private HashMap<Integer, Vector<OnTimeEventListener>> mTimeEventListeners = new HashMap<Integer, Vector<OnTimeEventListener>>();
+	private SparseArray<Vector<OnTimeEventListener>> mTimeEventListeners = new SparseArray<Vector<OnTimeEventListener>>();
 	public Handler mHandler;
 
 	public SDKVideoView(Context context, int width, int height,

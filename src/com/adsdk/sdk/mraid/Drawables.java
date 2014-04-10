@@ -33,7 +33,7 @@
 package com.adsdk.sdk.mraid;
 
 import java.io.ByteArrayInputStream;
-import android.annotation.SuppressLint;
+
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Base64;
@@ -61,7 +61,7 @@ public enum Drawables {
         this.encodedString = encodedString;
     }
 
-    @SuppressLint("NewApi")
+	@SuppressWarnings("deprecation")
 	public BitmapDrawable decodeImage(Context context) {
         if (cachedImage == null) {
             DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
