@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
-
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +20,7 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnInfoListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -39,7 +40,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
-
 import com.adsdk.sdk.Ad;
 import com.adsdk.sdk.AdListener;
 import com.adsdk.sdk.AdManager;
@@ -530,8 +530,19 @@ public class RichMediaActivity extends Activity {
 	private void initInterstitialFromBannerView() {
 		final FrameLayout layout = new FrameLayout(this);
 		if (mAd.getType() == Const.TEXT || mAd.getType() == Const.IMAGE) {
-			BannerAdView banner = new BannerAdView(this, mAd, 0, 0, false, createLocalAdListener());
-			banner.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			final float scale = this.getResources().getDisplayMetrics().density;
+			int width, height;
+			if(mAd.isHorizontalOrientationRequested()) {
+				width = 480;
+				height = 320;
+			} else {
+				width = 320;
+				height = 480;
+			}
+			
+			BannerAdView banner = new BannerAdView(this, mAd, width, height, false, createLocalAdListener());
+			banner.setLayoutParams(new FrameLayout.LayoutParams((int) (width * scale + 0.5f), (int) (height * scale + 0.5f), Gravity.CENTER));
+			
 			layout.addView(banner);
 		}
 		if (mAd.getType() == Const.MRAID) {
@@ -808,7 +819,7 @@ public class RichMediaActivity extends Activity {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(final Bundle icicle) {
-
+		
 		Log.d("RichMediaActivity onCreate");
 		super.onCreate(icicle);
 		this.mResult = false;
@@ -879,9 +890,32 @@ public class RichMediaActivity extends Activity {
 				break;
 			}
 		}
+		
+		if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
+			setOrientationOldApi();
+		} else {
+			setOrientation();
+		}
 
 		this.setContentView(this.mRootLayout);
 		Log.d("RichMediaActivity onCreate done");
+	}
+	
+	private void setOrientationOldApi() {
+		if(mAd.isHorizontalOrientationRequested()) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		} else {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		}
+	}
+
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+	private void setOrientation() {
+		if(mAd.isHorizontalOrientationRequested()) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+		} else {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+		}
 	}
 
 	@Override

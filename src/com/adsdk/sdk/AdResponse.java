@@ -26,6 +26,7 @@ public class AdResponse implements Ad {
 	private boolean scale;
 	private boolean skipPreflight;
 	private long timestamp;
+	private boolean horizontalOrientationRequested;
 	private VideoData videoData;
 
 	public int getBannerHeight() {
@@ -159,6 +160,14 @@ public class AdResponse implements Ad {
 
 	public void setVideoData(VideoData videoData) {
 		this.videoData = videoData;
+	}
+
+	public boolean isHorizontalOrientationRequested() {
+		return horizontalOrientationRequested;
+	}
+
+	public void setHorizontalOrientationRequested(boolean horizontalOrientationRequested) {
+		this.horizontalOrientationRequested = horizontalOrientationRequested;
 	}
 
 

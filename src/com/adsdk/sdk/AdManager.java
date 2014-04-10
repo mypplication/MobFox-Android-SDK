@@ -9,6 +9,7 @@ import java.util.HashMap;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Handler;
 
@@ -49,6 +50,7 @@ public class AdManager {
 	private boolean alreadyRequestedInterstitial;
 	private int videoMinimalDuration;
 	private int videoMaxDuration;
+	private boolean requestedHorizontalAd;
 
 	public static AdManager getAdManager(AdResponse ad) {
 		AdManager adManager = sRunningAds.remove(ad.getTimestamp());
@@ -318,6 +320,7 @@ public class AdManager {
 		try {
 			if (Util.isNetworkAvailable(getContext())) {
 				ad.setTimestamp(System.currentTimeMillis());
+				ad.setHorizontalOrientationRequested(requestedHorizontalAd);
 				Log.v("Showing Ad:" + ad);
 				if (customEventFullscreen == null) {
 					Intent intent = new Intent(activity, RichMediaActivity.class);
@@ -507,9 +510,17 @@ public class AdManager {
 			request.setLatitude(0.0);
 			request.setLongitude(0.0);
 		}
+		if (mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+			requestedHorizontalAd = true;
+			this.request.setAdspaceHeight(320);
+			this.request.setAdspaceWidth(480);
+		} else {
+			requestedHorizontalAd = false;
+			this.request.setAdspaceHeight(480);
+			this.request.setAdspaceWidth(320);
+		}
 		
-		this.request.setAdspaceHeight(480);
-		this.request.setAdspaceWidth(320);
+		
 		this.request.setAdspaceStrict(false);
 		
 		request.setConnectionType(Util.getConnectionType(getContext()));
