@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -25,6 +26,7 @@ import android.widget.MediaController.MediaPlayerControl;
 
 import com.adsdk.sdk.Log;
 
+@SuppressLint("ViewConstructor")
 public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	private Uri mUri;
 	private int mDuration;
@@ -105,6 +107,7 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 				+ height + ")");
 	}
 
+	@SuppressWarnings("deprecation")
 	private void initVideoView() {
 		mHandler = new Handler();
 		mVideoWidth = 0;
@@ -605,6 +608,14 @@ public class SDKVideoView extends SurfaceView implements MediaPlayerControl {
 	@Override
 	public boolean canSeekForward() {
 		return true;
+	}
+
+	@Override
+	public int getAudioSessionId() {
+		if (mMediaPlayer != null) {			
+			return mMediaPlayer.getAudioSessionId();
+		}
+		return 0;
 	}
 
 }

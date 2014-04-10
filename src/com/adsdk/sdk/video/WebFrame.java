@@ -25,6 +25,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebSettings.PluginState;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -103,7 +104,7 @@ public class WebFrame extends FrameLayout {
 		webSettings.setSavePassword(false);
 		webSettings.setSaveFormData(false);
 		webSettings.setJavaScriptEnabled(true);
-		webSettings.setPluginsEnabled(true);
+		webSettings.setPluginState(PluginState.ON);
 		webSettings.setSupportZoom(enableZoom);
 		webSettings.setBuiltInZoomControls(enableZoom);
 
