@@ -5,6 +5,7 @@ import static com.adsdk.sdk.Const.AD_EXTRA;
 import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
+import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
@@ -51,6 +52,9 @@ public class AdManager {
 	private int videoMinimalDuration;
 	private int videoMaxDuration;
 	private boolean requestedHorizontalAd;
+	private Gender userGender;
+	private int userAge;
+	private List<String> keywords;
 
 	public static AdManager getAdManager(AdResponse ad) {
 		AdManager adManager = sRunningAds.remove(ad.getTimestamp());
@@ -500,6 +504,10 @@ public class AdManager {
 		}
 		Location location = null;
 		request.setVideoRequest(false);
+		request.setGender(userGender);
+		request.setUserAge(userAge);
+		request.setKeywords(keywords);
+
 		if (this.mIncludeLocation)
 			location = Util.getLocation(mContext);
 		if (location != null) {
@@ -543,6 +551,10 @@ public class AdManager {
 			this.request.setUserAgent(Util.getDefaultUserAgentString(mContext));
 			this.request.setUserAgent2(Util.buildUserAgent());
 		}
+		request.setGender(userGender);
+		request.setUserAge(userAge);
+		request.setKeywords(keywords);
+		
 		request.setVideoRequest(true);
 		request.setVideoMaxDuration(videoMaxDuration);
 		request.setVideoMinDuration(videoMinimalDuration);
@@ -612,6 +624,18 @@ public class AdManager {
 
 	public void setVideoMaxDuration(int videoMaxDuration) {
 		this.videoMaxDuration = videoMaxDuration;
+	}
+
+	public void setUserGender(Gender userGender) {
+		this.userGender = userGender;
+	}
+
+	public void setUserAge(int userAge) {
+		this.userAge = userAge;
+	}
+
+	public void setKeywords(List<String> keywords) {
+		this.keywords = keywords;
 	}
 
 }

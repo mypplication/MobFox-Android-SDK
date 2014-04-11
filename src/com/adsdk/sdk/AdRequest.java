@@ -1,10 +1,14 @@
 package com.adsdk.sdk;
 
+import java.util.List;
+
 import android.net.Uri;
 import android.os.Build;
+import android.text.TextUtils;
 
 public class AdRequest {
-
+	private static final String REQUEST_TYPE_ANDROID = "android_app";
+	
 	private String userAgent;
 	private String userAgent2;
 	private String headers;
@@ -18,20 +22,20 @@ public class AdRequest {
 	private boolean adspaceStrict;
 	private int adspaceWidth;
 	private int adspaceHeight;
+	private Gender gender;
+	private int userAge;
+	private List<String> keywords;
+	
 	private int videoMinDuration;
 	private int videoMaxDuration;
-	private static final String REQUEST_TYPE_ANDROID = "android_app";
 	private boolean isVideoRequest;
 
 	private String ipAddress;
-
 	private String deviceId2;
 	private String androidIMEI = "";
 	private String androidID = "";
 	private String androidAdId = "";
-
 	private String connectionType;
-
 	private long timestamp;
 
 	public String getAndroidVersion() {
@@ -205,6 +209,19 @@ public class AdRequest {
 			b.appendQueryParameter("r_type", "banner");
 		}
 		
+		if(userAge != 0) {
+			b.appendQueryParameter("demo.age", Integer.toString(userAge));
+		}
+		
+		if (gender != null) {
+			b.appendQueryParameter("demo.gender", gender.getServerParam());
+		}
+		
+		if(keywords != null && !keywords.isEmpty()) {
+			String parameter = TextUtils.join(", ", keywords);
+			b.appendQueryParameter("demo.keywords", parameter);
+		}
+		
 		b.appendQueryParameter("u_wv", this.getUserAgent());
 		b.appendQueryParameter("u_br", this.getUserAgent());
 		if(longitude != 0 && latitude != 0) {
@@ -303,6 +320,18 @@ public class AdRequest {
 
 	public void setVideoMaxDuration(int videoMaxDuration) {
 		this.videoMaxDuration = videoMaxDuration;
+	}
+
+	public void setGender(Gender gender) {
+		this.gender = gender;
+	}
+	
+	public void setUserAge(int userAge) {
+		this.userAge = userAge;
+	}
+
+	public void setKeywords(List<String> keywords) {
+		this.keywords = keywords;
 	}
 
 }

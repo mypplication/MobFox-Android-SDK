@@ -4,6 +4,7 @@ import static com.adsdk.sdk.Const.TAG;
 
 import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.List;
 import java.util.Timer;
 
 import android.Manifest;
@@ -23,6 +24,7 @@ import com.adsdk.sdk.AdListener;
 import com.adsdk.sdk.AdRequest;
 import com.adsdk.sdk.AdResponse;
 import com.adsdk.sdk.Const;
+import com.adsdk.sdk.Gender;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.RequestGeneralAd;
 import com.adsdk.sdk.Util;
@@ -47,6 +49,9 @@ public class AdView extends FrameLayout {
 	private int adspaceWidth;
 	private int adspaceHeight;
 	private boolean adspaceStrict;
+	private Gender userGender;
+	private int userAge;
+	private List<String> keywords;
 
 	private BannerAdView mBannerView;
 	private MraidView mMRAIDView;
@@ -207,6 +212,9 @@ public class AdView extends FrameLayout {
 			Log.d(Const.TAG, "WebKit UserAgent:" + this.request.getUserAgent());
 			Log.d(Const.TAG, "SDK built UserAgent:" + this.request.getUserAgent2());
 		}
+		request.setGender(userGender);
+		request.setUserAge(userAge);
+		request.setKeywords(keywords);
 		Location location = null;
 		if (this.includeLocation)
 			location = Util.getLocation(mContext);
@@ -580,6 +588,18 @@ public class AdView extends FrameLayout {
 
 		final ReloadTask reloadTask = new ReloadTask(AdView.this);
 		this.reloadTimer.schedule(reloadTask, refreshTime);
+	}
+	
+	public void setUserGender(Gender userGender) {
+		this.userGender = userGender;
+	}
+
+	public void setUserAge(int userAge) {
+		this.userAge = userAge;
+	}
+
+	public void setKeywords(List<String> keywords) {
+		this.keywords = keywords;
 	}
 
 
