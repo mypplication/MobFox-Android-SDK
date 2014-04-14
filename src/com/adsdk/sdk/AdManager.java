@@ -103,12 +103,18 @@ public class AdManager {
 	}
 
 	public void requestAd() {
+		requestAdInternal(false);
+	}
+	
+	private void requestAdInternal(boolean keepFlags) {
 		if (!mEnabled) {
 			Log.w("Cannot request rich adds on low memory devices");
 			return;
 		}
-		alreadyRequestedInterstitial = false;
-		alreadyRequestedVideo = false;
+		if(!keepFlags) {
+			alreadyRequestedInterstitial = false;
+			alreadyRequestedVideo = false;
+		}
 
 		if (mRequestThread == null) {
 			Log.d("Requesting Ad (v" + Const.VERSION + "-" + Const.PROTOCOL_VERSION + ")");
@@ -128,10 +134,10 @@ public class AdManager {
 					Log.d("starting request thread");
 					try {
 						RequestGeneralAd requestAd = new RequestGeneralAd();
-						if(isInterstitialAdsEnabled && !prioritizeVideoAds) {							
+						if(isInterstitialAdsEnabled && !prioritizeVideoAds && !alreadyRequestedInterstitial) {							
 							request = getInterstitialRequest();
 							alreadyRequestedInterstitial = true;
-						} else if(isVideoAdsEnabled) {
+						} else if(isVideoAdsEnabled && !alreadyRequestedVideo) {
 							request = getVideoRequest();
 							alreadyRequestedVideo = true;
 						} else {
@@ -245,9 +251,11 @@ public class AdManager {
 						if(mResponse.getType() == Const.NO_AD && mResponse.getCustomEvents().isEmpty()) {
 							if(isVideoAdsEnabled && !alreadyRequestedVideo) {
 								request = getVideoRequest();
+								alreadyRequestedVideo = true;
 								mResponse = requestAd.sendRequest(request);
 							} else if(isInterstitialAdsEnabled && !alreadyRequestedInterstitial) {
 								request = getInterstitialRequest();
+								alreadyRequestedInterstitial = true;
 								mResponse = requestAd.sendRequest(request);
 							}
 						}
@@ -417,7 +425,11 @@ public class AdManager {
 				} else if (mResponse.getType() != Const.NO_AD && mResponse.getType() != Const.AD_FAILED) {
 					notifyAdLoaded(mResponse);
 				} else {
-					notifyNoAdFound();
+					if((isVideoAdsEnabled && !alreadyRequestedVideo) || (isInterstitialAdsEnabled && !alreadyRequestedInterstitial)) {
+						requestAdInternal(true);
+					} else {						
+						notifyNoAdFound();
+					}
 				}
 			}
 
