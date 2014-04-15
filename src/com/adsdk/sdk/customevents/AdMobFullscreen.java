@@ -15,6 +15,7 @@ public class AdMobFullscreen extends CustomEventFullscreen {
 	public void loadFullscreen(Context context, CustomEventFullscreenListener customEventFullscreenListener, String optionalParameters, String trackingPixel) {
 		String adId = optionalParameters;
 		listener = customEventFullscreenListener;
+		this.trackingPixel = trackingPixel;
 		
 		adListener = createAdListener();
 		interstitial = new InterstitialAd(context);
@@ -58,6 +59,7 @@ public class AdMobFullscreen extends CustomEventFullscreen {
 			@Override
 			public void onAdOpened() {
 				if(listener != null) {
+					reportImpression();
 					listener.onFullscreenOpened();
 				}
 			}
