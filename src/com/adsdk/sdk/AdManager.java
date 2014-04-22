@@ -389,9 +389,9 @@ public class AdManager {
 			Log.e("Publisher Id cannot be null or empty");
 			throw new IllegalArgumentException("User Id cannot be null or empty");
 		}
-		if ((mUniqueId2 == null) || (mUniqueId2.length() == 0)) {
+		if ((mUniqueId2 == null)) {
 			Log.e("Cannot get system device Id");
-			throw new IllegalArgumentException("System Device Id cannot be null or empty");
+			throw new IllegalArgumentException("System Device Id cannot be null");
 		}
 		Log.d("AdManager Publisher Id:" + mPublisherId + " Device Id:" + mUniqueId1 + " DeviceId2:" + mUniqueId2);
 		mEnabled = (Util.getMemoryClass(getContext()) > 16);
