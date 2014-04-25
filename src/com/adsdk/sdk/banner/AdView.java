@@ -83,7 +83,11 @@ public class AdView extends FrameLayout {
 	private final Runnable showContent = new Runnable() {
 		@Override
 		public void run() {
-			AdView.this.showContent();
+			try{
+				AdView.this.showContent();
+			} catch (Exception e) {
+				notifyLoadAdFailed(e);
+			}
 		}
 	};
 	private FrameLayout MRAIDFrame;
@@ -339,7 +343,7 @@ public class AdView extends FrameLayout {
 
 			@Override
 			public void run() {
-				Log.e(Const.TAG, "Exception in request thread", e);
+				Log.e(Const.TAG, "Exception when building ad:", e);
 				if (AdView.this.adListener != null) {
 					Log.d(Const.TAG, "notify bannerListener: " + AdView.this.adListener.getClass().getName());
 					adListener.noAdFound();

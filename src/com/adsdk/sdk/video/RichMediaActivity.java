@@ -1,11 +1,13 @@
 package com.adsdk.sdk.video;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -40,6 +42,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
+
 import com.adsdk.sdk.Ad;
 import com.adsdk.sdk.AdListener;
 import com.adsdk.sdk.AdManager;
@@ -82,7 +85,6 @@ public class RichMediaActivity extends Activity {
 		}
 	}
 
-
 	class VideoTimeoutTask extends TimerTask {
 
 		private final Activity mActivity;
@@ -109,8 +111,8 @@ public class RichMediaActivity extends Activity {
 
 	public static final int TYPE_BROWSER = 0;
 	public static final int TYPE_VIDEO = 1;
-	public static final int TYPE_INTERSTITIAL = 2; 
-	
+	public static final int TYPE_INTERSTITIAL = 2;
+
 	private ResourceManager mResourceManager;
 	private FrameLayout mRootLayout;
 	private FrameLayout mVideoLayout;
@@ -204,13 +206,12 @@ public class RichMediaActivity extends Activity {
 		public void onClick(final View arg0) {
 
 			if (RichMediaActivity.this.mVideoData.overlayClickThrough != null) {
-				if(RichMediaActivity.this.mVideoData.overlayClickTracking != null) {
+				if (RichMediaActivity.this.mVideoData.overlayClickTracking != null) {
 					trackClick(RichMediaActivity.this.mVideoData.overlayClickTracking);
 				}
-				
-				
+
 				String s = RichMediaActivity.this.mVideoData.overlayClickThrough.trim();
-				
+
 				notifyAdClicked();
 				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
 				intent.setData(Uri.parse(s));
@@ -286,16 +287,16 @@ public class RichMediaActivity extends Activity {
 		public void onClick(View v) {
 			if (RichMediaActivity.this.mVideoData.videoClickThrough != null) {
 
-				if(RichMediaActivity.this.mVideoData.videoClickTracking != null) {
-					for(String tracking:RichMediaActivity.this.mVideoData.videoClickTracking) {
+				if (RichMediaActivity.this.mVideoData.videoClickTracking != null) {
+					for (String tracking : RichMediaActivity.this.mVideoData.videoClickTracking) {
 						trackClick(tracking);
 					}
-				}	
-				
+				}
+
 				String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
 				notifyAdClicked();
 				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip button
-				
+
 				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
 				intent.setData(Uri.parse(s));
 				RichMediaActivity.this.startActivity(intent);
@@ -331,8 +332,8 @@ public class RichMediaActivity extends Activity {
 
 			Log.d("###########TRACKING START VIDEO");
 			final Vector<String> trackers = RichMediaActivity.this.mVideoData.startEvents;
-				trackers.addAll(RichMediaActivity.this.mVideoData.impressionEvents);
-			
+			trackers.addAll(RichMediaActivity.this.mVideoData.impressionEvents);
+
 			for (int i = 0; i < trackers.size(); i++) {
 				Log.d("Track url:" + trackers.get(i));
 				final TrackEvent event = new TrackEvent();
@@ -532,17 +533,17 @@ public class RichMediaActivity extends Activity {
 		if (mAd.getType() == Const.TEXT || mAd.getType() == Const.IMAGE) {
 			final float scale = this.getResources().getDisplayMetrics().density;
 			int width, height;
-			if(mAd.isHorizontalOrientationRequested()) {
+			if (mAd.isHorizontalOrientationRequested()) {
 				width = 480;
 				height = 320;
 			} else {
 				width = 320;
 				height = 480;
 			}
-			
+
 			BannerAdView banner = new BannerAdView(this, mAd, width, height, false, createLocalAdListener());
 			banner.setLayoutParams(new FrameLayout.LayoutParams((int) (width * scale + 0.5f), (int) (height * scale + 0.5f), Gravity.CENTER));
-			
+
 			layout.addView(banner);
 		}
 		if (mAd.getType() == Const.MRAID) {
@@ -630,7 +631,6 @@ public class RichMediaActivity extends Activity {
 	private void notifyAdClicked() {
 		AdManager.notifyAdClick(mAd);
 	}
-
 
 	private void initRootLayout() {
 		this.mRootLayout = new FrameLayout(this);
@@ -771,7 +771,6 @@ public class RichMediaActivity extends Activity {
 			this.mVideoView.setOnClickListener(mOnVideoClickListener);
 		}
 
-		
 		this.mVideoView.setOnPreparedListener(this.mOnVideoPreparedListener);
 		this.mVideoView.setOnCompletionListener(this.mOnVideoCompletionListener);
 		this.mVideoView.setOnErrorListener(this.mOnVideoErrorListener);
@@ -819,89 +818,96 @@ public class RichMediaActivity extends Activity {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(final Bundle icicle) {
-		
+
 		Log.d("RichMediaActivity onCreate");
 		super.onCreate(icicle);
-		this.mResult = false;
-		this.setResult(Activity.RESULT_CANCELED);
-		final Window win = this.getWindow();
-		win.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-		win.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-		final Display display = this.getWindowManager().getDefaultDisplay();
-		this.metrics = new DisplayMetrics();
-		final WindowManager wm = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
-		wm.getDefaultDisplay().getMetrics(this.metrics);
-		this.mWindowWidth = display.getWidth();
-		this.mWindowHeight = display.getHeight();
-		win.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
-		Log.d("RichMediaActivity Window Size:(" + this.mWindowWidth + "," + this.mWindowHeight + ")");
+		try {
 
-		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-		this.mType = RichMediaActivity.TYPE_UNKNOWN;
-		final Intent intent = this.getIntent();
-		final Bundle extras = intent.getExtras();
-		if (extras == null || extras.getSerializable(Const.AD_EXTRA) == null) {
-			this.uri = intent.getData();
-			if (this.uri == null) {
-
-				Log.d("url is null so do not load anything");
-				this.finish();
-				return;
-			}
-			this.mType = RichMediaActivity.TYPE_BROWSER;
-		} else
+			this.mResult = false;
+			this.setResult(Activity.RESULT_CANCELED);
+			final Window win = this.getWindow();
+			win.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+			win.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+			final Display display = this.getWindowManager().getDefaultDisplay();
+			this.metrics = new DisplayMetrics();
+			final WindowManager wm = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
+			wm.getDefaultDisplay().getMetrics(this.metrics);
+			this.mWindowWidth = display.getWidth();
+			this.mWindowHeight = display.getHeight();
+			win.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
-		mHandler = new ResourceHandler(this);
+			Log.d("RichMediaActivity Window Size:(" + this.mWindowWidth + "," + this.mWindowHeight + ")");
 
-		this.mResourceManager = new ResourceManager(this, this.mHandler);
-		this.initRootLayout();
+			this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-		if (this.mType == RichMediaActivity.TYPE_BROWSER) {
-			this.initWebBrowserView(true);
-			this.mWebBrowserView.loadUrl(this.uri.toString());
-		} else {
-			this.mAd = (AdResponse) extras.getSerializable(Const.AD_EXTRA);
+			this.mType = RichMediaActivity.TYPE_UNKNOWN;
+			final Intent intent = this.getIntent();
+			final Bundle extras = intent.getExtras();
+			if (extras == null || extras.getSerializable(Const.AD_EXTRA) == null) {
+				this.uri = intent.getData();
+				if (this.uri == null) {
 
-			this.mCanClose = false;
-			this.mType = extras.getInt(Const.AD_TYPE_EXTRA, -1);
-			if (this.mType == -1)
-				switch (this.mAd.getType()) {
-				case Const.VIDEO:
-					this.mType = TYPE_VIDEO;
-					break;
-				case Const.TEXT:
-				case Const.MRAID:
-				case Const.IMAGE:
-					if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
-						setOrientationOldApi();
-					} else {
-						setOrientation();
+					Log.d("url is null so do not load anything");
+					this.finish();
+					return;
+				}
+				this.mType = RichMediaActivity.TYPE_BROWSER;
+			} else
+				this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+			mHandler = new ResourceHandler(this);
+
+			this.mResourceManager = new ResourceManager(this, this.mHandler);
+			this.initRootLayout();
+
+			if (this.mType == RichMediaActivity.TYPE_BROWSER) {
+				this.initWebBrowserView(true);
+				this.mWebBrowserView.loadUrl(this.uri.toString());
+			} else {
+				this.mAd = (AdResponse) extras.getSerializable(Const.AD_EXTRA);
+
+				this.mCanClose = false;
+				this.mType = extras.getInt(Const.AD_TYPE_EXTRA, -1);
+				if (this.mType == -1)
+					switch (this.mAd.getType()) {
+					case Const.VIDEO:
+						this.mType = TYPE_VIDEO;
+						break;
+					case Const.TEXT:
+					case Const.MRAID:
+					case Const.IMAGE:
+						if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
+							setOrientationOldApi();
+						} else {
+							setOrientation();
+						}
+						this.mType = TYPE_INTERSTITIAL;
+						break;
 					}
-					this.mType = TYPE_INTERSTITIAL;
+				switch (this.mType) {
+				case TYPE_VIDEO:
+					Log.v("Type video");
+					this.initVideoView();
+					break;
+				case TYPE_INTERSTITIAL:
+					Log.v("Type interstitial like banner");
+					this.initInterstitialFromBannerView();
 					break;
 				}
-			switch (this.mType) {
-			case TYPE_VIDEO:
-				Log.v("Type video");
-				this.initVideoView();
-				break;
-			case TYPE_INTERSTITIAL:
-				Log.v("Type interstitial like banner");
-				this.initInterstitialFromBannerView();
-				break;
 			}
-		}
 
-		this.setContentView(this.mRootLayout);
-		Log.d("RichMediaActivity onCreate done");
+			this.setContentView(this.mRootLayout);
+			Log.d("RichMediaActivity onCreate done");
+			
+		} catch (Exception e) { //in unlikely case something goes terribly wrong
+			finish();
+		}
 	}
-	
+
 	private void setOrientationOldApi() {
-		if(mAd.isHorizontalOrientationRequested()) {
+		if (mAd.isHorizontalOrientationRequested()) {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		} else {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -910,7 +916,7 @@ public class RichMediaActivity extends Activity {
 
 	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	private void setOrientation() {
-		if(mAd.isHorizontalOrientationRequested()) {
+		if (mAd.isHorizontalOrientationRequested()) {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
 		} else {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);

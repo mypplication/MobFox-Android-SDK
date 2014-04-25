@@ -252,6 +252,8 @@ public class Util {
 						e.printStackTrace();
 					} catch (GooglePlayServicesRepairableException e) {
 						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 					return null;
 				}
