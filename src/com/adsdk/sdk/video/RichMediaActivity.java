@@ -1,6 +1,5 @@
 package com.adsdk.sdk.video;
 
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.Set;

@@ -43,7 +43,6 @@ public class AdManager {
 	private boolean mEnabled = true;
 	private AdResponse mResponse;
 	private String interstitialRequestURL;
-	private String videoRequestURL;
 	private boolean isInterstitialAdsEnabled = true;
 	private boolean isVideoAdsEnabled;
 	private boolean prioritizeVideoAds;
@@ -86,11 +85,10 @@ public class AdManager {
 		ResourceManager.cancel();
 	}
 
-	public AdManager(Context ctx, final String interstitialRequestURL, final String videoReqestURL, final String publisherId, final boolean includeLocation) throws IllegalArgumentException {
+	public AdManager(Context ctx, final String interstitialRequestURL, final String publisherId, final boolean includeLocation) throws IllegalArgumentException {
 		Util.prepareAndroidAdId(ctx);
 		AdManager.setmContext(ctx);
 		this.interstitialRequestURL = interstitialRequestURL;
-		this.setVideoRequestURL(videoReqestURL);
 		this.mPublisherId = publisherId;
 		this.mIncludeLocation = includeLocation;
 		this.mRequestThread = null;
@@ -207,10 +205,6 @@ public class AdManager {
 
 	public void setInterstitialRequestURL(String requestURL) {
 		this.interstitialRequestURL = requestURL;
-	}
-
-	public void setVideoRequestURL(String videoRequestURL) {
-		this.videoRequestURL = videoRequestURL;
 	}
 
 	public void requestAd(final InputStream xml) {
@@ -590,7 +584,7 @@ public class AdManager {
 		request.setIpAddress(Util.getLocalIpAddress());
 		request.setTimestamp(System.currentTimeMillis());
 		
-		this.request.setRequestURL(videoRequestURL);
+		this.request.setRequestURL(interstitialRequestURL);
 		return this.request;
 	}
 

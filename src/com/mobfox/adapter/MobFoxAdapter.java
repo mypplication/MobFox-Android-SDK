@@ -20,7 +20,6 @@ import android.view.View;
 public final class MobFoxAdapter implements MediationBannerAdapter<MobFoxExtras, MobFoxServerParameters>, MediationInterstitialAdapter<MobFoxExtras, MobFoxServerParameters> {
 
 	private static final String REQUEST_URL = "http://my.mobfox.com/request.php";
-	private static final String VREQUEST_URL = "http://my.mobfox.com/vrequest.php";
 	private AdView adView;
 	private AdManager mAdManager;
 
@@ -109,9 +108,9 @@ public final class MobFoxAdapter implements MediationBannerAdapter<MobFoxExtras,
 		interstitialListener = listener;
 
 		if (extras != null)
-			mAdManager = new AdManager(activity, REQUEST_URL, VREQUEST_URL, serverParameters.pubIdNumber, extras.getLocation());
+			mAdManager = new AdManager(activity, REQUEST_URL, serverParameters.pubIdNumber, extras.getLocation());
 		else
-			mAdManager = new AdManager(activity, REQUEST_URL, VREQUEST_URL, serverParameters.pubIdNumber, true);
+			mAdManager = new AdManager(activity, REQUEST_URL, serverParameters.pubIdNumber, true);
 		
 		mAdManager.setVideoAdsEnabled(true);
 		
