@@ -80,11 +80,11 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 	private String getTextValue(final Element element, final String name) {
 		NodeList nodeList = element.getElementsByTagName(name);
 		if (nodeList.getLength() > 0) {
-			return nodeList.item(0).getFirstChild().getNodeValue();
-		} else {
-			return "";
+			if (nodeList.item(0).getFirstChild() != null) {
+				return nodeList.item(0).getFirstChild().getNodeValue();
+			}
 		}
-
+		return "";
 	}
 
 	private List<CustomEvent> getCustomEvents(Document doc) {
