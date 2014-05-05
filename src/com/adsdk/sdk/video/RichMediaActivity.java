@@ -212,8 +212,8 @@ public class RichMediaActivity extends Activity {
 				String s = RichMediaActivity.this.mVideoData.overlayClickThrough.trim();
 
 				notifyAdClicked();
-				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
-				intent.setData(Uri.parse(s));
+				
+				final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
 				RichMediaActivity.this.startActivity(intent);
 			}
 
@@ -295,9 +295,8 @@ public class RichMediaActivity extends Activity {
 				String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
 				notifyAdClicked();
 				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip button
-
-				final Intent intent = new Intent(RichMediaActivity.this, RichMediaActivity.class);
-				intent.setData(Uri.parse(s));
+				
+				final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
 				RichMediaActivity.this.startActivity(intent);
 			}
 		}
