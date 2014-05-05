@@ -146,7 +146,7 @@ public class RichMediaActivity extends Activity {
 
 	int marginArg = 8;
 
-	int skipButtonSizeLand = 50;
+	int skipButtonSizeLand = 40;
 
 	int skipButtonSizePort = 40;
 
@@ -172,13 +172,9 @@ public class RichMediaActivity extends Activity {
 		case ResourceManager.RESOURCE_LOADED_MSG:
 			switch (msg.arg1) {
 			case ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID:
-				if (RichMediaActivity.this.mSkipButton != null)
-					if (mResourceManager.containsResource(ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID)) {
-						RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
-					} else {
-						RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
-					}
-
+				if (RichMediaActivity.this.mSkipButton != null) {
+					RichMediaActivity.this.mSkipButton.setImageDrawable(mResourceManager.getResource(this, ResourceManager.DEFAULT_SKIP_IMAGE_RESOURCE_ID));
+				}
 				break;
 			}
 			break;
@@ -212,7 +208,7 @@ public class RichMediaActivity extends Activity {
 				String s = RichMediaActivity.this.mVideoData.overlayClickThrough.trim();
 
 				notifyAdClicked();
-				
+
 				final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
 				RichMediaActivity.this.startActivity(intent);
 			}
@@ -295,7 +291,7 @@ public class RichMediaActivity extends Activity {
 				String s = RichMediaActivity.this.mVideoData.videoClickThrough.trim();
 				notifyAdClicked();
 				mOnVideoCanCloseEventListener.onTimeEvent(0); // to show skip button
-				
+
 				final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(s));
 				RichMediaActivity.this.startActivity(intent);
 			}
@@ -555,10 +551,13 @@ public class RichMediaActivity extends Activity {
 		this.mSkipButton = new ImageView(this);
 		this.mSkipButton.setAdjustViewBounds(false);
 
-		int buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
+		int buttonSize;
+		if(mAd.isHorizontalOrientationRequested()) {
+			buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
+		} else {
+			buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizePort, this.getResources().getDisplayMetrics());
+		}
 
-		int size = Math.min(this.getResources().getDisplayMetrics().widthPixels, this.getResources().getDisplayMetrics().heightPixels);
-		buttonSize = (int) (size * 0.1);
 
 		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
 
@@ -725,10 +724,12 @@ public class RichMediaActivity extends Activity {
 			this.mSkipButton.setAdjustViewBounds(false);
 			FrameLayout.LayoutParams params = null;
 
-			int buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
-
-			int size = Math.min(this.getResources().getDisplayMetrics().widthPixels, this.getResources().getDisplayMetrics().heightPixels);
-			buttonSize = (int) (size * 0.09);
+			int buttonSize;
+			if(mAd.isHorizontalOrientationRequested()) {
+				buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizeLand, this.getResources().getDisplayMetrics());
+			} else {
+				buttonSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.skipButtonSizePort, this.getResources().getDisplayMetrics());
+			}
 
 			params = new FrameLayout.LayoutParams(buttonSize, buttonSize, Gravity.TOP | Gravity.RIGHT);
 			if (this.mVideoData.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
@@ -898,8 +899,8 @@ public class RichMediaActivity extends Activity {
 
 			this.setContentView(this.mRootLayout);
 			Log.d("RichMediaActivity onCreate done");
-			
-		} catch (Exception e) { //in unlikely case something goes terribly wrong
+
+		} catch (Exception e) { // in unlikely case something goes terribly wrong
 			finish();
 		}
 	}
