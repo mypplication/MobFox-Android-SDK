@@ -162,7 +162,7 @@ public class RequestGeneralAd extends RequestAd<AdResponse> {
 				final Element element = doc.getDocumentElement();
 
 				if (element == null)
-					throw new RequestException("Cannot parse Response, document is not an xml");
+					throw new RequestException("Document is not an xml");
 
 				final String errorValue = this.getValue(doc, "error");
 				if (errorValue != null)
