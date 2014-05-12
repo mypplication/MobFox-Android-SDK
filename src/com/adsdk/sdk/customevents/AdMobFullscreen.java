@@ -17,6 +17,17 @@ public class AdMobFullscreen extends CustomEventFullscreen {
 		listener = customEventFullscreenListener;
 		this.trackingPixel = trackingPixel;
 		
+		try {
+			Class.forName("com.google.android.gms.ads.AdListener");
+			Class.forName("com.google.android.gms.ads.AdRequest");
+			Class.forName("com.google.android.gms.ads.InterstitialAd");
+		} catch (ClassNotFoundException e) {
+			if(listener != null) {
+				listener.onFullscreenFailed();
+			}
+			return;
+		}
+		
 		adListener = createAdListener();
 		interstitial = new InterstitialAd(context);
 		interstitial.setAdUnitId(adId);

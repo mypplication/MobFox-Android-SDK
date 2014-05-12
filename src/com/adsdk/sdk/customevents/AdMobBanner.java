@@ -19,6 +19,9 @@ public class AdMobBanner extends CustomEventBanner {
 
 		try {
 			Class.forName("com.google.android.gms.ads.AdView");
+			Class.forName("com.google.android.gms.ads.AdListener");
+			Class.forName("com.google.android.gms.ads.AdRequest");
+			Class.forName("com.google.android.gms.ads.AdSize");
 		} catch (ClassNotFoundException e) {
 			if(listener != null) {
 				listener.onBannerFailed();
