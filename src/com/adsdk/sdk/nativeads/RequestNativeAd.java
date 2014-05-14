@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -76,11 +77,34 @@ public class RequestNativeAd {
 			String result = sb.toString();
 			JSONObject mainObject = new JSONObject(result);
 			JSONObject imageAssetsObject = mainObject.getJSONObject("imageassets");
-			if(imageAssetsObject != null) {
+			if (imageAssetsObject != null) {
+				Iterator<String> keys = imageAssetsObject.keys();
 
+				while (keys.hasNext()) {
+					ImageAsset asset = new ImageAsset();
+					String type = keys.next();
+					asset.type = type;
+					JSONObject assetObject = imageAssetsObject.getJSONObject(type);
+					asset.url = assetObject.getString("url");
+					asset.width = assetObject.getInt("width");
+					asset.height = assetObject.getInt("height");
+					response.getImageAssets().add(asset);
+				}
+			}
+
+			JSONObject textAssetsObject = mainObject.getJSONObject("textassets");
+			if (textAssetsObject != null) {
+				Iterator<String> keys = textAssetsObject.keys();
+				while (keys.hasNext()) {
+					TextAsset asset = new TextAsset();
+					String type = keys.next();
+					asset.type = type;
+					asset.text = textAssetsObject.getString(type);
+					response.getTextAssets().add(asset);
+				}
 			}
 			
-			
+			//TODO: tracking events
 
 		} catch (UnsupportedEncodingException e) {
 			throw new RequestException("Cannot parse Response", e);

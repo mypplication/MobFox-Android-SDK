@@ -13,7 +13,7 @@ public class NativeAdRequest {
 	private static final String RESPONSE_TYPE = "json";
 	private static final String IMAGE_TYPES = "icon,main";
 	private static final String TEXT_TYPES = "headline,description,cta,advertiser,rating";
-	private static final String REQUEST_URL = "http://my.mobfox.com/request.php";
+	private  String request_url;
 	private List<String> adTypes;
 	private String publisherId;
 	private String userAgent;
@@ -29,9 +29,14 @@ public class NativeAdRequest {
 	private Gender gender;
 	private int userAge;
 	private List<String> keywords;
+	
+	@Override
+	public String toString() {
+		return this.toUri().toString();
+	}
 
 	public Uri toUri() {
-		final Uri.Builder b = Uri.parse(REQUEST_URL).buildUpon();
+		final Uri.Builder b = Uri.parse(request_url).buildUpon();
 		b.appendQueryParameter("r_type", REQUEST_TYPE);
 		b.appendQueryParameter("r_resp", RESPONSE_TYPE);
 		b.appendQueryParameter("n_img", IMAGE_TYPES);
@@ -182,6 +187,10 @@ public class NativeAdRequest {
 
 	public void setKeywords(List<String> keywords) {
 		this.keywords = keywords;
+	}
+	
+	public void setRequestUrl (String url) {
+		this.request_url = url;
 	}
 
 }

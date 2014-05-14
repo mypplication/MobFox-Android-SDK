@@ -30,11 +30,14 @@ public class NativeAdManager {
 	private Thread requestThread;
 	private NativeAdRequest request;
 
+	private String requestUrl;
+	
 	private int telephonyPermission;
 	private List<String> adTypes;
 
-	public NativeAdManager(Context context, boolean includeLocation, String publisherId, NativeAdListener listener, List<String> adTypes) {
+	public NativeAdManager(Context context, String requestUrl, boolean includeLocation, String publisherId, NativeAdListener listener, List<String> adTypes) {
 		this.context = context;
+		this.requestUrl = requestUrl;
 		this.includeLocation = includeLocation;
 		this.publisherId = publisherId;
 		this.listener = listener;
@@ -98,9 +101,11 @@ public class NativeAdManager {
 			this.request.setUserAgent(Util.getDefaultUserAgentString(context));
 			Log.d(Const.TAG, "WebKit UserAgent:" + this.request.getUserAgent());
 		}
+		request.setRequestUrl(requestUrl);
 		request.setAdTypes(adTypes);
 		request.setGender(userGender);
 		request.setUserAge(userAge);
+		request.setAdTypes(adTypes);
 		request.setKeywords(keywords);
 		Location location = null;
 		if (this.includeLocation)

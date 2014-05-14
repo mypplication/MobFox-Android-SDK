@@ -1,5 +1,6 @@
 package com.adsdk.sdk.nativeads;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NativeAd {
@@ -21,9 +22,9 @@ public class NativeAd {
 	}
 
 	private String clickUrl;
-	private List<ImageAsset> imageAssets;
-	private List<TextAsset> textAssets;
-	private List<Tracker> trackers;
+	private List<ImageAsset> imageAssets = new ArrayList<NativeAd.ImageAsset>(); //TODO: hash maps?
+	private List<TextAsset> textAssets = new ArrayList<NativeAd.TextAsset>();
+	private List<Tracker> trackers = new ArrayList<NativeAd.Tracker>();
 
 	public String getClickUrl() {
 		return clickUrl;
