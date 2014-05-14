@@ -6,9 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -16,6 +14,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpProtocolParams;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -60,11 +59,7 @@ public class RequestNativeAd {
 	protected NativeAd parse(final InputStream inputStream) throws RequestException {
 
 		final NativeAd response = new NativeAd();
-		List<TextAsset> textAssets = new ArrayList<NativeAd.TextAsset>();
-		List<ImageAsset> imageAssets = new ArrayList<NativeAd.ImageAsset>();
-		List<Tracker> trackers = new ArrayList<NativeAd.Tracker>();
 
-		// TODO: fill native ad fields
 		try {
 			BufferedReader reader;
 			reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 8);
@@ -76,8 +71,9 @@ public class RequestNativeAd {
 			}
 			String result = sb.toString();
 			JSONObject mainObject = new JSONObject(result);
-			JSONObject imageAssetsObject = mainObject.getJSONObject("imageassets");
+			JSONObject imageAssetsObject = mainObject.optJSONObject("imageassets");
 			if (imageAssetsObject != null) {
+				@SuppressWarnings("unchecked")
 				Iterator<String> keys = imageAssetsObject.keys();
 
 				while (keys.hasNext()) {
@@ -92,8 +88,9 @@ public class RequestNativeAd {
 				}
 			}
 
-			JSONObject textAssetsObject = mainObject.getJSONObject("textassets");
+			JSONObject textAssetsObject = mainObject.optJSONObject("textassets");
 			if (textAssetsObject != null) {
+				@SuppressWarnings("unchecked")
 				Iterator<String> keys = textAssetsObject.keys();
 				while (keys.hasNext()) {
 					TextAsset asset = new TextAsset();
@@ -103,8 +100,21 @@ public class RequestNativeAd {
 					response.getTextAssets().add(asset);
 				}
 			}
-			
-			//TODO: tracking events
+
+			response.setClickUrl(mainObject.optString("click_url", null));
+
+			JSONArray trackersArray = mainObject.optJSONArray("trackers");
+			if (trackersArray != null) {
+				for (int i = 0; i < trackersArray.length(); i++) {
+					JSONObject trackerObject = trackersArray.optJSONObject(i);
+					if(trackerObject != null) {
+						Tracker tracker = new Tracker();
+						tracker.type = trackerObject.getString("type");
+						tracker.url = trackerObject.getString("url");
+						response.getTrackers().add(tracker);
+					}
+				}
+			}
 
 		} catch (UnsupportedEncodingException e) {
 			throw new RequestException("Cannot parse Response", e);
