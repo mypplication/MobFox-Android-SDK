@@ -314,9 +314,7 @@ public class AdView extends FrameLayout {
 				}
 			});
 			this.loadContentThread.start();
-		} else {
-
-		}
+		} 
 
 	}
 

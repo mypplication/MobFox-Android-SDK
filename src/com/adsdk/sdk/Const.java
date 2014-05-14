@@ -6,7 +6,7 @@ public interface Const {
 	public static final String ENCODING = "UTF-8";
 	public static final String RESPONSE_ENCODING = "ISO-8859-1";
 	public static final String VERSION = "5.1.0";
-	public static final String PROTOCOL_VERSION = "1.0";
+	public static final String PROTOCOL_VERSION = "3.0";
 
 	public static final int LIVE = 0;
 	public static final int TEST = 1;
