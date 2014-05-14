@@ -22,7 +22,6 @@ import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
 import com.adsdk.sdk.RequestException;
 import com.adsdk.sdk.nativeads.NativeAd.ImageAsset;
-import com.adsdk.sdk.nativeads.NativeAd.TextAsset;
 import com.adsdk.sdk.nativeads.NativeAd.Tracker;
 
 public class RequestNativeAd {
@@ -79,12 +78,11 @@ public class RequestNativeAd {
 				while (keys.hasNext()) {
 					ImageAsset asset = new ImageAsset();
 					String type = keys.next();
-					asset.type = type;
 					JSONObject assetObject = imageAssetsObject.getJSONObject(type);
 					asset.url = assetObject.getString("url");
 					asset.width = assetObject.getInt("width");
 					asset.height = assetObject.getInt("height");
-					response.getImageAssets().add(asset);
+					response.addImageAsset(type, asset);
 				}
 			}
 
@@ -93,11 +91,9 @@ public class RequestNativeAd {
 				@SuppressWarnings("unchecked")
 				Iterator<String> keys = textAssetsObject.keys();
 				while (keys.hasNext()) {
-					TextAsset asset = new TextAsset();
 					String type = keys.next();
-					asset.type = type;
-					asset.text = textAssetsObject.getString(type);
-					response.getTextAssets().add(asset);
+					String text = textAssetsObject.getString(type);
+					response.addTextAsset(type, text);
 				}
 			}
 

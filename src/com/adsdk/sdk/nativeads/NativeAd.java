@@ -1,19 +1,15 @@
 package com.adsdk.sdk.nativeads;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NativeAd {
 	public static class ImageAsset {
-		String type;
 		String url;
 		int width;
 		int height;
-	}
-
-	public static class TextAsset {
-		String type;
-		String text;
 	}
 
 	public static class Tracker {
@@ -22,8 +18,8 @@ public class NativeAd {
 	}
 
 	private String clickUrl;
-	private List<ImageAsset> imageAssets = new ArrayList<NativeAd.ImageAsset>(); //TODO: hash maps?
-	private List<TextAsset> textAssets = new ArrayList<NativeAd.TextAsset>();
+	private Map<String, ImageAsset> imageAssets = new HashMap<String, NativeAd.ImageAsset>();
+	private Map<String, String> textAssets = new HashMap<String, String>();
 	private List<Tracker> trackers = new ArrayList<NativeAd.Tracker>();
 
 	public String getClickUrl() {
@@ -34,22 +30,22 @@ public class NativeAd {
 		this.clickUrl = clickUrl;
 	}
 
-	public List<ImageAsset> getImageAssets() {
-		return imageAssets;
+	public void addTextAsset(String type, String asset) {
+		textAssets.put(type, asset);
+	}
+	
+	public void addImageAsset (String type, ImageAsset asset) {
+		imageAssets.put(type, asset);
+	}
+	
+	public String getTextAsset (String type) {
+		return textAssets.get(type);
 	}
 
-	public void setImageAssets(List<ImageAsset> imageAssets) {
-		this.imageAssets = imageAssets;
+	public ImageAsset getImageAsset (String type) {
+		return imageAssets.get(type);
 	}
-
-	public List<TextAsset> getTextAssets() {
-		return textAssets;
-	}
-
-	public void setTextAssets(List<TextAsset> textAssets) {
-		this.textAssets = textAssets;
-	}
-
+	
 	public List<Tracker> getTrackers() {
 		return trackers;
 	}
