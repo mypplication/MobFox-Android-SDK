@@ -7,6 +7,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Handler;
 import android.telephony.TelephonyManager;
 
 import com.adsdk.sdk.Const;
@@ -31,7 +32,8 @@ public class NativeAdManager {
 	private NativeAdRequest request;
 
 	private String requestUrl;
-	
+	private Handler handler;
+
 	private int telephonyPermission;
 	private List<String> adTypes;
 
@@ -42,6 +44,7 @@ public class NativeAdManager {
 		this.publisherId = publisherId;
 		this.listener = listener;
 		this.adTypes = adTypes;
+		handler = new Handler();
 		telephonyPermission = context.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE);
 		Util.prepareAndroidAdId(context);
 	}
@@ -58,18 +61,12 @@ public class NativeAdManager {
 					try {
 						nativeAd = requestAd.sendRequest(NativeAdManager.this.getRequest());
 						if (nativeAd != null) {
-							if (listener != null) {
-								listener.adLoaded(nativeAd);
-							}
+							notifyAdLoaded(nativeAd);
 						} else {
-							if (listener != null) {
-								listener.adFailedToLoad();
-							}
+							notifyAdFailed();
 						}
 					} catch (final Throwable e) {
-						if (listener != null) {
-							listener.adFailedToLoad();
-						}
+						notifyAdFailed();
 					}
 					NativeAdManager.this.requestThread = null;
 					Log.d(Const.TAG, "finishing request thread");
@@ -87,7 +84,7 @@ public class NativeAdManager {
 			this.requestThread.start();
 		}
 	}
-	
+
 	private NativeAdRequest getRequest() {
 		if (this.request == null) {
 			this.request = new NativeAdRequest();
@@ -119,6 +116,35 @@ public class NativeAdManager {
 			this.request.setLongitude(0.0);
 		}
 		return this.request;
+	}
+
+	public NativeAdView getNativeAdView(NativeAd ad, NativeViewBinder binder) {
+		NativeAdView view = new NativeAdView(context, ad, binder);
+		return view;
+	}
+
+	private void notifyAdFailed() {
+		if (listener != null) {
+			handler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					listener.adFailedToLoad();
+				}
+			});
+		}
+	}
+
+	private void notifyAdLoaded(final NativeAd ad) {
+		if (listener != null) {
+			handler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					listener.adLoaded(ad);
+				}
+			});
+		}
 	}
 
 	public void setUserGender(Gender userGender) {
