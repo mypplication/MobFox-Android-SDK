@@ -5,9 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.graphics.Bitmap;
+
 public class NativeAd {
 	public static class ImageAsset {
 		String url;
+		Bitmap bitmap;
 		int width;
 		int height;
 	}

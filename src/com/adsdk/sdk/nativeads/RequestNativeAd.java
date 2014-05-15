@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Iterator;
 
 import org.apache.http.HttpResponse;
@@ -17,6 +18,9 @@ import org.apache.http.params.HttpProtocolParams;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Log;
@@ -79,7 +83,9 @@ public class RequestNativeAd {
 					ImageAsset asset = new ImageAsset();
 					String type = keys.next();
 					JSONObject assetObject = imageAssetsObject.getJSONObject(type);
-					asset.url = assetObject.getString("url");
+					String url = assetObject.getString("url");
+					asset.url = url;
+					asset.bitmap = loadBitmap(url);
 					asset.width = assetObject.getInt("width");
 					asset.height = assetObject.getInt("height");
 					response.addImageAsset(type, asset);
@@ -121,6 +127,18 @@ public class RequestNativeAd {
 		}
 
 		return response;
+	}
+	
+	private Bitmap loadBitmap (String url) {
+		Bitmap bitmap = null;
+		try {
+			InputStream in = new URL(url).openStream();
+			bitmap = BitmapFactory.decodeStream(in);
+		} catch (Exception e) {
+			Log.e("Decoding bitmap failed!");
+		}
+		
+		return bitmap;
 	}
 
 }

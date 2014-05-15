@@ -2,8 +2,10 @@ package com.adsdk.sdk.nativeads;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 @SuppressLint("ViewConstructor")
@@ -34,7 +36,18 @@ public class NativeAdView extends FrameLayout {
 			}
 		}
 
-		// TODO: image assets
+		for (String key : binder.getImageAssetsBindingsKeySet()) {
+			int resId = binder.getIdForImageAsset(key);
+			if (resId == 0) {
+				continue;				
+			}
+			ImageView view = (ImageView)adView.findViewById(resId); //TODO: exception handling
+			Bitmap imageBitmap = ad.getImageAsset(key).bitmap;
+			if(view != null && imageBitmap != null) {
+				view.setImageBitmap(imageBitmap);
+			}
+		}
+		
 	}
 
 }
