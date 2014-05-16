@@ -5,10 +5,14 @@ import java.util.List;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 import com.adsdk.sdk.Const;
 import com.adsdk.sdk.Gender;
@@ -120,7 +124,36 @@ public class NativeAdManager {
 
 	public NativeAdView getNativeAdView(NativeAd ad, NativeViewBinder binder) {
 		NativeAdView view = new NativeAdView(context, ad, binder);
+		view.setOnClickListener(createOnNativeAdClickListener(ad.getClickUrl()));
 		return view;
+	}
+
+	private OnClickListener createOnNativeAdClickListener(final String clickUrl) {
+		OnClickListener clickListener = new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				notifyAdClicked();
+				if(clickUrl != null && !clickUrl.equals("")) {
+					final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickUrl));
+					context.startActivity(intent);
+				}
+				
+			}
+		};
+		return clickListener;
+	}
+
+	private void notifyAdLoaded(final NativeAd ad) {
+		if (listener != null) {
+			handler.post(new Runnable() {
+				
+				@Override
+				public void run() {
+					listener.adLoaded(ad);
+				}
+			});
+		}
 	}
 
 	private void notifyAdFailed() {
@@ -134,18 +167,19 @@ public class NativeAdManager {
 			});
 		}
 	}
-
-	private void notifyAdLoaded(final NativeAd ad) {
+	
+	private void notifyAdClicked() {
 		if (listener != null) {
 			handler.post(new Runnable() {
 
 				@Override
 				public void run() {
-					listener.adLoaded(ad);
+					listener.adClicked();
 				}
 			});
 		}
 	}
+
 
 	public void setUserGender(Gender userGender) {
 		this.userGender = userGender;

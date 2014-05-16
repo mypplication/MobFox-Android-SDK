@@ -22,7 +22,6 @@ public class NativeAdView extends FrameLayout {
 		adView = inflate(context, binder.getAdLayoutId(), null);
 		fillAdView(ad, binder);
 		this.addView(adView);
-		// TODO: click listeners
 		// TODO: impression tracking
 	}
 
@@ -58,7 +57,7 @@ public class NativeAdView extends FrameLayout {
 				continue;
 			}
 			try {
-				ImageView view = (ImageView) adView.findViewById(resId); 
+				ImageView view = (ImageView) adView.findViewById(resId);
 				Bitmap imageBitmap = ad.getImageAsset(key).bitmap;
 				if (view != null && imageBitmap != null) {
 					view.setImageBitmap(imageBitmap);
