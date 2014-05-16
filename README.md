@@ -1,10 +1,15 @@
-AdSdk-SDK4.1.6-Android
-======================
+MobFox Android SDK
+=====================
 
-Open sourced under this Licence:
+Thank you for looking into the MobFox SDK. All our SDKs are available both open-source here on GitHub as well as as compiled libraries, downloadable through your MobFox account.
 
-Copyright (C) 2012 MobFox Mobile Advertising GmbH
+To get started, sign up for a MobFox account under http://www.mobfox.com/signup
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Integration Documentation
+=====================
+Integration docs are available directly in your MobFox account. Just log in, head to Integration, and you will see the latest integration tutorials.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Custom Events
+=====================
+This SDK supports custom events to add additional third party SDKs to your monetization stack. For a tutorial on setting this up, please refer to the integration docs.
+
