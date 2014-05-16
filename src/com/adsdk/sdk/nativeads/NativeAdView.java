@@ -6,7 +6,10 @@ import android.graphics.Bitmap;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
+
+import com.adsdk.sdk.Log;
 
 @SuppressLint("ViewConstructor")
 public class NativeAdView extends FrameLayout {
@@ -20,34 +23,51 @@ public class NativeAdView extends FrameLayout {
 		fillAdView(ad, binder);
 		this.addView(adView);
 		// TODO: click listeners
-		// TODO: impression tracking 
+		// TODO: impression tracking
 	}
 
 	public void fillAdView(NativeAd ad, NativeViewBinder binder) {
 		for (String key : binder.getTextAssetsBindingsKeySet()) {
 			int resId = binder.getIdForTextAsset(key);
 			if (resId == 0) {
-				continue;				
+				continue;
 			}
-			TextView view = (TextView)adView.findViewById(resId); //TODO: exception handling
-			String text = ad.getTextAsset(key);
-			if(view != null && text != null) {
-				view.setText(text); 
+			try {
+				if (key.equals("rating")) { // rating is special, not displayed as normal text view.
+					RatingBar bar = (RatingBar) adView.findViewById(resId);
+					if (bar != null) {
+						int rating = Integer.parseInt(ad.getTextAsset(key));
+						bar.setIsIndicator(true);
+						bar.setRating(rating);
+					}
+				} else {
+					TextView view = (TextView) adView.findViewById(resId);
+					String text = ad.getTextAsset(key);
+					if (view != null && text != null) {
+						view.setText(text);
+					}
+				}
+			} catch (ClassCastException e) {
+				Log.e("Cannot fill view for " + key);
 			}
 		}
 
 		for (String key : binder.getImageAssetsBindingsKeySet()) {
 			int resId = binder.getIdForImageAsset(key);
 			if (resId == 0) {
-				continue;				
+				continue;
 			}
-			ImageView view = (ImageView)adView.findViewById(resId); //TODO: exception handling
-			Bitmap imageBitmap = ad.getImageAsset(key).bitmap;
-			if(view != null && imageBitmap != null) {
-				view.setImageBitmap(imageBitmap);
+			try {
+				ImageView view = (ImageView) adView.findViewById(resId); 
+				Bitmap imageBitmap = ad.getImageAsset(key).bitmap;
+				if (view != null && imageBitmap != null) {
+					view.setImageBitmap(imageBitmap);
+				}
+			} catch (ClassCastException e) {
+				Log.e("Cannot fill view for " + key);
 			}
 		}
-		
+
 	}
 
 }
