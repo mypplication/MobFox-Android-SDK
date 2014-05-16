@@ -123,7 +123,7 @@ public class NativeAdManager {
 	}
 
 	public NativeAdView getNativeAdView(NativeAd ad, NativeViewBinder binder) {
-		NativeAdView view = new NativeAdView(context, ad, binder);
+		NativeAdView view = new NativeAdView(context, ad, binder, listener);
 		view.setOnClickListener(createOnNativeAdClickListener(ad.getClickUrl()));
 		return view;
 	}
