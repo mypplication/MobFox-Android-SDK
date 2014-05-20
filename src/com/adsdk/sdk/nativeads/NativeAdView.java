@@ -35,6 +35,9 @@ public class NativeAdView extends FrameLayout {
 
 	public NativeAdView(Context context, NativeAd ad, NativeViewBinder binder, NativeAdListener listener) {
 		super(context);
+		if (ad == null || binder == null) {
+			return;
+		}
 		adView = inflate(context, binder.getAdLayoutId(), null);
 		trackers = ad.getTrackers();
 		handler = new Handler();
@@ -86,7 +89,7 @@ public class NativeAdView extends FrameLayout {
 		}
 
 	}
-	
+
 	@Override
 	protected void dispatchDraw(Canvas canvas) {
 		if (!impressionReported) {
@@ -94,7 +97,7 @@ public class NativeAdView extends FrameLayout {
 			notifyImpression();
 
 			for (Tracker t : trackers) {
-				if(t.type.equals("impression")) {
+				if (t.type.equals("impression")) {
 					trackImpression(t.url);
 				}
 			}
@@ -137,7 +140,5 @@ public class NativeAdView extends FrameLayout {
 		};
 		task.execute();
 	}
-	
-	
-	
+
 }

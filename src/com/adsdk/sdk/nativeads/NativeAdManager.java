@@ -124,21 +124,23 @@ public class NativeAdManager {
 
 	public NativeAdView getNativeAdView(NativeAd ad, NativeViewBinder binder) {
 		NativeAdView view = new NativeAdView(context, ad, binder, listener);
-		view.setOnClickListener(createOnNativeAdClickListener(ad.getClickUrl()));
+		if (ad != null) {
+			view.setOnClickListener(createOnNativeAdClickListener(ad.getClickUrl()));
+		}
 		return view;
 	}
 
 	private OnClickListener createOnNativeAdClickListener(final String clickUrl) {
 		OnClickListener clickListener = new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				notifyAdClicked();
-				if(clickUrl != null && !clickUrl.equals("")) {
+				if (clickUrl != null && !clickUrl.equals("")) {
 					final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickUrl));
 					context.startActivity(intent);
 				}
-				
+
 			}
 		};
 		return clickListener;
@@ -147,7 +149,7 @@ public class NativeAdManager {
 	private void notifyAdLoaded(final NativeAd ad) {
 		if (listener != null) {
 			handler.post(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					listener.adLoaded(ad);
@@ -167,7 +169,7 @@ public class NativeAdManager {
 			});
 		}
 	}
-	
+
 	private void notifyAdClicked() {
 		if (listener != null) {
 			handler.post(new Runnable() {
@@ -179,7 +181,6 @@ public class NativeAdManager {
 			});
 		}
 	}
-
 
 	public void setUserGender(Gender userGender) {
 		this.userGender = userGender;
