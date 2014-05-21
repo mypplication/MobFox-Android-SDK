@@ -32,7 +32,6 @@ public class NativeAdManager {
 	private NativeAdListener listener;
 
 	private Context context;
-	private Thread requestThread;
 	private NativeAdRequest request;
 
 	private String requestUrl;
@@ -54,8 +53,7 @@ public class NativeAdManager {
 	}
 
 	public void requestAd() {
-		if (this.requestThread == null) {
-			this.requestThread = new Thread(new Runnable() {
+			Thread requestThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					Log.d(Const.TAG, "starting request thread");
@@ -72,21 +70,18 @@ public class NativeAdManager {
 					} catch (final Throwable e) {
 						notifyAdFailed();
 					}
-					NativeAdManager.this.requestThread = null;
 					Log.d(Const.TAG, "finishing request thread");
 				}
 
 			});
-			this.requestThread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+			requestThread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
 				@Override
 				public void uncaughtException(final Thread thread, final Throwable ex) {
 					Log.e(Const.TAG, "Exception in request thread", ex);
-					NativeAdManager.this.requestThread = null;
 				}
 			});
-			this.requestThread.start();
-		}
+			requestThread.start();
 	}
 
 	private NativeAdRequest getRequest() {
