@@ -1,6 +1,7 @@
 package com.adsdk.sdk.nativeads;
 
 import java.util.List;
+import java.util.Random;
 
 import android.net.Uri;
 import android.text.TextUtils;
@@ -37,6 +38,9 @@ public class NativeAdRequest {
 
 	public Uri toUri() {
 		final Uri.Builder b = Uri.parse(request_url).buildUpon();
+		Random r = new Random();
+		int random = r.nextInt(50000);
+
 		b.appendQueryParameter("r_type", REQUEST_TYPE);
 		b.appendQueryParameter("r_resp", RESPONSE_TYPE);
 		b.appendQueryParameter("n_img", IMAGE_TYPES);
@@ -50,6 +54,7 @@ public class NativeAdRequest {
 		b.appendQueryParameter("s", this.getPublisherId());
 		b.appendQueryParameter("u", this.getUserAgent());
 		b.appendQueryParameter("i", this.getIpAddress());
+		b.appendQueryParameter("r_random", Integer.toString(random));
 		b.appendQueryParameter("o_androidid", androidID);
 		b.appendQueryParameter("o_androidimei", androidIMEI);
 		b.appendQueryParameter("o_andadvid", androidAdId);

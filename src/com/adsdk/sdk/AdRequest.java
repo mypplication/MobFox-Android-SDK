@@ -1,6 +1,7 @@
 package com.adsdk.sdk;
 
 import java.util.List;
+import java.util.Random;
 
 import android.net.Uri;
 import android.os.Build;
@@ -180,6 +181,9 @@ public class AdRequest {
 
 	public Uri toUri() {
 		final Uri.Builder b = Uri.parse(this.getRequestURL()).buildUpon();
+		Random r = new Random();
+		int random = r.nextInt(50000);
+		
 		b.appendQueryParameter("rt", this.getRequestType());
 		b.appendQueryParameter("v", this.getProtocolVersion());
 		b.appendQueryParameter("i", this.getIpAddress());
@@ -190,6 +194,7 @@ public class AdRequest {
 		b.appendQueryParameter("o_androidimei", androidIMEI);
 		b.appendQueryParameter("o_androidid", androidID);
 		b.appendQueryParameter("o_andadvid", androidAdId);
+		b.appendQueryParameter("r_random", Integer.toString(random));
 		b.appendQueryParameter("o2", this.getDeviceId2());
 		b.appendQueryParameter("t", Long.toString(this.getTimestamp()));
 		b.appendQueryParameter("connection_type", this.getConnectionType());
