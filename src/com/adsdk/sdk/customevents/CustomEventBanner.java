@@ -32,7 +32,13 @@ public abstract class CustomEventBanner {
 					HttpClient client = new DefaultHttpClient();
 					HttpGet request = new HttpGet();
 					request.setHeader("User-Agent", System.getProperty("http.agent"));
-					request.setURI(new URI(trackingPixel));
+					String url;
+					if(trackingPixel.startsWith("http://") || trackingPixel.startsWith("https://")) {
+						url = trackingPixel;
+					} else {
+						url = "http://" + trackingPixel;
+					}
+					request.setURI(new URI(url));
 					client.execute(request);
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
