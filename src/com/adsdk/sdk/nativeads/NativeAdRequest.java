@@ -14,11 +14,12 @@ public class NativeAdRequest {
 	private static final String RESPONSE_TYPE = "json";
 	private static final String IMAGE_TYPES = "icon,main";
 	private static final String TEXT_TYPES = "headline,description,cta,advertiser,rating";
+	private static final String REQUEST_TYPE_ANDROID = "android_app";
 	private  String request_url;
 	private List<String> adTypes;
 	private String publisherId;
 	private String userAgent;
-	private String ipAddress;
+	private String userAgent2;
 	private String androidIMEI = "";
 	private String androidID = "";
 	private String androidAdId = "";
@@ -40,7 +41,8 @@ public class NativeAdRequest {
 		final Uri.Builder b = Uri.parse(request_url).buildUpon();
 		Random r = new Random();
 		int random = r.nextInt(50000);
-
+		
+		b.appendQueryParameter("rt", REQUEST_TYPE_ANDROID);
 		b.appendQueryParameter("r_type", REQUEST_TYPE);
 		b.appendQueryParameter("r_resp", RESPONSE_TYPE);
 		b.appendQueryParameter("n_img", IMAGE_TYPES);
@@ -53,7 +55,7 @@ public class NativeAdRequest {
 	
 		b.appendQueryParameter("s", this.getPublisherId());
 		b.appendQueryParameter("u", this.getUserAgent());
-		b.appendQueryParameter("i", this.getIpAddress());
+		b.appendQueryParameter("u2", this.getUserAgent2());
 		b.appendQueryParameter("r_random", Integer.toString(random));
 		b.appendQueryParameter("o_androidid", androidID);
 		b.appendQueryParameter("o_androidimei", androidIMEI);
@@ -107,16 +109,6 @@ public class NativeAdRequest {
 
 	public void setUserAgent(String userAgent) {
 		this.userAgent = userAgent;
-	}
-
-	public String getIpAddress() {
-		if (this.ipAddress == null)
-			return "";
-		return this.ipAddress;
-	}
-
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
 	}
 
 	public String getAndroidIMEI() {
@@ -186,10 +178,20 @@ public class NativeAdRequest {
 		this.userAge = userAge;
 	}
 
+	public String getUserAgent2() {
+		if (this.userAgent2 == null)
+			return "";
+		return this.userAgent2;
+	}
+	
+	public void setUserAgent2(final String userAgent) {
+		this.userAgent2 = userAgent;
+	}
+
 	public List<String> getKeywords() {
 		return keywords;
 	}
-
+	
 	public void setKeywords(List<String> keywords) {
 		this.keywords = keywords;
 	}
@@ -197,5 +199,5 @@ public class NativeAdRequest {
 	public void setRequestUrl (String url) {
 		this.request_url = url;
 	}
-
+	
 }

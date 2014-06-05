@@ -41,6 +41,10 @@ public class NativeAdManager {
 	private List<String> adTypes;
 
 	public NativeAdManager(Context context, String requestUrl, boolean includeLocation, String publisherId, NativeAdListener listener, List<String> adTypes) {
+		if ((publisherId == null) || (publisherId.length() == 0)) {
+			Log.e("Publisher Id cannot be null or empty");
+			throw new IllegalArgumentException("User Id cannot be null or empty");
+		}
 		this.context = context;
 		this.requestUrl = requestUrl;
 		this.includeLocation = includeLocation;
@@ -95,6 +99,7 @@ public class NativeAdManager {
 			this.request.setAndroidAdId(Util.getAndroidAdId());
 			this.request.setPublisherId(this.publisherId);
 			this.request.setUserAgent(Util.getDefaultUserAgentString(context));
+			this.request.setUserAgent2(Util.buildUserAgent());
 			Log.d(Const.TAG, "WebKit UserAgent:" + this.request.getUserAgent());
 		}
 		request.setRequestUrl(requestUrl);
