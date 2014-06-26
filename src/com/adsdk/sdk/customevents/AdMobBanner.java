@@ -33,7 +33,7 @@ public class AdMobBanner extends CustomEventBanner {
 		
 		adView = new AdView(context);
 		adView.setAdUnitId(adId);
-		adView.setAdSize(new AdSize(width, height));
+		adView.setAdSize(AdSize.SMART_BANNER);
 		
 		adView.setAdListener(createAdListener());
 		AdRequest adRequest = new AdRequest.Builder().addTestDevice(AdRequest.DEVICE_ID_EMULATOR).build();
