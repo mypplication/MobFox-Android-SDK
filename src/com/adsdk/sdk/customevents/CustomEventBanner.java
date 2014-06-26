@@ -21,7 +21,7 @@ public abstract class CustomEventBanner {
     public abstract void loadBanner(Context context,
             CustomEventBannerListener customEventBannerListener, String optionalParameters, String trackingPixel, int width, int height);
     
-
+    public abstract View getView();
     
     protected void reportImpression() {
 		AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
