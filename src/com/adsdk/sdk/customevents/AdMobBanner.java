@@ -74,5 +74,10 @@ public class AdMobBanner extends CustomEventBanner {
 		};
 	}
 
+	@Override
+	public View getView()
+	{
+		return this.adView;
+	}
 
 }
