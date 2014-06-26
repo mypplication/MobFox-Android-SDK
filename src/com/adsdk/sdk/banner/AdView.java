@@ -56,8 +56,7 @@ public class AdView extends FrameLayout {
 	private BannerAdView mBannerView;
 	private MraidView mMRAIDView;
 	private CustomEventBanner customEventBanner;
-	private View customEventBannerView;
-
+	
 	private Timer reloadTimer;
 	private boolean isInternalBrowser = false;
 
@@ -389,8 +388,8 @@ public class AdView extends FrameLayout {
 			this.removeView(MRAIDFrame);
 			MRAIDFrame = null;
 		}
-		if (customEventBannerView != null) {
-			this.removeView(customEventBannerView);
+		if (customEventBanner != null && customEventBanner.getView() != null) {
+			this.removeView(customEventBanner.getView() );
 		}
 		
 		if (response.getType() == Const.TEXT || response.getType() == Const.IMAGE) {
